@@ -1,0 +1,354 @@
+/* ==========================================================================
+   WIREFRAME / LOW-FIDELITY THEME (SKRIPSI BAB 4)
+   Target: Full Monochrome, Structural Layout, Print-Friendly
+   Overrides: base.css, Bootstrap 5, FontAwesome Colors
+   ========================================================================== */
+
+/* --- 1. GLOBAL RESET & VARIABLES --- */
+:root {
+    --primary-color: #000000;
+    --bg-primary: #ffffff;
+    --text-color: #000000;
+    --border-color: #000000;
+    --border-width: 2px;
+}
+
+/* Paksa reset ke style dokumen teknis */
+body {
+    background: #ffffff !important;
+    background-image: none !important;
+    color: #000000 !important;
+    font-family: 'Courier New', Courier, 'Lucida Sans Typewriter', monospace !important;
+    line-height: 1.5;
+    letter-spacing: 0.5px;
+}
+
+/* MATIKAN SEMUA EFEK VISUAL */
+*, *::before, *::after {
+    box-shadow: none !important;
+    text-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    transition: none !important;
+    animation: none !important;
+    background-image: none !important; /* Hapus gradien */
+}
+
+/* --- 2. TYPOGRAPHY OVERRIDES --- */
+/* Paksa semua level teks menjadi hitam pekat */
+h1, h2, h3, h4, h5, h6, 
+p, span, div, a, li, small, 
+label, th, td, i, b, strong,
+/* Explicitly Override Bootstrap Color Utilities */
+.text-white, .text-light, .text-muted, 
+.text-primary, .text-secondary, .text-success, 
+.text-danger, .text-warning, .text-info,
+.text-white-50, .text-black-50, .text-body {
+    color: #000000 !important;
+    background-color: transparent !important;
+    -webkit-text-fill-color: initial !important; /* Reset gradient text */
+    opacity: 1 !important; /* Fix opacity for muted/50 classes */
+}
+
+/* Link Style - Garis bawah klasik */
+a {
+    text-decoration: underline !important;
+    font-weight: bold;
+}
+a:hover {
+    background-color: #000 !important;
+    color: #fff !important;
+    text-decoration: none !important;
+}
+
+/* --- 3. CONTAINER & LAYOUT (KOTAK TEGAS) --- */
+.container, .row, .col-12, .col-md-6 {
+    /* Visual aid untuk debugging layout di bab 4 (opsional, bisa dihapus jika terlalu ramai) */
+    /* outline: 1px dotted #ccc; */
+}
+
+.card, 
+.doc-container, 
+.summary-output,
+.tutorial-card,
+.guest-notice,
+.anim-container,
+.metric-card {
+    background: #ffffff !important;
+    border: var(--border-width) solid #000000 !important;
+    border-radius: 0 !important;
+    margin-bottom: 24px;
+}
+
+/* Header Kartu */
+.card-header, .doc-header {
+    background: #e0e0e0 !important;
+    border-bottom: var(--border-width) solid #000000 !important;
+    font-weight: 800 !important;
+    text-transform: uppercase;
+}
+
+/* --- 4. NAVIGATION BAR --- */
+.navbar {
+    background: #ffffff !important;
+    border-bottom: var(--border-width) solid #000000 !important;
+    padding: 1rem 0;
+}
+
+.nav-link {
+    border: 1px solid transparent;
+    margin: 0 5px;
+}
+
+.nav-link.active {
+    background: #000000 !important;
+    color: #ffffff !important; /* Teks putih pada menu aktif */
+    border: 1px solid #000000;
+}
+.nav-link.active i { color: #ffffff !important; }
+
+/* --- 5. FORMS & INPUTS --- */
+.form-control, 
+.form-select, 
+textarea, 
+.summary-textarea {
+    background: #ffffff !important;
+    border: var(--border-width) solid #000000 !important;
+    border-radius: 0 !important;
+    color: #000000 !important;
+    font-family: inherit !important;
+}
+
+.form-control:focus, .form-select:focus {
+    outline: 4px solid #cccccc !important;
+    border-color: #000 !important;
+}
+
+.form-label {
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+}
+
+/* Range Slider Customization (Flat Look) */
+input[type=range] {
+    -webkit-appearance: none;
+    background: transparent;
+}
+input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    height: 20px;
+    width: 20px;
+    background: #000000;
+    border: 2px solid #000000;
+    border-radius: 0;
+    margin-top: -8px;
+}
+input[type=range]::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 4px;
+    background: #000000;
+}
+
+/* File Upload Area */
+.upload-container {
+    background: repeating-linear-gradient(
+        45deg,
+        #ffffff,
+        #ffffff 10px,
+        #f5f5f5 10px,
+        #f5f5f5 20px
+    ) !important;
+    border: 2px dashed #000000 !important;
+}
+
+/* --- 6. BUTTONS (OUTLINE STYLE) --- */
+.btn {
+    background: #ffffff !important;
+    color: #000000 !important;
+    border: var(--border-width) solid #000000 !important;
+    border-radius: 0 !important;
+    text-transform: uppercase;
+    font-weight: 800;
+    box-shadow: 4px 4px 0px 0px #000000 !important; /* Hard shadow */
+    margin: 4px;
+}
+
+.btn:hover {
+    transform: translate(2px, 2px) !important;
+    box-shadow: 2px 2px 0px 0px #000000 !important;
+    background: #f0f0f0 !important;
+}
+
+.btn-primary { 
+    background: #000000 !important; 
+    color: #ffffff !important; 
+}
+.btn-primary:hover {
+    background: #333333 !important;
+}
+/* Override icon colors inside buttons */
+.btn i { color: inherit !important; }
+
+/* --- 7. SPECIFIC COMPONENTS --- */
+
+/* A. COMPARISON (Diff View) */
+/* Reset warna header panel */
+.doc-header.traditional, 
+.doc-header.hybrid, 
+.doc-header.unified {
+    border-top: none !important;
+    border-left: 8px solid #000 !important; /* Penanda kiri tebal */
+    background: #f4f4f4 !important;
+}
+
+/* Diff Text Styling */
+.diff-ins {
+    background: #fff !important;
+    color: #000 !important;
+    border: 1px solid #000;
+    padding: 0 3px;
+    text-decoration: none;
+    border-bottom: 3px solid #000; /* Garis bawah tebal untuk penambahan */
+}
+
+.diff-ins::before { content: "[+] "; font-size: 0.8em; font-weight: bold; }
+
+.diff-del {
+    background: #fff !important;
+    color: #000 !important;
+    text-decoration: line-through;
+    opacity: 0.5;
+    border: 1px dotted #000;
+}
+
+/* B. SUMMARY DETAIL (Entity Badges) */
+/* Reset warna badge entity */
+.entity-badge {
+    background: #fff !important;
+    color: #000 !important;
+    border-radius: 0 !important;
+    padding: 4px 8px;
+    margin: 2px;
+}
+
+/* Styling Pembeda Entity Teknis */
+.entity-PER {
+    border: 2px solid #000 !important;
+}
+.entity-PER::after { content: " (PERSON)"; font-size: 0.7em; vertical-align: super; }
+
+.entity-ORG {
+    border: 2px dashed #000 !important;
+}
+.entity-ORG::after { content: " (ORG)"; font-size: 0.7em; vertical-align: super; }
+
+.entity-LOC {
+    border: 2px dotted #000 !important;
+}
+.entity-LOC::after { content: " (LOC)"; font-size: 0.7em; vertical-align: super; }
+
+/* C. METHOD SELECTOR (Summarize Page) */
+.method-option-card {
+    border: 2px solid #000 !important;
+    background: #fff !important;
+}
+/* Radio button selected state */
+.method-option-card:has(input:checked) {
+    background: #000 !important;
+}
+.method-option-card:has(input:checked) div {
+    color: #fff !important; /* Text jadi putih */
+}
+
+/* D. CHARTS & TABLES */
+.custom-table th {
+    background: #000 !important;
+    color: #fff !important;
+    border: 1px solid #000;
+}
+.custom-table td {
+    background: #fff !important;
+    border: 1px solid #000;
+}
+
+/* Baris Accuracy/Average */
+.row-accent td {
+    background: #e0e0e0 !important;
+    font-weight: bold;
+    border-top: 3px double #000 !important;
+}
+
+/* Image Charts (Force Grayscale) */
+img, .chart-img {
+    filter: grayscale(100%) contrast(120%);
+    border: 2px solid #000;
+}
+
+/* E. LOADING STATES (notification.js overrides) */
+.skeleton {
+    background: #e0e0e0 !important;
+    border: 1px solid #000;
+    border-radius: 0 !important;
+}
+
+/* Loading Overlay */
+.loading-overlay {
+    background: rgba(255, 255, 255, 0.95) !important;
+}
+.spinner-ring {
+    border: 5px solid #000 !important;
+    border-top-color: transparent !important;
+}
+
+/* F. STEP LOADER */
+.step-item { opacity: 1 !important; }
+.step-circle {
+    border: 2px solid #000 !important;
+    background: #fff !important;
+    color: #000 !important;
+}
+.step-item.active .step-circle {
+    background: #000 !important;
+    color: #fff !important;
+}
+.step-item.done .step-circle {
+    background: #888 !important;
+    color: #fff !important;
+    border-color: #888 !important;
+}
+
+/* --- 8. UTILITIES --- */
+.badge {
+    background: transparent !important;
+    color: #000 !important;
+    border: 1px solid #000 !important;
+    border-radius: 0 !important;
+}
+.badge.bg-success, .badge.bg-warning, .badge.bg-primary {
+    background: #fff !important;
+}
+
+/* Alert Messages */
+.alert {
+    background: #fff !important;
+    border: 2px solid #000 !important;
+    color: #000 !important;
+    border-radius: 0 !important;
+}
+.alert-success { border-left-width: 10px !important; } /* Penanda kiri tebal */
+.alert-error { border-left-width: 10px !important; border-left-style: dashed !important; }
+
+/* History Items */
+.history-item, .recent-item {
+    background: #fff !important;
+    border: 1px solid #000 !important;
+    border-left: 4px solid #000 !important;
+}
+.history-item:hover {
+    background: #f0f0f0 !important;
+}
+
+i {
+  display: none;
+}

@@ -1,0 +1,20 @@
+# Web Framework & Server
+django
+gunicorn
+python-dotenv
+dj-database-url
+psycopg2-binary
+
+# Deep Learning & Math
+tensorflow-cpu
+numpy
+pandas
+
+# Machine Learning & NLP
+scikit-learn
+PySastrawi
+nltk
+joblib
+
+# Utility
+whitenoise

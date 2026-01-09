@@ -1,0 +1,210 @@
+{% extends 'summarizer/base.html' %}
+
+{% block title %}Model Metrics{% endblock %} 
+
+{% block extra_css %}
+<style>
+    .metric-card {
+        background: rgba(30, 41, 59, 0.5);
+        border: 1px solid var(--card-border);
+        border-radius: 8px;
+        padding: 1.5rem;
+        height: 100%;
+        transition: transform 0.2s;
+    }
+    .metric-card:hover {
+        transform: translateY(-2px);
+        background: rgba(30, 41, 59, 0.8);
+    }
+    .metric-label {
+        color: var(--text-muted-color);
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.5rem;
+    }
+    .metric-value {
+        color: white;
+        font-size: 1.25rem;
+        font-weight: 600;
+        font-family: 'Space Grotesk', sans-serif;
+    }
+    
+    .custom-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+    .custom-table th {
+        text-align: left;
+        padding: 1rem;
+        background: rgba(15, 23, 42, 0.5);
+        color: var(--primary-light);
+        font-weight: 600;
+        border-bottom: 2px solid var(--card-border);
+    }
+    .custom-table td {
+        padding: 1rem;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+        color: var(--text-color);
+        font-family: 'JetBrains Mono', monospace;
+    }
+    .custom-table tr:last-child td {
+        border-bottom: none;
+    }
+    .custom-table tr:hover td {
+        background: rgba(255,255,255,0.02);
+    }
+    
+    .chart-container {
+        background: white; /* Charts usually look better on white or need inversion */
+        padding: 1rem;
+        border-radius: 8px;
+        text-align: center;
+    }
+    .chart-img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 4px;
+    }
+    
+    /* Highlight for accuracy/avg rows */
+    .row-accent td {
+        background: rgba(59, 130, 246, 0.1) !important;
+        font-weight: bold;
+        color: #fff;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <div class="card fade-in">
+      <div class="card-body p-4">
+        <h2 class="card-title mb-4 text-white">
+          <i class="fas fa-microscope text-primary"></i> Model Analysis
+        </h2>
+
+        {% if file_error %}
+        <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle"></i> Could not load metrics files. Ensure files exist in <code>ml/output/</code>.<br>
+            <small>{{ file_error }}</small>
+        </div>
+        {% endif %}
+
+        <!-- 1. Training History Image -->
+        <h4 class="mb-3 text-white">Training History</h4>
+        <div class="row mb-5">
+            <div class="col-12">
+                {% if chart_image %}
+                <div class="chart-container">
+                    <img src="{{ chart_image }}" alt="Training History Chart" class="chart-img">
+                </div>
+                {% else %}
+                <div class="p-5 text-center border border-secondary rounded">
+                    <p class="text-muted">Training history image not found (training_history.png).</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <hr class="my-5" style="border-color: var(--card-border);">
+
+        <!-- 2. Confusion Matrix / Classification Report -->
+        <div class="row mb-5">
+            <div class="col-lg-12">
+                <h4 class="mb-3 text-white">Evaluation Metrics (NER)</h4>
+                {% if classification_report %}
+                <div class="table-responsive">
+                    <table class="custom-table">
+                        <thead>
+                            <tr>
+                                <th>Entity Type</th>
+                                <th>Precision</th>
+                                <th>Recall</th>
+                                <th>F1-Score</th>
+                                <th>Support</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in classification_report %}
+                            <tr class="{% if 'avg' in row.label or row.label == 'accuracy' %}row-accent{% endif %}">
+                                <td>
+                                    {% if row.label == 'LOC' %}<span class="badge bg-warning">LOC</span>
+                                    {% elif row.label == 'ORG' %}<span class="badge bg-success">ORG</span>
+                                    {% elif row.label == 'PER' %}<span class="badge bg-primary">PER</span>
+                                    {% elif row.label == 'accuracy' %}<span class="text-info">ACCURACY</span>
+                                    {% else %}{{ row.label|title }}{% endif %}
+                                </td>
+                                <td>{{ row.precision }}</td>
+                                <td>{{ row.recall }}</td>
+                                <td>{{ row.f1 }}</td>
+                                <td>{{ row.support }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted">No classification report data available.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 3. Key Experiments JSON Data -->
+        {% if experiment_metrics %}
+        <h4 class="mb-3 text-white">Configuration & Performance</h4>
+        <div class="row g-4">
+            <!-- Architecture Column -->
+            <div class="col-md-4">
+                <h5 class="text-info mb-3 small fw-bold">MODEL ARCHITECTURE</h5>
+                <div class="row g-3">
+                    {% for key, value in experiment_metrics.Architecture.items %}
+                    <div class="col-6 col-md-12 col-lg-6">
+                        <div class="metric-card">
+                            <div class="metric-label">{{ key }}</div>
+                            <div class="metric-value">{{ value }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Training Column -->
+            <div class="col-md-4">
+                <h5 class="text-warning mb-3 small fw-bold">TRAINING CONFIG</h5>
+                <div class="row g-3">
+                    {% for key, value in experiment_metrics.Training.items %}
+                    <div class="col-6 col-md-12 col-lg-6">
+                        <div class="metric-card">
+                            <div class="metric-label">{{ key }}</div>
+                            <div class="metric-value">{{ value }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Performance Column -->
+            <div class="col-md-4">
+                <h5 class="text-success mb-3 small fw-bold">FINAL RESULTS</h5>
+                <div class="row g-3">
+                    {% for key, value in experiment_metrics.Performance.items %}
+                    <div class="col-12">
+                        <div class="metric-card border-success">
+                            <div class="metric-label">{{ key }}</div>
+                            <div class="metric-value text-success">{{ value }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

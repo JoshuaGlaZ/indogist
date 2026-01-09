@@ -1,0 +1,332 @@
+{% extends 'summarizer/base.html' %} 
+{% block title %}Method Comparison{% endblock %} 
+
+{% block extra_css %}
+<style>
+  .doc-container {
+    background: rgba(30, 41, 59, 0.8);
+    backdrop-filter: var(--blur-sm);
+    -webkit-backdrop-filter: var(--blur-sm);
+    border-radius: 8px;
+    overflow: hidden;
+    height: 100%;
+    border: 1px solid var(--card-border);
+    display: flex;
+    flex-direction: column;
+    transition: all var(--transition-base);
+  }
+  
+  .doc-container:hover {
+    box-shadow: var(--shadow-base);
+  }
+  
+  .doc-header {
+    padding: 1rem;
+    border-bottom: 1px solid var(--card-border);
+    font-weight: bold;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .doc-header.traditional { 
+      background: rgba(245, 158, 11, 0.1);
+      color: #fbbf24; 
+      border-top: 4px solid #f59e0b; 
+  }
+  
+  .doc-header.hybrid { 
+      background: rgba(34, 197, 94, 0.1);
+      color: #4ade80; 
+      border-top: 4px solid #22c55e; 
+  }
+  
+  .doc-header.unified {
+      background: rgba(59, 130, 246, 0.1);
+      color: #60a5fa;
+      border-top: 4px solid #3b82f6;
+  }
+
+  .doc-body {
+    padding: 1.5rem;
+    font-size: 1.1rem;
+    line-height: 1.7;
+    color: var(--text-color);
+    background: rgba(30, 41, 59, 0.6);
+    flex-grow: 1;
+    overflow-y: auto;
+    max-height: 500px;
+    white-space: pre-wrap;
+  }
+
+  .diff-ins {
+      background-color: rgba(34, 197, 94, 0.2);
+      color: #86efac;
+      text-decoration: none;
+      border-radius: 2px;
+      padding: 0 2px;
+  }
+  
+  .diff-del {
+      background-color: rgba(239, 68, 68, 0.2);
+      color: #fca5a5;
+      text-decoration: line-through;
+      opacity: 0.8;
+      border-radius: 2px;
+      padding: 0 2px;
+  }
+  
+  #loadingIndicator {
+    animation: fadeIn 0.3s ease;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+{% endblock %} 
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <div class="card fade-in mb-4">
+      <div class="card-body p-4">
+        <h2 class="card-title mb-3 text-white">
+          <i class="fas fa-balance-scale text-primary"></i> Compare Methods
+        </h2>
+        <label class="text-muted mb-4">Analyze the difference between standard summarization and our hybrid context model.</label>
+        
+        <form id="comparisonForm" method="post">
+          {% csrf_token %}
+          <div class="row">
+            <div class="col-md-8 mb-3">
+              <label class="form-label text-white">Document Title</label>
+              <input
+                type="text"
+                name="title"
+                class="form-control"
+                placeholder="Enter document title"
+                required
+              />
+            </div>
+            
+            <div class="col-md-4 mb-3">
+                <label class="form-label text-white">Summary Length: <span id="lengthLabel" class="badge bg-primary">30%</span></label>
+                <input type="range" class="form-range" name="compression_slider" min="0.1" max="0.5" step="0.05" id="compSlider" value="0.3">
+                <input type="hidden" name="compression_ratio" id="id_comp_ratio" value="0.3">
+            </div>
+          </div>
+          
+          <div class="mb-4">
+            <label class="form-label text-white">Text to Summarize</label>
+            <textarea
+              name="text"
+              class="form-control"
+              rows="5"
+              placeholder="Paste your Indonesian text here..."
+              required
+            ></textarea>
+          </div>
+          
+          <button type="submit" class="btn btn-primary btn-lg" id="compareBtn">
+            <i class="fas fa-play"></i> Run Comparison
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <div id="loadingIndicator" class="d-none mt-4">
+      <div class="text-center">
+        <div class="spinner-ring mb-3"></div>
+        <h5 class="text-white">Analyzing both methods...</h5>
+        <p class="text-muted">This may take a few moments</p>
+      </div>
+    </div>
+
+    <div id="comparisonResults" class="d-none mt-4">
+      
+      <div class="row mb-4 align-items-center">
+        <div class="col-md-8 text-md-start text-center mb-3 mb-md-0">
+            <span class="badge bg-secondary p-2 me-2">Original: <span id="origCount">0</span> words</span>
+            <i class="fas fa-arrow-right text-muted mx-2"></i>
+            <span class="badge bg-warning p-2 me-2">Traditional: <span id="tradCount">0</span> words</span>
+            <span class="badge bg-success p-2">Hybrid: <span id="enhCount">0</span> words</span>
+        </div>
+        <div class="col-md-4 text-md-end text-center">
+            <div class="btn-group" role="group">
+                <button type="button" class="btn btn-outline-primary active" id="btnSplitView" onclick="switchView('split')">
+                    <i class="fas fa-columns"></i> Split
+                </button>
+                <button type="button" class="btn btn-outline-primary" id="btnUnifiedView" onclick="switchView('unified')">
+                    <i class="fas fa-code-branch"></i> Unified
+                </button>
+            </div>
+        </div>
+      </div>
+
+      <div id="viewSplit" class="row g-4 fade-in">
+        <div class="col-md-6">
+            <div class="doc-container">
+                <div class="doc-header traditional">
+                    <span><i class="fas fa-calculator me-2"></i> Traditional</span>
+                    <small>Statistical Approach</small>
+                </div>
+                <div class="doc-body" id="traditionalContent"></div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="doc-container">
+                <div class="doc-header hybrid">
+                    <span><i class="fas fa-magic me-2"></i> Hybrid</span>
+                    <small>Context Aware</small>
+                </div>
+                <div class="doc-body" id="hybridContent"></div>
+            </div>
+        </div>
+      </div>
+
+      <div id="viewUnified" class="row fade-in d-none">
+        <div class="col-12">
+            <div class="doc-container">
+                <div class="doc-header unified">
+                    <span><i class="fas fa-file-signature me-2"></i> Unified Diff</span>
+                    <small>
+                        <span class="text-danger text-decoration-line-through me-2">Removed (Traditional)</span>
+                        <span class="text-success">Added (Hybrid)</span>
+                    </small>
+                </div>
+                <div class="doc-body" id="unifiedContent"></div>
+            </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %} 
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsdiff/5.1.0/diff.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    
+    // Slider Logic
+    const compSlider = document.getElementById('compSlider');
+    const compHidden = document.getElementById('id_comp_ratio');
+    const compLabel = document.getElementById('lengthLabel');
+
+    if (compSlider && compHidden && compLabel) {
+        const initVal = parseFloat(compSlider.value);
+        compLabel.textContent = Math.round(initVal * 100) + "%";
+        
+        compSlider.addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value);
+            compHidden.value = val;
+            compLabel.textContent = Math.round(val * 100) + "%";
+        });
+    }
+
+    // View Switcher Logic
+    window.switchView = function(mode) {
+        const splitView = document.getElementById('viewSplit');
+        const unifiedView = document.getElementById('viewUnified');
+        const btnSplit = document.getElementById('btnSplitView');
+        const btnUnified = document.getElementById('btnUnifiedView');
+
+        if (mode === 'split') {
+            splitView.classList.remove('d-none');
+            unifiedView.classList.add('d-none');
+            btnSplit.classList.add('active');
+            btnUnified.classList.remove('active');
+        } else {
+            splitView.classList.add('d-none');
+            unifiedView.classList.remove('d-none');
+            btnSplit.classList.remove('active');
+            btnUnified.classList.add('active');
+        }
+    }
+
+    // Diff Generator
+    function generateUnifiedDiff(traditionalText, hybridText) {
+        const diff = Diff.diffWords(traditionalText, hybridText);
+        const fragment = document.createDocumentFragment();
+
+        diff.forEach((part) => {
+            const span = document.createElement('span');
+            if (part.added) {
+                span.classList.add('diff-ins');
+                span.textContent = part.value;
+            } else if (part.removed) {
+                span.classList.add('diff-del');
+                span.textContent = part.value;
+            } else {
+                span.textContent = part.value;
+            }
+            fragment.appendChild(span);
+        });
+
+        const container = document.getElementById('unifiedContent');
+        container.innerHTML = '';
+        container.appendChild(fragment);
+    }
+
+    // Form Submission Logic
+    const form = document.getElementById("comparisonForm");
+    const compareBtn = document.getElementById("compareBtn");
+    
+    if (form) {
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(form);
+
+            // Use Loading API
+            Loading.buttonLoading(compareBtn, 'Analyzing...');
+            document.getElementById("loadingIndicator").classList.remove("d-none");
+            document.getElementById("comparisonResults").classList.add("d-none");
+
+            try {
+                const response = await fetch('{% url "summarizer:comparison" %}', {
+                    method: "POST",
+                    body: formData,
+                    headers: { "X-Requested-With": "XMLHttpRequest" },
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Update stats
+                    document.getElementById("origCount").textContent = data.original_words;
+                    document.getElementById("tradCount").textContent = data.traditional_words;
+                    document.getElementById("enhCount").textContent = data.hybrid_words;
+
+                    // Update Split Content
+                    document.getElementById("traditionalContent").textContent = data.traditional;
+                    document.getElementById("hybridContent").textContent = data.hybrid;
+
+                    // Generate Unified Diff
+                    generateUnifiedDiff(data.traditional, data.hybrid);
+
+                    // Show results
+                    document.getElementById("comparisonResults").classList.remove("d-none");
+                    document.getElementById("comparisonResults").scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    
+                    window.notify.success('Comparison completed successfully!', 5000);
+                } else {
+                    window.notify.error("Error: " + data.error, 7000);
+                }
+            } catch (error) {
+                console.error(error);
+                window.notify.error("An error occurred: " + error.message, 7000);
+            } finally {
+                Loading.buttonReady(compareBtn);
+                document.getElementById("loadingIndicator").classList.add("d-none");
+            }
+        });
+    }
+});
+</script>
+{% endblock %}
