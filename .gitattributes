@@ -43,4 +43,11 @@ data/indosum/train.02.jsonl filter=lfs diff=lfs merge=lfs -text
 data/indosum/train.03.jsonl filter=lfs diff=lfs merge=lfs -text
 data/indosum/train.04.jsonl filter=lfs diff=lfs merge=lfs -text
 data/indosum/train.05.jsonl filter=lfs diff=lfs merge=lfs -text
+ml/models/ner_experiment_20251018_215155/best_model_by_f1.keras filter=lfs diff=lfs merge=lfs -text
+ml/models/ner_experiment_20251018_215155/model.keras filter=lfs diff=lfs merge=lfs -text
+ml/models/ner_experiment_20251018_215155/training_history.png filter=lfs diff=lfs merge=lfs -text
+ml/models/ner_experiment_30-November-2025_13.35/best_model_by_f1.keras filter=lfs diff=lfs merge=lfs -text
+ml/models/ner_experiment_30-November-2025_13.35/entity_f1_metrics.png filter=lfs diff=lfs merge=lfs -text
+ml/models/ner_experiment_30-November-2025_13.35/model.keras filter=lfs diff=lfs merge=lfs -text
+ml/models/ner_experiment_30-November-2025_13.35/training_metrics.png filter=lfs diff=lfs merge=lfs -text
 *.keras filter=lfs diff=lfs merge=lfs -text
