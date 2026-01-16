@@ -1,0 +1,41 @@
+{
+  "config": {
+    "embed_dim": 150,
+    "w2v_window": 5,
+    "w2v_min_count": 1,
+    "w2v_epochs": 5,
+    "w2v_sg": 1,
+    "min_freq": 1,
+    "lstm_units": 64,
+    "dropout": 0.2,
+    "epochs": 1000,
+    "batch_size": 128,
+    "eval_batch_size": 128,
+    "max_cap_len": 256,
+    "trainable_embeddings": true,
+    "learning_rate": 0.01,
+    "patience": 10,
+    "num_lstm_layers": 2,
+    "recurrent_dropout": 0.1,
+    "tuner/epochs": 50,
+    "tuner/initial_epoch": 17,
+    "tuner/bracket": 3,
+    "tuner/round": 3,
+    "tuner/trial_id": "0046"
+  },
+  "metrics": {
+    "accuracy": 0.935870797128825,
+    "f1_weighted": 0.9329596206697706,
+    "f1_macro": 0.7515290119774373,
+    "precision_weighted": 0.9389893079191266,
+    "recall_weighted": 0.935870797128825,
+    "entity_f1": 0.6550079491255962,
+    "entity_precision": 0.7119815668202765,
+    "entity_recall": 0.6064769381746811
+  },
+  "vocab_size": 6631,
+  "n_classes": 8,
+  "max_length": 72,
+  "tuning_strategy": "none",
+  "timestamp": "2025-10-16T00:46:52.651594"
+}

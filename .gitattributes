@@ -50,4 +50,11 @@ ml/models/ner_experiment_30-November-2025_13.35/best_model_by_f1.keras filter=lf
 ml/models/ner_experiment_30-November-2025_13.35/entity_f1_metrics.png filter=lfs diff=lfs merge=lfs -text
 ml/models/ner_experiment_30-November-2025_13.35/model.keras filter=lfs diff=lfs merge=lfs -text
 ml/models/ner_experiment_30-November-2025_13.35/training_metrics.png filter=lfs diff=lfs merge=lfs -text
+ml/models/ner2_tuningHYPERBAND_FINAL/all_predictions.json filter=lfs diff=lfs merge=lfs -text
+ml/models/ner2_tuningHYPERBAND_FINAL/best_by_entity_f1.keras filter=lfs diff=lfs merge=lfs -text
+ml/models/ner2_tuningHYPERBAND_FINAL/best_model.keras filter=lfs diff=lfs merge=lfs -text
+ml/models/ner2_tuningHYPERBAND_FINAL/final_model.keras filter=lfs diff=lfs merge=lfs -text
+ml/models/ner2_tuningHYPERBAND_FINAL/model.keras filter=lfs diff=lfs merge=lfs -text
+ml/models/ner2_tuningHYPERBAND_FINAL/training_history_old.png filter=lfs diff=lfs merge=lfs -text
+ml/models/ner2_tuningHYPERBAND_FINAL/training_history.png filter=lfs diff=lfs merge=lfs -text
 *.keras filter=lfs diff=lfs merge=lfs -text
