@@ -1,20 +1,18 @@
-# Web Framework & Server
 django
 gunicorn
 python-dotenv
 dj-database-url
 psycopg2-binary
+django-crispy-forms
+crispy-bootstrap5
 
-# Deep Learning & Math
 tensorflow-cpu
 numpy
 pandas
 
-# Machine Learning & NLP
 scikit-learn
 PySastrawi
 nltk
 joblib
 
-# Utility
 whitenoise
