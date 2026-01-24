@@ -82,21 +82,24 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-db_url = os.environ.get('DATABASE_URL')
-if not db_url:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': ':memory:',
-        }
-    }
-else:
-    DATABASES = {
-        'default': dj_database_url.config(
-            default=db_url,
-            conn_max_age=600,
-            ssl_require=True
-        )
+raw_db_url = os.environ.get('DATABASE_URL')
+print(raw_db_url)
+if raw_db_url:
+    raw_db_url = raw_db_url.strip()
+print(raw_db_url)
+
+DATABASES = {
+    'default': dj_database_url.config(
+        default=raw_db_url,
+        conn_max_age=600,
+        ssl_require=True
+    )
+}
+
+if not raw_db_url:
+    DATABASES['default'] = {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': ':memory:'
     }
 
 # Password validation
