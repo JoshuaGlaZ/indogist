@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 import dj_database_url
+from urllib.parse import quote_plus
 from logging import config
 from pathlib import Path
 import os
@@ -82,26 +83,30 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-raw_db_url = os.environ.get('DATABASE_URL')
-print(raw_db_url)
-if raw_db_url:
-    raw_db_url = raw_db_url.strip()
-print(raw_db_url)
+db_user = os.environ.get('DB_USER')
+db_password = os.environ.get('DB_PASSWORD')
+db_host = os.environ.get('DB_HOST')
+db_port = os.environ.get('DB_PORT', '6543') 
+db_name = os.environ.get('DB_NAME', 'postgres')
 
-DATABASES = {
-    'default': dj_database_url.config(
-        default=raw_db_url,
-        conn_max_age=600,
-        ssl_require=True
-    )
-}
-
-if not raw_db_url:
-    DATABASES['default'] = {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': ':memory:'
+if db_user and db_password and db_host:
+    safe_url = f"postgres://{db_user}:{quote_plus(db_password)}@{db_host}:{db_port}/{db_name}"
+    
+    DATABASES = {
+        'default': dj_database_url.parse(
+            safe_url,
+            conn_max_age=600,
+            ssl_require=True
+        )
     }
-
+else:
+    print("DEBUG: Database secrets missing. Using sqlite memory fallback.")
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': ':memory:',
+        }
+    }
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
