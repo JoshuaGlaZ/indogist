@@ -28,8 +28,12 @@ SECRET_KEY =  os.environ.get('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '.hf.space']
 
+CSRF_TRUSTED_ORIGINS = [
+    'https://*.hf.space',
+    'https://huggingface.co'
+]
 
 # Application definition
 
@@ -181,6 +185,8 @@ CACHES = {
         'LOCATION': BASE_DIR / 'cache',
     }
 }
+
+X_FRAME_OPTIONS = 'ALLOW-FROM https://huggingface.co/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
