@@ -32,15 +32,17 @@ class SummaryForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['title'].required = False
+        self.fields['original_text'].required = False
 
     def clean(self):
         cleaned_data = super().clean()
         text = cleaned_data.get('original_text')
         file = cleaned_data.get('file')
+        title = cleaned_data.get('title')
 
-        if not text and not file:
-            raise forms.ValidationError("Please either paste text or upload a file.")
-        return cleaned_data
+        if not file:
+            if not text or not title:
+                raise forms.ValidationError("Please provide both a Title and Original Text, or upload a template file.")
 
 
 class SummaryFilterForm(forms.Form):
