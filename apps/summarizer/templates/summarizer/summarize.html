@@ -418,18 +418,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const textInput = document.getElementById('id_original_text');
 
     function updateRequiredState() {
-        if (fileInput && titleInput && textInput) {
-            if (fileInput.files.length > 0) {
-                titleInput.removeAttribute('required');
-                textInput.removeAttribute('required');
-                titleInput.classList.remove('is-invalid');
-                textInput.classList.remove('is-invalid');
-            } else {
-                titleInput.setAttribute('required', '');
-                textInput.setAttribute('required', '');
-            }
+        const hasFile = fileInput.files && fileInput.files.length > 0;
+        if (hasFile) {
+            titleInput.required = false;
+            textInput.required = false;
+            titleInput.classList.remove('is-invalid');
+            textInput.classList.remove('is-invalid');
+        } else {
+            titleInput.required = true;
+            textInput.required = true;
         }
     }
+
+    titleInput.addEventListener('input', updateRequiredState);
+    textInput.addEventListener('input', updateRequiredState);
 
     if (dropzone && fileInput) {
         dropzone.addEventListener('click', () => fileInput.click());
@@ -463,6 +465,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const dt = new DataTransfer();
             dt.items.add(file);
             fileInput.files = dt.files;
+            titleInput.value = "";
+            textInput.value = "";
             fileNameDisplay.innerHTML = `<span class="text-success"><i class="fas fa-check"></i> ${file.name}</span>`;
             window.notify.success(`File "${file.name}" uploaded successfully`, 3000);
             updateRequiredState();
