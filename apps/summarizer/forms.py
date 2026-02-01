@@ -36,14 +36,18 @@ class SummaryForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
-        text = cleaned_data.get('original_text')
-        file = cleaned_data.get('file')
-        title = cleaned_data.get('title')
-
-        if not file:
-            if not text or not title:
-                raise forms.ValidationError("Please provide both a Title and Original Text, or upload a template file.")
-
+        text = cleaned_data.get('original_text', '').strip()
+        title = cleaned_data.get('title', '').strip()
+        file = self.files.get('file')
+        has_file = file is not None
+        
+        if not has_file:
+            if not text:
+                self.add_error('original_text', 'Please provide text or upload a file.')
+            if not title:
+                self.add_error('title', 'Please provide a title or upload a file.')
+        return cleaned_data
+        
 
 class SummaryFilterForm(forms.Form):
     """Form for filtering summaries in history page"""
