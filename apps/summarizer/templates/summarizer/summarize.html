@@ -36,6 +36,7 @@
         transition: all var(--transition-base);
         background: rgba(30, 41, 59, 0.5);
         cursor: pointer;
+        position: relative;
     }
     
     .upload-container:hover {
@@ -48,6 +49,38 @@
         border-color: var(--success-color);
         background-color: rgba(34, 197, 94, 0.1);
         transform: scale(1.02);
+    }
+    
+    .upload-container.has-file {
+        border-color: var(--success-color);
+        background-color: rgba(34, 197, 94, 0.1);
+    }
+
+    .cancel-file-btn {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: rgba(239, 68, 68, 0.9);
+        border: none;
+        color: white;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all var(--transition-base);
+        z-index: 10;
+    }
+    
+    .cancel-file-btn:hover {
+        background: rgba(220, 38, 38, 1);
+        transform: scale(1.1);
+    }
+    
+    .upload-container.has-file .cancel-file-btn {
+        display: flex;
     }
 
     .main-card-glass {
@@ -187,6 +220,28 @@
         -webkit-backdrop-filter: var(--blur-sm);
         animation: slideInUp 0.4s ease;
     }
+
+    .input-mode-indicator {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-left: 8px;
+        transition: all var(--transition-base);
+    }
+    
+    .mode-manual {
+        background: rgba(59, 130, 246, 0.2);
+        color: #60a5fa;
+        border: 1px solid rgba(59, 130, 246, 0.4);
+    }
+    
+    .mode-file {
+        background: rgba(34, 197, 94, 0.2);
+        color: #4ade80;
+        border: 1px solid rgba(34, 197, 94, 0.4);
+    }
     
     @keyframes slideInUp {
         from {
@@ -231,7 +286,7 @@
                         <h5 class="text-white mb-2">How to Use</h5>
                         <ol class="text-muted ps-3 mb-2">
                             <li>Enter a title and paste your <strong>Indonesian</strong> text below.</li>
-                            <li>Or, use the "Upload File" section (requires Template).</li>
+                            <li><strong>OR</strong>, use the "Upload File" section (requires Template).</li>
                             <li>Adjust summary length and select your preferred method.</li>
                             <li>Click "Generate Summary".</li>
                         </ol>
@@ -246,13 +301,16 @@
         <div class="card main-card-glass fade-in">
             <div class="card-body p-4 p-md-5">
                 <div class="text-center mb-4">
-                    <h2 class="card-title text-white">Create New Summary</h2>
+                    <h2 class="card-title text-white">
+                        Create New Summary
+                        <span id="inputModeIndicator" class="input-mode-indicator mode-manual">Manual Input</span>
+                    </h2>
                 </div>
                 
                 <form id="summaryForm" method="post" action="{% url 'summarizer:summarize' %}" enctype="multipart/form-data">
                     {% csrf_token %}
                     
-                    <div class="mb-4">
+                    <div class="mb-4" id="titleInputGroup">
                         <label for="{{ form.title.id_for_label }}" class="form-label fw-bold text-white">
                             Document Title
                         </label>
@@ -262,7 +320,7 @@
                         {% endif %}
                     </div>
                     
-                    <div class="mb-4">
+                    <div class="mb-4" id="textInputGroup">
                         <label for="{{ form.original_text.id_for_label }}" class="form-label fw-bold text-white">
                             Original Text (Indonesian)
                         </label>
@@ -277,6 +335,9 @@
                         <div class="row g-3">
                             <div class="col-md-8">
                                 <div class="upload-container h-100 p-3 d-flex align-items-center justify-content-center flex-column text-center" id="fileDropzone">
+                                    <button type="button" class="cancel-file-btn" id="cancelFileBtn" title="Remove file">
+                                        <i class="fas fa-times"></i>
+                                    </button>
                                     <i class="fas fa-cloud-upload-alt fa-2x text-muted mb-2"></i>
                                     <div>
                                         <p class="mb-0 fw-bold text-white small">
@@ -414,27 +475,63 @@ document.addEventListener('DOMContentLoaded', () => {
     const dropzone = document.getElementById('fileDropzone');
     const fileInput = document.querySelector('input[name="file"]');
     const fileNameDisplay = document.getElementById('fileName');
+    const cancelFileBtn = document.getElementById('cancelFileBtn');
     const titleInput = document.getElementById('id_title');
     const textInput = document.getElementById('id_original_text');
+    const titleInputGroup = document.getElementById('titleInputGroup');
+    const textInputGroup = document.getElementById('textInputGroup');
+    const inputModeIndicator = document.getElementById('inputModeIndicator');
 
-    function updateRequiredState() {
-        const hasFile = fileInput.files && fileInput.files.length > 0;
-        if (hasFile) {
-            titleInput.required = false;
-            textInput.required = false;
-            titleInput.classList.remove('is-invalid');
-            textInput.classList.remove('is-invalid');
+    let isFileMode = false;
+
+    function updateInputMode(fileMode) {
+        isFileMode = fileMode;
+        
+        if (fileMode) {
+            // File upload mode
+            dropzone.classList.add('has-file');
+            titleInputGroup.style.opacity = '0.5';
+            textInputGroup.style.opacity = '0.5';
+            titleInput.disabled = true;
+            textInput.disabled = true;
+            inputModeIndicator.textContent = 'File Upload';
+            inputModeIndicator.className = 'input-mode-indicator mode-file';
         } else {
-            titleInput.required = true;
-            textInput.required = true;
+            // Manual input mode
+            dropzone.classList.remove('has-file');
+            titleInputGroup.style.opacity = '1';
+            textInputGroup.style.opacity = '1';
+            titleInput.disabled = false;
+            textInput.disabled = false;
+            inputModeIndicator.textContent = 'Manual Input';
+            inputModeIndicator.className = 'input-mode-indicator mode-manual';
         }
     }
 
-    titleInput.addEventListener('input', updateRequiredState);
-    textInput.addEventListener('input', updateRequiredState);
+    function clearFile() {
+        fileInput.value = '';
+        fileNameDisplay.innerHTML = '<span class="text-muted small">Supports template format only</span>';
+        titleInput.value = '';
+        textInput.value = '';
+        updateInputMode(false);
+        window.notify.info('File removed. You can now use manual input.', 3000);
+    }
 
+    // Cancel file button
+    if (cancelFileBtn) {
+        cancelFileBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            clearFile();
+        });
+    }
+
+    // File dropzone interactions
     if (dropzone && fileInput) {
-        dropzone.addEventListener('click', () => fileInput.click());
+        dropzone.addEventListener('click', (e) => {
+            if (!e.target.closest('.cancel-file-btn')) {
+                fileInput.click();
+            }
+        });
         
         dropzone.addEventListener('dragover', (e) => { 
             e.preventDefault(); 
@@ -452,10 +549,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         
         fileInput.addEventListener('change', (e) => {
-            if(e.target.files.length) {
+            if (e.target.files.length) {
                 handleFile(e.target.files[0]);
             } else {
-                updateRequiredState();
+                updateInputMode(false);
             }
         });
     }
@@ -465,20 +562,21 @@ document.addEventListener('DOMContentLoaded', () => {
             const dt = new DataTransfer();
             dt.items.add(file);
             fileInput.files = dt.files;
-            titleInput.value = "";
-            textInput.value = "";
-            fileNameDisplay.innerHTML = `<span class="text-success"><i class="fas fa-check"></i> ${file.name}</span>`;
+            
+            fileNameDisplay.innerHTML = `<span class="text-success fw-bold"><i class="fas fa-check-circle"></i> ${file.name}</span>`;
+            updateInputMode(true);
             window.notify.success(`File "${file.name}" uploaded successfully`, 3000);
-            updateRequiredState();
         } else {
             window.notify.error('Please upload a .txt file only', 5000);
-            fileInput.value = ""; 
-            updateRequiredState();
+            fileInput.value = '';
+            updateInputMode(false);
         }
     }
 
-    updateRequiredState();
+    // Initialize mode
+    updateInputMode(false);
 
+    // Compression slider
     const slider = document.getElementById('compressionSlider');
     const hiddenInput = document.getElementById('id_compression_ratio');
     const label = document.getElementById('lengthLabel');
@@ -494,6 +592,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Form submission
     const summaryForm = document.getElementById('summaryForm');
     const submitBtn = document.getElementById('submitBtn');
     const loadingIndicator = document.getElementById('loadingIndicator');
@@ -507,6 +606,12 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
 
             const formData = new FormData(summaryForm);
+            
+            // Re-enable disabled fields temporarily for submission
+            if (isFileMode) {
+                titleInput.disabled = false;
+                textInput.disabled = false;
+            }
             
             Loading.buttonLoading(submitBtn, 'Processing...');
             loadingIndicator.classList.remove('d-none');
@@ -571,6 +676,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 loadingIndicator.classList.add('d-none');
             } finally {
                 Loading.buttonReady(submitBtn);
+                // Re-disable fields if in file mode
+                if (isFileMode) {
+                    titleInput.disabled = true;
+                    textInput.disabled = true;
+                }
             }
         });
     }
