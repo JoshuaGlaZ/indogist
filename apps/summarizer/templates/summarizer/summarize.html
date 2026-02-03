@@ -55,7 +55,6 @@
         border-color: var(--success-color);
         background-color: rgba(34, 197, 94, 0.1);
     }
-
     .cancel-file-btn {
         position: absolute;
         top: 8px;
@@ -82,7 +81,6 @@
     .upload-container.has-file .cancel-file-btn {
         display: flex;
     }
-
     .main-card-glass {
         background: rgba(30, 41, 59, 0.85);
         backdrop-filter: var(--blur-base);
@@ -90,7 +88,6 @@
         border: 1px solid var(--card-border);
         box-shadow: var(--shadow-lg);
     }
-
     .method-selector-container {
         display: flex;
         flex-direction: column;
@@ -125,7 +122,6 @@
         transform: scale(1.2);
         cursor: pointer;
     }
-
     .step-loader {
         display: flex;
         flex-direction: column;
@@ -220,7 +216,6 @@
         -webkit-backdrop-filter: var(--blur-sm);
         animation: slideInUp 0.4s ease;
     }
-
     .input-mode-indicator {
         display: inline-block;
         padding: 4px 12px;
@@ -481,9 +476,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const titleInputGroup = document.getElementById('titleInputGroup');
     const textInputGroup = document.getElementById('textInputGroup');
     const inputModeIndicator = document.getElementById('inputModeIndicator');
-
     let isFileMode = false;
-
     function updateInputMode(fileMode) {
         isFileMode = fileMode;
         
@@ -507,7 +500,6 @@ document.addEventListener('DOMContentLoaded', () => {
             inputModeIndicator.className = 'input-mode-indicator mode-manual';
         }
     }
-
     function clearFile() {
         fileInput.value = '';
         fileNameDisplay.innerHTML = '<span class="text-muted small">Supports template format only</span>';
@@ -516,7 +508,6 @@ document.addEventListener('DOMContentLoaded', () => {
         updateInputMode(false);
         window.notify.info('File removed. You can now use manual input.', 3000);
     }
-
     // Cancel file button
     if (cancelFileBtn) {
         cancelFileBtn.addEventListener('click', (e) => {
@@ -524,7 +515,6 @@ document.addEventListener('DOMContentLoaded', () => {
             clearFile();
         });
     }
-
     // File dropzone interactions
     if (dropzone && fileInput) {
         dropzone.addEventListener('click', (e) => {
@@ -556,7 +546,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-
     function handleFile(file) {
         if (file.name.endsWith('.txt')) {
             const dt = new DataTransfer();
@@ -572,10 +561,8 @@ document.addEventListener('DOMContentLoaded', () => {
             updateInputMode(false);
         }
     }
-
     // Initialize mode
     updateInputMode(false);
-
     // Compression slider
     const slider = document.getElementById('compressionSlider');
     const hiddenInput = document.getElementById('id_compression_ratio');
@@ -584,14 +571,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (slider && hiddenInput && label) {
         const initVal = parseFloat(slider.value);
         label.textContent = Math.round(initVal * 100) + "%";
-
         slider.addEventListener('input', (e) => {
             const val = parseFloat(e.target.value);
             hiddenInput.value = val;
             label.textContent = Math.round(val * 100) + "%";
         });
     }
-
     // Form submission
     const summaryForm = document.getElementById('summaryForm');
     const submitBtn = document.getElementById('submitBtn');
@@ -600,11 +585,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     let summaryIdForRedirect = null;
     const isAuthenticated = {{ user.is_authenticated|yesno:"true,false" }};
-
     if (summaryForm) {
         summaryForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-
             const formData = new FormData(summaryForm);
             
             // Re-enable disabled fields temporarily for submission
@@ -620,7 +603,6 @@ document.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll('.step-item').forEach(el => {
                 el.classList.remove('active', 'done');
             });
-
             const updateStep = (id, state) => {
                 const el = document.getElementById(id);
                 if(state === 'active') el.classList.add('active');
@@ -630,7 +612,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     el.querySelector('.step-circle').innerHTML = '<i class="fas fa-check"></i>';
                 }
             };
-
             updateStep('step1', 'active');
             
             const step2Timer = setTimeout(() => { 
@@ -684,7 +665,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-
     function displaySummary(summary, mode) {
         const summaryTextEl = document.getElementById('summaryText');
         const guestNotice = document.getElementById('guestNotice');
@@ -705,7 +685,6 @@ document.addEventListener('DOMContentLoaded', () => {
         summaryOutput.classList.remove('d-none');
         summaryOutput.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
-
     window.handleViewDetails = function() {
         if (summaryIdForRedirect && isAuthenticated) {
             window.location.href = `/summary/${summaryIdForRedirect}/`;
@@ -713,7 +692,6 @@ document.addEventListener('DOMContentLoaded', () => {
             window.location.href = '/accounts/login/?next={% url "summarizer:summarize" %}';
         }
     }
-
     window.copyToClipboard = function() {
         const text = document.getElementById("summaryText").innerText;
         navigator.clipboard.writeText(text).then(() => {
