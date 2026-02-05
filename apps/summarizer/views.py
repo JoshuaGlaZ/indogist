@@ -34,14 +34,67 @@ def _parse_uploaded_file(uploaded_file):
     """Helper: Parse uploaded text file with template format."""
     try:
         content = uploaded_file.read().decode('utf-8')
-        title_match = re.search(r'^TITLE=(.*)', content, re.MULTILINE)
-        text_match = re.search(r'^TEXT=(.*)', content, re.MULTILINE | re.DOTALL)
+        lines = content.split('\n')
+        
+        title = ""
+        text = ""
+        capture_text = False
+        
+        for i, line in enumerate(lines):
+            if line.strip().startswith('TITLE='):
+                title_on_line = line.split('TITLE=', 1)[1].strip()
+                if title_on_line:
+                    title = title_on_line
+                else:
+                    for next_line in lines[i+1:]:
+                        if next_line.strip() and not next_line.strip().startswith('TEXT='):
+                            title = next_line.strip()
+                            break
+            elif line.strip().startswith('TEXT='):
+                text_on_line = line.split('TEXT=', 1)[1].strip()
+                if text_on_line:
+                    text = text_on_line + '\n'
+                capture_text = True
+                continue
+            elif capture_text:
+                text += line + '\n'
 
-        if title_match and text_match:
-            return title_match.group(1).strip(), text_match.group(1).strip()
-        raise ValueError("File format invalid. Please use the official template.")
+        text = text.strip()
+        if not title or not text:
+            raise ValueError(
+                "File format invalid. Please ensure:\n"
+                "1. TITLE= is present with a title\n"
+                "2. TEXT= is present with text content\n"
+                "Use the official template."
+            )
+        
+        return title, text
+        
     except UnicodeDecodeError:
         raise ValueError("Unable to read file. Please ensure it's a valid UTF-8 text file.")
+
+
+
+def _validate_text_content(text, min_words=10):
+    """Validate that text has sufficient content for summarization."""
+    if not text or not text.strip():
+        raise ValueError("Text content is empty.")
+    words = text.split()
+    word_count = len(words)
+    if word_count < min_words:
+        raise ValueError(
+            f"Text is too short for summarization. "
+            f"Please provide at least {min_words} words (currently: {word_count} words)."
+        )
+    meaningful_words = [w for w in words if len(w) > 2]
+    if len(meaningful_words) < min_words // 2:
+        raise ValueError(
+            "Text contains insufficient meaningful content. "
+            "Please provide more substantial text for summarization."
+        )
+    
+    return True
+  
 
 def summarize_view(request):
     """Main summarization view with hybrid error handling"""
@@ -66,6 +119,15 @@ def summarize_view(request):
         # Validation & Processing
         if form.is_valid():
             data = form.cleaned_data
+            try:
+                _validate_text_content(data['original_text'])
+            except ValueError as e:
+                error_msg = str(e)
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return JsonResponse({'success': False, 'error': error_msg}, status=400)
+                messages.error(request, error_msg)
+                return render(request, 'summarizer/summarize.html', {'form': form})
+            
             try:
                 # Generate Summary
                 if data['method'] == 'hybrid':
@@ -395,11 +457,16 @@ def download_template(request):
 
     template = """IMPORTANT INSTRUCTIONS:
 1. Do not remove the 'TITLE=' and 'TEXT=' lines
-2. Place your title after 'TITLE='
-3. Place your entire text content after 'TEXT='
+2. Write your title on the line after 'TITLE='
+3. Write your entire text content on the lines after 'TEXT='
 
 TITLE=
+Kebijakan Ekonomi Digital Indonesia
+
 TEXT=
+Pemerintah Indonesia mengumumkan kebijakan baru untuk meningkatkan ekonomi digital di seluruh negeri. Program ini akan fokus pada tiga pilar utama: pengembangan infrastruktur internet berkecepatan tinggi, pelatihan sumber daya manusia di bidang teknologi informasi, dan pemberian insentif untuk startup lokal. 
+
+Menteri Komunikasi dan Informatika menyatakan bahwa program ini diharapkan dapat menciptakan setidaknya satu juta lapangan kerja baru dalam lima tahun ke depan. Investasi pemerintah untuk program ini mencapai 50 triliun rupiah, dengan harapan dapat meningkatkan daya saing ekonomi Indonesia di kancah global.
 """
     response.write(template)
     return response
