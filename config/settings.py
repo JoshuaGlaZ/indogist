@@ -30,9 +30,17 @@ DEBUG = False
 
 ALLOWED_HOSTS = ['*']
 
+X_FRAME_OPTIONS = 'ALLOWALL' 
+
+CSRF_COOKIE_SAMESITE = 'None'
+CSRF_COOKIE_SECURE = True 
+
+SESSION_COOKIE_SAMESITE = 'None'
+SESSION_COOKIE_SECURE = True
+
 CSRF_TRUSTED_ORIGINS = [
     'https://*.hf.space',
-    'https://huggingface.co'
+    'https://huggingface.co',
 ]
 
 # Application definition
@@ -87,30 +95,42 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-db_user = os.environ.get('DB_USER')
-db_password = os.environ.get('DB_PASSWORD')
-db_host = os.environ.get('DB_HOST')
-db_port = os.environ.get('DB_PORT', '6543') 
-db_name = os.environ.get('DB_NAME', 'postgres')
+# db_user = os.environ.get('DB_USER')
+# db_password = os.environ.get('DB_PASSWORD')
+# db_host = os.environ.get('DB_HOST')
+# db_port = os.environ.get('DB_PORT', '6543') 
+# db_name = os.environ.get('DB_NAME', 'postgres')
 
-if db_user and db_password and db_host:
-    safe_url = f"postgres://{db_user}:{quote_plus(db_password)}@{db_host}:{db_port}/{db_name}"
+# if db_user and db_password and db_host:
+#     safe_url = f"postgres://{db_user}:{quote_plus(db_password)}@{db_host}:{db_port}/{db_name}"
     
-    DATABASES = {
-        'default': dj_database_url.parse(
-            safe_url,
-            conn_max_age=600,
-            ssl_require=True
-        )
-    }
-else:
-    print("DEBUG: Database secrets missing. Using sqlite memory fallback.")
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': ':memory:',
-        }
-    }
+#     DATABASES = {
+#         'default': dj_database_url.parse(
+#             safe_url,
+#             conn_max_age=600,
+#             ssl_require=True
+#         )
+#     }
+# else:
+#     print("DEBUG: Database secrets missing. Using sqlite memory fallback.")
+#     DATABASES = {
+#         'default': {
+#             'ENGINE': 'django.db.backends.sqlite3',
+#             'NAME': ':memory:',
+#         }
+#     }
+
+db_password = os.environ.get("DB_PASSWORD")
+db_user = os.environ.get("DB_USER")
+db_host = os.environ.get("DB_HOST")
+db_port = os.environ.get("DB_PORT")
+db_name = os.environ.get("DB_NAME")
+
+DATABASE_URL = os.environ.get("DATABASE_URL", f"postgresql://{db_user}:{quote_plus(db_password)}@{db_host}:{db_port}/{db_name}")
+
+DATABASES = {
+    'default': dj_database_url.config(default=DATABASE_URL)
+}
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
@@ -179,12 +199,26 @@ INDOSUM_DATA_PATH = BASE_DIR / 'data' / 'indosum'
 # CELERY_RESULT_BACKEND = config('CELERY_RESULT_BACKEND', default='redis://localhost:6379/0')
 
 # Cache configuration
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
-        'LOCATION': BASE_DIR / 'cache',
+REDIS_URL = os.environ.get('REDIS_URL')
+
+if REDIS_URL:
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": REDIS_URL,
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            }
+        }
     }
-}
+else:
+    # Fallback to local file-based cache if no Redis URL provided
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+            'LOCATION': BASE_DIR / 'cache',
+        }
+    }
 
 X_FRAME_OPTIONS = 'ALLOW-FROM https://huggingface.co/'
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')

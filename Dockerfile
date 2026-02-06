@@ -27,4 +27,4 @@ RUN python manage.py collectstatic --noinput
 
 EXPOSE 7860
 
-CMD ["gunicorn", "--bind", "0.0.0.0:7860", "--workers", "1", "--timeout", "300", "--preload", "config.wsgi:application"]
+CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:7860", "--timeout", "300", "--workers", "1", "--preload"]
