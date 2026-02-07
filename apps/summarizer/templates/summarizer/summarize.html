@@ -1,35 +1,35 @@
-{% extends 'summarizer/base.html'  %}
+{% extends 'summarizer/base.html' %}
 {% load widget_tweaks %}
 
 {% block title %}Generate Summary{% endblock %}
 
 {% block extra_css %}
 <style>
-    .summary-output { 
+    .summary-output {
         background: rgba(30, 41, 59, 0.8);
         backdrop-filter: var(--blur-sm);
         -webkit-backdrop-filter: var(--blur-sm);
-        border-radius: 10px; 
-        padding: 1.5rem; 
-        line-height: 1.8; 
-        font-size: 1rem; 
-        border: 1px solid var(--card-border); 
+        border-radius: 10px;
+        padding: 1.5rem;
+        line-height: 1.8;
+        font-size: 1rem;
+        border: 1px solid var(--card-border);
         color: var(--text-color);
         transition: all var(--transition-base);
     }
-    
+
     .summary-output:hover {
         background: rgba(30, 41, 59, 1);
         box-shadow: var(--shadow-base);
     }
-    
-    .tutorial-card { 
-        background: rgba(59, 130, 246, 0.1); 
+
+    .tutorial-card {
+        background: rgba(59, 130, 246, 0.1);
         border: 1px solid rgba(59, 130, 246, 0.3);
         backdrop-filter: var(--blur-sm);
         -webkit-backdrop-filter: var(--blur-sm);
     }
-    
+
     .upload-container {
         border: 2px dashed var(--card-border);
         border-radius: 8px;
@@ -38,23 +38,24 @@
         cursor: pointer;
         position: relative;
     }
-    
+
     .upload-container:hover {
         border-color: var(--primary-color);
         background-color: rgba(51, 65, 85, 0.8);
         transform: translateY(-2px);
     }
-    
+
     .upload-container.dragover {
         border-color: var(--success-color);
         background-color: rgba(34, 197, 94, 0.1);
         transform: scale(1.02);
     }
-    
+
     .upload-container.has-file {
         border-color: var(--success-color);
         background-color: rgba(34, 197, 94, 0.1);
     }
+
     .cancel-file-btn {
         position: absolute;
         top: 8px;
@@ -72,15 +73,16 @@
         transition: all var(--transition-base);
         z-index: 10;
     }
-    
+
     .cancel-file-btn:hover {
         background: rgba(220, 38, 38, 1);
         transform: scale(1.1);
     }
-    
+
     .upload-container.has-file .cancel-file-btn {
         display: flex;
     }
+
     .main-card-glass {
         background: rgba(30, 41, 59, 0.85);
         backdrop-filter: var(--blur-base);
@@ -88,15 +90,16 @@
         border: 1px solid var(--card-border);
         box-shadow: var(--shadow-lg);
     }
+
     .method-selector-container {
         display: flex;
         flex-direction: column;
         gap: 10px;
     }
-    
+
     .method-option-card {
         border: 1px solid var(--card-border);
-        background: rgba(255,255,255,0.03);
+        background: rgba(255, 255, 255, 0.03);
         border-radius: 8px;
         padding: 10px 15px;
         cursor: pointer;
@@ -104,24 +107,25 @@
         display: flex;
         align-items: center;
     }
-    
+
     .method-option-card:hover {
-        background: rgba(255,255,255,0.08);
+        background: rgba(255, 255, 255, 0.08);
         border-color: var(--primary-color);
         transform: translateX(4px);
     }
-    
+
     .method-option-card:has(input[type="radio"]:checked) {
         background: rgba(56, 189, 248, 0.1);
         border-color: var(--primary-color);
         box-shadow: 0 0 0 1px var(--primary-color);
     }
-    
+
     .method-option-card input[type="radio"] {
         margin-right: 12px;
         transform: scale(1.2);
         cursor: pointer;
     }
+
     .step-loader {
         display: flex;
         flex-direction: column;
@@ -129,7 +133,7 @@
         max-width: 400px;
         margin: 0 auto;
     }
-    
+
     .step-item {
         display: flex;
         align-items: center;
@@ -138,27 +142,27 @@
         transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         transform: translateX(0);
     }
-    
+
     .step-item.active {
         opacity: 1;
         transform: translateX(10px);
     }
-    
+
     .step-circle {
         width: 30px;
         height: 30px;
         border-radius: 50%;
-        border: 2px solid rgba(255,255,255,0.2);
+        border: 2px solid rgba(255, 255, 255, 0.2);
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 14px;
         background: rgba(15, 23, 42, 0.5);
-        color: rgba(255,255,255,0.5);
+        color: rgba(255, 255, 255, 0.5);
         transition: all var(--transition-base);
         flex-shrink: 0;
     }
-    
+
     .step-item.active .step-circle {
         border-color: var(--primary-color);
         box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
@@ -166,48 +170,50 @@
         color: var(--primary-color);
         animation: pulse 2s ease-in-out infinite;
     }
-    
+
     .step-item.done .step-circle {
         background: var(--primary-color);
         border-color: var(--primary-color);
         color: #0f172a;
     }
-    
+
     .step-text {
         font-family: 'JetBrains Mono', monospace;
         font-size: 0.95rem;
         color: #e2e8f0;
     }
-    
+
     .success-icon {
         animation: successPop 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
     }
-    
+
     @keyframes successPop {
         0% {
             transform: scale(0);
             opacity: 0;
         }
+
         50% {
             transform: scale(1.2);
         }
+
         100% {
             transform: scale(1);
             opacity: 1;
         }
     }
-    
+
     .result-actions {
         display: flex;
         gap: 0.75rem;
         flex-wrap: wrap;
     }
-    
+
     .result-actions .btn {
         flex: 1;
         min-width: 150px;
     }
-    
+
     .guest-notice {
         background: rgba(251, 191, 36, 0.1);
         border: 1px solid rgba(251, 191, 36, 0.3);
@@ -216,6 +222,7 @@
         -webkit-backdrop-filter: var(--blur-sm);
         animation: slideInUp 0.4s ease;
     }
+
     .input-mode-indicator {
         display: inline-block;
         padding: 4px 12px;
@@ -225,44 +232,45 @@
         margin-left: 8px;
         transition: all var(--transition-base);
     }
-    
+
     .mode-manual {
         background: rgba(59, 130, 246, 0.2);
         color: #60a5fa;
         border: 1px solid rgba(59, 130, 246, 0.4);
     }
-    
+
     .mode-file {
         background: rgba(34, 197, 94, 0.2);
         color: #4ade80;
         border: 1px solid rgba(34, 197, 94, 0.4);
     }
-    
+
     @keyframes slideInUp {
         from {
             opacity: 0;
             transform: translateY(20px);
         }
+
         to {
             opacity: 1;
             transform: translateY(0);
         }
     }
-    
+
     @media (max-width: 768px) {
         .result-actions {
             flex-direction: column;
         }
-        
+
         .result-actions .btn {
             width: 100%;
             min-width: 100%;
         }
-        
+
         .step-loader {
             gap: 12px;
         }
-        
+
         .step-text {
             font-size: 0.85rem;
         }
@@ -286,7 +294,8 @@
                             <li>Click "Generate Summary".</li>
                         </ol>
                         <span class="badge bg-warning">
-                            <i class="fas fa-exclamation-triangle"></i> DISCLAIMER: Works best with Indonesian language text only.
+                            <i class="fas fa-exclamation-triangle"></i> DISCLAIMER: Works best with Indonesian language
+                            text only.
                         </span>
                     </div>
                 </div>
@@ -301,36 +310,39 @@
                         <span id="inputModeIndicator" class="input-mode-indicator mode-manual">Manual Input</span>
                     </h2>
                 </div>
-                
-                <form id="summaryForm" method="post" action="{% url 'summarizer:summarize' %}" enctype="multipart/form-data">
+
+                <form id="summaryForm" method="post" action="{% url 'summarizer:summarize' %}"
+                    enctype="multipart/form-data" novalidate>
                     {% csrf_token %}
-                    
+
                     <div class="mb-4" id="titleInputGroup">
-                        <label for="{{ form.title.id_for_label }}" class="form-label fw-bold text-white">
+                        <label for="id_title" class="form-label fw-bold text-white">
                             Document Title
                         </label>
-                        {% render_field form.title class="form-control" placeholder="e.g., Berita Ekonomi Hari Ini" %}
+                        {% render_field form.title class="form-control" id="id_title" placeholder="e.g., Berita Ekonomi Hari Ini" %}
                         {% if form.title.errors %}
-                            <div class="invalid-feedback d-block">{{ form.title.errors|first }}</div>
+                        <div class="invalid-feedback d-block">{{ form.title.errors|first }}</div>
                         {% endif %}
                     </div>
-                    
+
                     <div class="mb-4" id="textInputGroup">
-                        <label for="{{ form.original_text.id_for_label }}" class="form-label fw-bold text-white">
+                        <label for="id_original_text" class="form-label fw-bold text-white">
                             Original Text (Indonesian)
                         </label>
-                        {% render_field form.original_text class="form-control" rows="8" placeholder="Paste your text here..." %}
+                        {% render_field form.original_text class="form-control" id="id_original_text" rows="8" placeholder="Paste your text here..." %}
                         {% if form.original_text.errors %}
-                            <div class="invalid-feedback d-block">{{ form.original_text.errors|first }}</div>
+                        <div class="invalid-feedback d-block">{{ form.original_text.errors|first }}</div>
                         {% endif %}
                     </div>
-                    
+
                     <div class="mb-4">
                         <label class="form-label fw-bold text-white">Or Upload File</label>
                         <div class="row g-3">
                             <div class="col-md-8">
-                                <div class="upload-container h-100 p-3 d-flex align-items-center justify-content-center flex-column text-center" id="fileDropzone">
-                                    <button type="button" class="cancel-file-btn" id="cancelFileBtn" title="Remove file">
+                                <div class="upload-container h-100 p-3 d-flex align-items-center justify-content-center flex-column text-center"
+                                    id="fileDropzone">
+                                    <button type="button" class="cancel-file-btn" id="cancelFileBtn"
+                                        title="Remove file">
                                         <i class="fas fa-times"></i>
                                     </button>
                                     <i class="fas fa-cloud-upload-alt fa-2x text-muted mb-2"></i>
@@ -345,7 +357,8 @@
                                 </div>
                             </div>
                             <div class="col-md-4">
-                                <a href="{% url 'summarizer:download_template' %}" class="btn btn-outline-info w-100 h-100 d-flex flex-column align-items-center justify-content-center">
+                                <a href="{% url 'summarizer:download_template' %}"
+                                    class="btn btn-outline-info w-100 h-100 d-flex flex-column align-items-center justify-content-center">
                                     <i class="fas fa-file-download fa-lg mb-2"></i>
                                     <span>Download<br>Template</span>
                                 </a>
@@ -353,7 +366,7 @@
                         </div>
                         {{ form.file|add_class:"d-none" }}
                     </div>
-                    
+
                     <div class="row mb-5">
                         <div class="col-md-6 mb-4 mb-md-0">
                             <label class="form-label fw-bold text-white">Summary Length</label>
@@ -363,12 +376,13 @@
                                     <span id="lengthLabel" class="badge bg-primary">30%</span>
                                     <span class="small text-muted">Long</span>
                                 </div>
-                                
-                                <input type="range" class="form-range" min="0.1" max="0.5" step="0.05" id="compressionSlider" value="0.3">
+
+                                <input type="range" class="form-range" min="0.1" max="0.5" step="0.05"
+                                    id="compressionSlider" value="0.3">
                                 <input type="hidden" name="compression_ratio" id="id_compression_ratio" value="0.3">
                             </div>
                         </div>
-                        
+
                         <div class="col-md-6">
                             <label class="form-label fw-bold text-white mb-2">Method</label>
                             <div class="method-selector-container">
@@ -379,9 +393,9 @@
                                         <div class="fw-bold text-white">{{ radio.choice_label }}</div>
                                         <div class="small text-muted" style="font-size: 0.75rem;">
                                             {% if "Hybrid" in radio.choice_label %}
-                                                Uses Deep Learning (NER) for context.
+                                            Uses Deep Learning (NER) for context.
                                             {% else %}
-                                                Statistical approach, fast and simple.
+                                            Statistical approach, fast and simple.
                                             {% endif %}
                                         </div>
                                     </div>
@@ -390,7 +404,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="d-grid">
                         <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
                             <i class="fas fa-magic"></i> Generate Summary
@@ -403,7 +417,7 @@
                         <div class="spinner-ring"></div>
                         <h5 class="text-white animate-pulse mt-3">Processing Document...</h5>
                     </div>
-                    
+
                     <div class="step-loader">
                         <div class="step-item" id="step1">
                             <div class="step-circle"><i class="fas fa-file-alt"></i></div>
@@ -423,35 +437,40 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div id="summaryOutput" class="mt-5 d-none">
                     <hr class="my-4" style="border-color: var(--card-border);">
-                    
+
                     <div class="text-center mb-4">
                         <i class="fas fa-check-circle fa-3x text-success mb-3 success-icon"></i>
                         <h3 class="text-white">Summary Generated!</h3>
                     </div>
-                    
+
                     <div class="summary-output mb-4" id="summaryText"></div>
-                    
+
                     <div class="result-actions">
-                        <button class="btn btn-outline-light" onclick="copyToClipboard()">
+                        <button type="button" class="btn btn-outline-light" onclick="copyToClipboard()">
                             <i class="fas fa-copy"></i> Copy Summary
                         </button>
-                        <button id="viewDetailsBtn" class="btn btn-primary" onclick="handleViewDetails()">
+                        <button type="button" class="btn btn-outline-secondary" onclick="resetForm()">
+                            <i class="fas fa-redo"></i> Create Another
+                        </button>
+                        <button type="button" id="viewDetailsBtn" class="btn btn-primary" onclick="handleViewDetails()">
                             <i class="fas fa-eye"></i> View Full Details
                         </button>
                     </div>
-                    
+
                     <div id="guestNotice" class="mt-3 d-none p-3 rounded guest-notice">
                         <div class="d-flex align-items-center">
                             <i class="fas fa-lock text-warning fa-2x me-3"></i>
                             <div>
                                 <h6 class="text-white mb-1">Want to see detailed analysis?</h6>
                                 <p class="text-muted mb-2 small">
-                                    Login to access full summary details, entity analysis, statistics, and save your summaries for later.
+                                    Login to access full summary details, entity analysis, statistics, and save your
+                                    summaries for later.
                                 </p>
-                                <a href="/accounts/login/?next={% url 'summarizer:summarize' %}" class="btn btn-sm btn-warning">
+                                <a href="/accounts/login/?next={% url 'summarizer:summarize' %}"
+                                    class="btn btn-sm btn-warning">
                                     <i class="fas fa-sign-in-alt"></i> Login to Continue
                                 </a>
                             </div>
@@ -466,240 +485,307 @@
 
 {% block extra_js %}
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-    const dropzone = document.getElementById('fileDropzone');
-    const fileInput = document.querySelector('input[name="file"]');
-    const fileNameDisplay = document.getElementById('fileName');
-    const cancelFileBtn = document.getElementById('cancelFileBtn');
-    const titleInput = document.getElementById('id_title');
-    const textInput = document.getElementById('id_original_text');
-    const titleInputGroup = document.getElementById('titleInputGroup');
-    const textInputGroup = document.getElementById('textInputGroup');
-    const inputModeIndicator = document.getElementById('inputModeIndicator');
-    let isFileMode = false;
-    function updateInputMode(fileMode) {
-        isFileMode = fileMode;
-        
-        if (fileMode) {
-            // File upload mode
-            dropzone.classList.add('has-file');
-            titleInputGroup.style.opacity = '0.5';
-            textInputGroup.style.opacity = '0.5';
-            titleInput.disabled = true;
-            textInput.disabled = true;
-            inputModeIndicator.textContent = 'File Upload';
-            inputModeIndicator.className = 'input-mode-indicator mode-file';
-        } else {
-            // Manual input mode
-            dropzone.classList.remove('has-file');
-            titleInputGroup.style.opacity = '1';
-            textInputGroup.style.opacity = '1';
-            titleInput.disabled = false;
-            textInput.disabled = false;
-            inputModeIndicator.textContent = 'Manual Input';
-            inputModeIndicator.className = 'input-mode-indicator mode-manual';
-        }
-    }
-    function clearFile() {
-        fileInput.value = '';
-        fileNameDisplay.innerHTML = '<span class="text-muted small">Supports template format only</span>';
-        titleInput.value = '';
-        textInput.value = '';
-        updateInputMode(false);
-        window.notify.info('File removed. You can now use manual input.', 3000);
-    }
-    // Cancel file button
-    if (cancelFileBtn) {
-        cancelFileBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            clearFile();
-        });
-    }
-    // File dropzone interactions
-    if (dropzone && fileInput) {
-        dropzone.addEventListener('click', (e) => {
-            if (!e.target.closest('.cancel-file-btn')) {
+    document.addEventListener('DOMContentLoaded', () => {
+        const dropzone = document.getElementById('fileDropzone');
+        const fileInput = document.querySelector('input[name="file"]');
+        const fileNameDisplay = document.getElementById('fileName');
+        const cancelBtn = document.getElementById('cancelFileBtn');
+        const titleInput = document.getElementById('id_title');
+        const textInput = document.getElementById('id_original_text');
+
+        // Remove automated required attributes logic
+        if (titleInput) titleInput.removeAttribute('required');
+        if (textInput) textInput.removeAttribute('required');
+
+        if (dropzone && fileInput) {
+            dropzone.addEventListener('click', (e) => {
+                // Don't trigger file input if clicking the cancel button
+                if (e.target.closest('#cancelFileBtn')) return;
                 fileInput.click();
-            }
-        });
-        
-        dropzone.addEventListener('dragover', (e) => { 
-            e.preventDefault(); 
-            dropzone.classList.add('dragover'); 
-        });
-        
-        dropzone.addEventListener('dragleave', () => {
-            dropzone.classList.remove('dragover');
-        });
-        
-        dropzone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropzone.classList.remove('dragover');
-            if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
-        });
-        
-        fileInput.addEventListener('change', (e) => {
-            if (e.target.files.length) {
-                handleFile(e.target.files[0]);
-            } else {
-                updateInputMode(false);
-            }
-        });
-    }
-    function handleFile(file) {
-        if (file.name.endsWith('.txt')) {
-            const dt = new DataTransfer();
-            dt.items.add(file);
-            fileInput.files = dt.files;
-            
-            fileNameDisplay.innerHTML = `<span class="text-success fw-bold"><i class="fas fa-check-circle"></i> ${file.name}</span>`;
-            updateInputMode(true);
-            window.notify.success(`File "${file.name}" uploaded successfully`, 3000);
-        } else {
-            window.notify.error('Please upload a .txt file only', 5000);
-            fileInput.value = '';
-            updateInputMode(false);
+            });
+
+            dropzone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropzone.classList.add('dragover');
+            });
+
+            dropzone.addEventListener('dragleave', () => {
+                dropzone.classList.remove('dragover');
+            });
+
+            dropzone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropzone.classList.remove('dragover');
+                if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length) {
+                    handleFile(e.target.files[0]);
+                }
+            });
         }
-    }
-    // Initialize mode
-    updateInputMode(false);
-    // Compression slider
-    const slider = document.getElementById('compressionSlider');
-    const hiddenInput = document.getElementById('id_compression_ratio');
-    const label = document.getElementById('lengthLabel');
-    
-    if (slider && hiddenInput && label) {
-        const initVal = parseFloat(slider.value);
-        label.textContent = Math.round(initVal * 100) + "%";
-        slider.addEventListener('input', (e) => {
-            const val = parseFloat(e.target.value);
-            hiddenInput.value = val;
-            label.textContent = Math.round(val * 100) + "%";
-        });
-    }
-    // Form submission
-    const summaryForm = document.getElementById('summaryForm');
-    const submitBtn = document.getElementById('submitBtn');
-    const loadingIndicator = document.getElementById('loadingIndicator');
-    const summaryOutput = document.getElementById('summaryOutput');
-    
-    let summaryIdForRedirect = null;
-    const isAuthenticated = {{ user.is_authenticated|yesno:"true,false" }};
-    if (summaryForm) {
-        summaryForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const formData = new FormData(summaryForm);
+
+        function handleFile(file) {
+            if (file.name.endsWith('.txt')) {
+                const dt = new DataTransfer();
+                dt.items.add(file);
+                fileInput.files = dt.files;
+
+                // Visual Updates
+                fileNameDisplay.innerHTML = `<span class="text-success"><i class="fas fa-check"></i> ${file.name}</span>`;
+                if (dropzone) dropzone.classList.add('has-file');
+                
+                // Update mode indicator
+                updateInputMode('file');
+                
+                // Disable manual inputs when file is uploaded
+                if (titleInput) {
+                    titleInput.disabled = true;
+                    titleInput.value = '';
+                }
+                if (textInput) {
+                    textInput.disabled = true;
+                    textInput.value = '';
+                }
+                
+                window.notify.success('File uploaded successfully', 3000);
+            } else {
+                window.notify.error('Please upload a .txt file only');
+                fileInput.value = "";
+            }
+        }
+
+        // Cancel File Logic
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+
+                // Clear File
+                fileInput.value = "";
+                const dt = new DataTransfer();
+                fileInput.files = dt.files;
+
+                // Reset UI
+                if (dropzone) dropzone.classList.remove('has-file');
+                fileNameDisplay.innerHTML = 'Supports template format only';
+                
+                // Update mode indicator back to manual
+                updateInputMode('manual');
+                
+                // Re-enable manual inputs
+                if (titleInput) titleInput.disabled = false;
+                if (textInput) textInput.disabled = false;
+                
+                // Show success notification
+                window.notify.success('File removed successfully', 3000);
+            });
+        }
+        
+        // Function to update input mode indicator
+        function updateInputMode(mode) {
+            const indicator = document.getElementById('inputModeIndicator');
+            if (!indicator) return;
             
-            // Re-enable disabled fields temporarily for submission
-            if (isFileMode) {
-                titleInput.disabled = false;
-                textInput.disabled = false;
+            if (mode === 'file') {
+                indicator.textContent = 'File Upload';
+                indicator.className = 'input-mode-indicator mode-file';
+            } else {
+                indicator.textContent = 'Manual Input';
+                indicator.className = 'input-mode-indicator mode-manual';
+            }
+        }
+
+        const slider = document.getElementById('compressionSlider');
+        const hiddenInput = document.getElementById('id_compression_ratio');
+        const label = document.getElementById('lengthLabel');
+
+        if (slider && hiddenInput && label) {
+            const initVal = parseFloat(slider.value);
+            label.textContent = Math.round(initVal * 100) + "%";
+
+            slider.addEventListener('input', (e) => {
+                const val = parseFloat(e.target.value);
+                hiddenInput.value = val;
+                label.textContent = Math.round(val * 100) + "%";
+            });
+        }
+
+        const summaryForm = document.getElementById('summaryForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const summaryOutput = document.getElementById('summaryOutput');
+
+        let summaryIdForRedirect = null;
+        const isAuthenticated = {{ user.is_authenticated|yesno:"true,false" }};
+
+        if (summaryForm) {
+            summaryForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const title = titleInput.value.trim();
+                const text = textInput.value.trim();
+                const hasFile = fileInput && fileInput.files.length > 0;
+
+                const formData = new FormData(summaryForm);
+
+                Loading.buttonLoading(submitBtn, 'Processing...');
+                loadingIndicator.classList.remove('d-none');
+                summaryOutput.classList.add('d-none');
+
+                document.querySelectorAll('.step-item').forEach(el => {
+                    el.classList.remove('active', 'done');
+                });
+
+                const updateStep = (id, state) => {
+                    const el = document.getElementById(id);
+                    if (state === 'active') el.classList.add('active');
+                    if (state === 'done') {
+                        el.classList.remove('active');
+                        el.classList.add('done');
+                        el.querySelector('.step-circle').innerHTML = '<i class="fas fa-check"></i>';
+                    }
+                };
+
+                updateStep('step1', 'active');
+
+                const step2Timer = setTimeout(() => {
+                    updateStep('step1', 'done');
+                    updateStep('step2', 'active');
+                }, 1000);
+
+                const step3Timer = setTimeout(() => {
+                    updateStep('step2', 'done');
+                    updateStep('step3', 'active');
+                }, 3000);
+
+                try {
+                    const response = await fetch(summaryForm.action, {
+                        method: 'POST',
+                        body: formData,
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    });
+
+                    clearTimeout(step2Timer);
+                    clearTimeout(step3Timer);
+                    ['step1', 'step2', 'step3'].forEach(id => updateStep(id, 'done'));
+                    updateStep('step4', 'done');
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        summaryIdForRedirect = data.summary_id || null;
+
+                        setTimeout(() => {
+                            loadingIndicator.classList.add('d-none');
+                            displaySummary(data.summary, data.mode);
+                            window.notify.success('Summary generated successfully!', 5000);
+                        }, 800);
+                    } else {
+                        let errorMsg = data.error || "Please check your form for errors.";
+                        window.notify.error(errorMsg);
+                        loadingIndicator.classList.add('d-none');
+                    }
+                } catch (error) {
+                    console.error(error);
+                    window.notify.error('An error occurred during submission. Please try again.');
+                    loadingIndicator.classList.add('d-none');
+                } finally {
+                    Loading.buttonReady(submitBtn);
+                }
+                
+                return false;
+            });
+            
+            summaryForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                return false;
+            }, true);
+        }
+
+        function displaySummary(summary, mode) {
+            const summaryTextEl = document.getElementById('summaryText');
+            const guestNotice = document.getElementById('guestNotice');
+            const viewDetailsBtn = document.getElementById('viewDetailsBtn');
+
+            summaryTextEl.textContent = summary;
+
+            if (mode === 'guest' || !isAuthenticated) {
+                guestNotice.classList.remove('d-none');
+                viewDetailsBtn.disabled = true;
+                viewDetailsBtn.innerHTML = '<i class="fas fa-lock"></i> Login to View Details';
+            } else {
+                guestNotice.classList.add('d-none');
+                viewDetailsBtn.disabled = false;
+                viewDetailsBtn.innerHTML = '<i class="fas fa-eye"></i> View Full Details';
+            }
+
+            summaryOutput.classList.remove('d-none');
+            summaryOutput.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        // SPA-friendly navigation to details page
+        window.handleViewDetails = function () {
+            if (summaryIdForRedirect && isAuthenticated) {
+                // Use pushState for SPA navigation instead of full page reload
+                window.location.href = `/summary/${summaryIdForRedirect}/`;
+            } else if (!isAuthenticated) {
+                window.location.href = '/accounts/login/?next={% url "summarizer:summarize" %}';
+            }
+        }
+
+        window.copyToClipboard = function () {
+            const text = document.getElementById("summaryText").innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                window.notify.success('Summary copied to clipboard!', 3000);
+            }).catch(err => {
+                window.notify.error('Failed to copy text. Please try again.', 5000);
+            });
+        }
+        
+        // Reset form function for "Create Another" button
+        window.resetForm = function () {
+            // Reset form fields
+            summaryForm.reset();
+            
+            // Clear file input
+            if (fileInput) {
+                fileInput.value = "";
+                const dt = new DataTransfer();
+                fileInput.files = dt.files;
             }
             
-            Loading.buttonLoading(submitBtn, 'Processing...');
-            loadingIndicator.classList.remove('d-none');
+            // Reset UI
+            if (dropzone) dropzone.classList.remove('has-file');
+            if (fileNameDisplay) fileNameDisplay.innerHTML = 'Supports template format only';
+            
+            // Re-enable inputs
+            if (titleInput) titleInput.disabled = false;
+            if (textInput) textInput.disabled = false;
+            
+            // Update mode indicator
+            updateInputMode('manual');
+            
+            // Hide summary output
             summaryOutput.classList.add('d-none');
             
-            document.querySelectorAll('.step-item').forEach(el => {
-                el.classList.remove('active', 'done');
-            });
-            const updateStep = (id, state) => {
-                const el = document.getElementById(id);
-                if(state === 'active') el.classList.add('active');
-                if(state === 'done') {
-                    el.classList.remove('active');
-                    el.classList.add('done');
-                    el.querySelector('.step-circle').innerHTML = '<i class="fas fa-check"></i>';
-                }
-            };
-            updateStep('step1', 'active');
-            
-            const step2Timer = setTimeout(() => { 
-                updateStep('step1', 'done'); 
-                updateStep('step2', 'active'); 
-            }, 1000);
-            
-            const step3Timer = setTimeout(() => { 
-                updateStep('step2', 'done'); 
-                updateStep('step3', 'active'); 
-            }, 3000);
-            
-            try {
-                const response = await fetch(summaryForm.action, {
-                    method: 'POST',
-                    body: formData,
-                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
-                });
-                
-                clearTimeout(step2Timer);
-                clearTimeout(step3Timer);
-                ['step1', 'step2', 'step3'].forEach(id => updateStep(id, 'done'));
-                updateStep('step4', 'done');
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    summaryIdForRedirect = data.summary_id || null;
-                    
-                    setTimeout(() => {
-                        loadingIndicator.classList.add('d-none');
-                        displaySummary(data.summary, data.mode);
-                        window.notify.success('Summary generated successfully!', 5000);
-                    }, 800);
-                } else {
-                    let errorMsg = data.error || "Please check your form for errors.";
-                    window.notify.error(errorMsg, 7000);
-                    loadingIndicator.classList.add('d-none');
-                }
-            } catch (error) {
-                console.error(error);
-                window.notify.error('An error occurred during submission. Please try again.', 7000);
-                loadingIndicator.classList.add('d-none');
-            } finally {
-                Loading.buttonReady(submitBtn);
-                // Re-disable fields if in file mode
-                if (isFileMode) {
-                    titleInput.disabled = true;
-                    textInput.disabled = true;
-                }
+            // Reset slider
+            if (slider && hiddenInput && label) {
+                slider.value = 0.3;
+                hiddenInput.value = 0.3;
+                label.textContent = '30%';
             }
-        });
-    }
-    function displaySummary(summary, mode) {
-        const summaryTextEl = document.getElementById('summaryText');
-        const guestNotice = document.getElementById('guestNotice');
-        const viewDetailsBtn = document.getElementById('viewDetailsBtn');
-        
-        summaryTextEl.textContent = summary;
-        
-        if (mode === 'guest' || !isAuthenticated) {
-            guestNotice.classList.remove('d-none');
-            viewDetailsBtn.disabled = true;
-            viewDetailsBtn.innerHTML = '<i class="fas fa-lock"></i> Login to View Details';
-        } else {
-            guestNotice.classList.add('d-none');
-            viewDetailsBtn.disabled = false;
-            viewDetailsBtn.innerHTML = '<i class="fas fa-eye"></i> View Full Details';
+            
+            // Clear summary ID
+            summaryIdForRedirect = null;
+            
+            // Scroll to top of form
+            summaryForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            
+            window.notify.success('Form reset. Ready for new summary!', 3000);
         }
-        
-        summaryOutput.classList.remove('d-none');
-        summaryOutput.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
-    window.handleViewDetails = function() {
-        if (summaryIdForRedirect && isAuthenticated) {
-            window.location.href = `/summary/${summaryIdForRedirect}/`;
-        } else if (!isAuthenticated) {
-            window.location.href = '/accounts/login/?next={% url "summarizer:summarize" %}';
-        }
-    }
-    window.copyToClipboard = function() {
-        const text = document.getElementById("summaryText").innerText;
-        navigator.clipboard.writeText(text).then(() => {
-            window.notify.success('Summary copied to clipboard!', 3000);
-        }).catch(err => {
-            window.notify.error('Failed to copy text. Please try again.', 5000);
-        });
-    }
-});
+    });
 </script>
 {% endblock %}
