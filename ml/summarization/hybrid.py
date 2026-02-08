@@ -5,13 +5,12 @@ from .utils import text_to_sentences, preprocess_tfidf, extract_tf_query
 from ..ner.predict import predict_entities
 
 WEIGHTS = np.array([
-    0.12,  # Title Similarity
-    0.50,  # Location
-    0.11,  # Term Frequency
-    0.11,  # Aggregation
-    0.03,  # Entity Count
-    0.04,  # Entity Density
-    0.09   # Entity Overlap
+    0.16,  # Title Similarity
+    0.29,  # Location
+    0.21,  # Term Frequency
+    0.09,  # Aggregation
+    0.16,  # Entity Count
+    0.09   # Entity Density
 ])
 
 def normalize_scores(scores):
@@ -33,35 +32,18 @@ def compute_hybrid_scores(sentences, title, ner_results, tfidf_mat, vectorizer):
     agg_scores = sim_mat.sum(axis=1)
 
     title_scores = np.zeros(n)
-    if title:
-        title_vec = vectorizer.transform([title])
-        title_scores = cosine_similarity(tfidf_mat, title_vec).flatten()
+    effective_title = title if title and title.strip() else extract_tf_query(tfidf_mat, vectorizer)
+    title_vec = vectorizer.transform([effective_title])
+    title_scores = cosine_similarity(tfidf_mat, title_vec).flatten()
 
     # Semantic Features (NER based)
     ent_counts = np.zeros(n)
     ent_densities = np.zeros(n)
-    ent_overlaps = np.zeros(n)
     
     # Extract title entities for overlap calculation
-    title_entities = set()
-    if title:
-        # Assuming title is processed as a single sentence input for NER
-        t_res = predict_entities([title])
-        if t_res and t_res[0].get('entities'):
-            title_entities = {e['text'].lower() for e in t_res[0]['entities']}
-
-    for i, res in enumerate(ner_results):
-        entities = res.get('entities', [])
-        tokens = res.get('tokens', [])
-        count = len(entities)
-        
-        ent_counts[i] = count
-        ent_densities[i] = count / len(tokens) if tokens else 0
-        
-        if title_entities and entities:
-            sent_ents = {e['text'].lower() for e in entities}
-            overlap = len(sent_ents.intersection(title_entities))
-            ent_overlaps[i] = overlap / len(title_entities)
+    
+    ent_counts = np.array([len(res.get('entities', [])) for res in ner_results])
+    ent_densities = np.array([len(res.get('entities', []))/len(res.get('tokens', [1])) for res in ner_results])
 
     # Matrix Construction (n_sentences x 7_features)
     feature_matrix = np.column_stack((
@@ -71,7 +53,6 @@ def compute_hybrid_scores(sentences, title, ner_results, tfidf_mat, vectorizer):
         normalize_scores(agg_scores),
         normalize_scores(ent_counts),
         normalize_scores(ent_densities),
-        normalize_scores(ent_overlaps)
     ))
 
     return feature_matrix
@@ -105,7 +86,7 @@ def predict_and_summarize(text, title=None, compression_ratio=0.3):
     final_scores = feature_matrix @ WEIGHTS
     
     # Selection
-    n_select = max(1, int(len(raw_sentences) * compression_ratio))
+    n_select = max(1, round(len(raw_sentences) * compression_ratio))
     top_indices = np.argsort(final_scores)[-n_select:]
     top_indices.sort() 
     
