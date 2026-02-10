@@ -7,17 +7,11 @@ from datetime import datetime
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse, HttpResponse, StreamingHttpResponse
 from django.views.decorators.http import require_http_methods
 from django.db.models import Q
 from django.core.paginator import Paginator
 from django.utils.safestring import mark_safe
-from config import settings
-from ml.summarization.utils import add_to_indosum_dataset
-
-from .models import Summary
-from .forms import SummaryForm
-
 from ml.summarization.hybrid import predict_and_summarize
 from ml.summarization.traditional import summarize_traditional
 
@@ -97,7 +91,7 @@ def _validate_text_content(text, min_words=10):
   
 
 def summarize_view(request):
-    """Main summarization view with hybrid error handling"""
+    """Main summarization view that handles both standard and streaming AJAX requests."""
     form = SummaryForm()
 
     if request.method == 'POST':
@@ -128,62 +122,107 @@ def summarize_view(request):
                 messages.error(request, error_msg)
                 return render(request, 'summarizer/summarize.html', {'form': form})
             
-            try:
-                # Generate Summary
-                if data['method'] == 'hybrid':
-                    result = predict_and_summarize(
-                        text=data['original_text'],
-                        title=data['title'],
-                        compression_ratio=data['compression_ratio']
-                    )
-                    summary_text = result['summary']
-                    entities = result['entities']
-                else:
-                    summary_text = summarize_traditional(
-                        text=data['original_text'],
-                        title=data['title'],
-                        compression_ratio=data['compression_ratio']
-                    )
-                    entities = []
+            user = request.user
 
-                # Save (if authenticated)
-                summary_id = None
-                if request.user.is_authenticated:
-                    summary_obj = Summary.objects.create(
-                        user=request.user,
-                        title=data['title'],
-                        original_text=data['original_text'],
-                        summary_text=summary_text,
-                        compression_ratio=data['compression_ratio'],
-                        entities=entities,
-                        method=data['method']
-                    )
-                    summary_id = summary_obj.id
+            # If it's an AJAX request, returns SSE stream
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                def event_stream():
+                    try:
+                        if data['method'] == 'hybrid':
+                            gen = predict_and_summarize(
+                                text=data['original_text'],
+                                title=data['title'],
+                                compression_ratio=data['compression_ratio'],
+                                stream=True
+                            )
+                        else:
+                            gen = summarize_traditional(
+                                text=data['original_text'],
+                                title=data['title'],
+                                compression_ratio=data['compression_ratio'],
+                                stream=True
+                            )
 
-                # JSON Response (for AJAX)
-                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                    return JsonResponse({
-                        'success': True,
-                        'mode': 'user' if request.user.is_authenticated else 'guest',
-                        'summary': summary_text,
-                        'entities': entities,
-                        'summary_id': summary_id
+                        result_data = None
+                        for event in gen:
+                            step = event['step']
+                            if step == 4 and 'result' in event:
+                                result_data = event['result']
+                                summary_text = result_data['summary']
+                                entities = result_data.get('entities', [])
+
+                                # Save (if authenticated)
+                                summary_id = None
+                                if user.is_authenticated:
+                                    summary_obj = Summary.objects.create(
+                                        user=user,
+                                        title=data['title'],
+                                        original_text=data['original_text'],
+                                        summary_text=summary_text,
+                                        compression_ratio=data['compression_ratio'],
+                                        entities=entities,
+                                        method=data['method']
+                                    )
+                                    summary_id = summary_obj.id
+
+                                yield f"data: {json.dumps({'step': 4, 'done': True, 'success': True, 'mode': 'user' if user.is_authenticated else 'guest', 'summary': summary_text, 'entities': entities, 'summary_id': summary_id})}\n\n"
+                            else:
+                                yield f"data: {json.dumps({'step': step})}\n\n"
+
+                    except Exception as e:
+                        print(f"[ERROR] summarize_view SSE: {e}")
+                        yield f"data: {json.dumps({'error': str(e)})}\n\n"
+
+                response = StreamingHttpResponse(event_stream(), content_type='text/event-stream')
+                response['Cache-Control'] = 'no-cache'
+                response['X-Accel-Buffering'] = 'no'
+                return response
+
+            # Standard Response (Fallback for non-JS clients)
+            else:
+                try:
+                    if data['method'] == 'hybrid':
+                        result = predict_and_summarize(
+                            text=data['original_text'],
+                            title=data['title'],
+                            compression_ratio=data['compression_ratio'],
+                            stream=False
+                        )
+                        summary_text = result['summary']
+                        entities = result['entities']
+                    else:
+                        summary_text = summarize_traditional(
+                            text=data['original_text'],
+                            title=data['title'],
+                            compression_ratio=data['compression_ratio'],
+                            stream=False
+                        )
+                        entities = []
+
+                    summary_id = None
+                    if user.is_authenticated:
+                        summary_obj = Summary.objects.create(
+                            user=user,
+                            title=data['title'],
+                            original_text=data['original_text'],
+                            summary_text=summary_text,
+                            compression_ratio=data['compression_ratio'],
+                            entities=entities,
+                            method=data['method']
+                        )
+                        summary_id = summary_obj.id
+
+                    messages.success(request, '✓ Summary generated successfully!')
+                    return render(request, 'summarizer/summarize.html', {
+                        'form': form,
+                        'result': {'summary': summary_text, 'entities': entities, 'id': summary_id}
                     })
 
-                # Standard Response (Fallback)
-                messages.success(request, '✓ Summary generated successfully!')
-                return render(request, 'summarizer/summarize.html', {
-                    'form': form,
-                    'result': {'summary': summary_text, 'entities': entities, 'id': summary_id}
-                })
+                except Exception as e:
+                    error_msg = f'Failed to generate summary: {str(e)}'
+                    print(f"[ERROR] summarize_view fallback: {e}")
+                    messages.error(request, error_msg)
 
-            except Exception as e:
-                error_msg = f'Failed to generate summary: {str(e)}'
-                print(f"[ERROR] summarize_view: {e}")
-                
-                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                    return JsonResponse({'success': False, 'error': error_msg}, status=500)
-                messages.error(request, error_msg)
         else:
             # Form validation failed
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':

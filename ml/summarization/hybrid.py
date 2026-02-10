@@ -57,54 +57,78 @@ def compute_hybrid_scores(sentences, title, ner_results, tfidf_mat, vectorizer):
 
     return feature_matrix
 
-def predict_and_summarize(text, title=None, compression_ratio=0.3):
-    # Preprocessing
-    raw_sentences = text_to_sentences(text)
-    if not raw_sentences:
-        return {'summary': '', 'entities': [], 'effective_title': ''}
+def predict_and_summarize(text, title=None, compression_ratio=0.3, stream=False):
+    """
+    If stream=True, acts as a generator yielding progress steps: {'step': N}
+    until the final {'step': 4, 'result': ...}.
+    Otherwise, returns the final result dict directly.
+    """
+    def _generator():
+        # --- Step 1: Preprocessing ---
+        yield {'step': 1}
 
-    processed_sents = preprocess_tfidf(raw_sentences)
-    if not any(processed_sents):
-        return {'summary': raw_sentences[0], 'entities': [], 'effective_title': title}
+        raw_sentences = text_to_sentences(text)
+        if not raw_sentences:
+            yield {'step': 4, 'result': {'summary': '', 'entities': [], 'effective_title': ''}}
+            return
 
-    # TF-IDF & Title Handling
-    vectorizer = TfidfVectorizer()
-    tfidf_mat = vectorizer.fit_transform(processed_sents)
-    
-    effective_title = title
-    if not effective_title or not effective_title.strip():
-        effective_title = extract_tf_query(tfidf_mat, vectorizer)
+        processed_sents = preprocess_tfidf(raw_sentences)
+        if not any(processed_sents):
+            yield {'step': 4, 'result': {'summary': raw_sentences[0], 'entities': [], 'effective_title': title}}
+            return
 
-    # Inference (NER)
-    ner_results = predict_entities(raw_sentences)
+        vectorizer = TfidfVectorizer()
+        tfidf_mat = vectorizer.fit_transform(processed_sents)
 
-    # Scoring & Ranking
-    feature_matrix = compute_hybrid_scores(
-        raw_sentences, effective_title, ner_results, tfidf_mat, vectorizer
-    )
-    
-    final_scores = feature_matrix @ WEIGHTS
-    
-    # Selection
-    n_select = max(1, round(len(raw_sentences) * compression_ratio))
-    top_indices = np.argsort(final_scores)[-n_select:]
-    top_indices.sort() 
-    
-    summary = " ".join([raw_sentences[i] for i in top_indices])
+        effective_title = title
+        if not effective_title or not effective_title.strip():
+            effective_title = extract_tf_query(tfidf_mat, vectorizer)
 
-    # Entity Aggregation
-    unique_entities = {}
-    for idx in top_indices:
-        for ent in ner_results[idx].get('entities', []):
-            key = (ent['text'].lower(), ent['label'])
-            if key not in unique_entities:
-                # Ensure JSON serializable types
-                clean_ent = {k: float(v) if isinstance(v, (np.floating, float)) else v 
-                             for k, v in ent.items()}
-                unique_entities[key] = clean_ent
+        # --- Step 2: NER Inference (the slow part) ---
+        yield {'step': 2}
 
-    return {
-        'summary': summary,
-        'entities': list(unique_entities.values()),
-        'effective_title': effective_title
-    }
+        ner_results = predict_entities(raw_sentences)
+
+        # --- Step 3: Scoring & Selection ---
+        yield {'step': 3}
+
+        feature_matrix = compute_hybrid_scores(
+            raw_sentences, effective_title, ner_results, tfidf_mat, vectorizer
+        )
+        final_scores = feature_matrix @ WEIGHTS
+
+        n_select = max(1, round(len(raw_sentences) * compression_ratio))
+        top_indices = np.argsort(final_scores)[-n_select:]
+        top_indices.sort()
+
+        summary = " ".join([raw_sentences[i] for i in top_indices])
+
+        unique_entities = {}
+        for idx in top_indices:
+            for ent in ner_results[idx].get('entities', []):
+                key = (ent['text'].lower(), ent['label'])
+                if key not in unique_entities:
+                    # Ensure JSON serializable types
+                    clean_ent = {k: float(v) if isinstance(v, (np.floating, float)) else v 
+                                 for k, v in ent.items()}
+                    unique_entities[key] = clean_ent
+
+        # --- Step 4: Done ---
+        yield {
+            'step': 4,
+            'result': {
+                'summary': summary,
+                'entities': list(unique_entities.values()),
+                'effective_title': effective_title
+            }
+        }
+
+    if stream:
+        return _generator()
+    else:
+        # Run the generator to exhaustion and return the final result
+        result = None
+        for step_data in _generator():
+            if step_data.get('step') == 4 and 'result' in step_data:
+                result = step_data['result']
+        return result
