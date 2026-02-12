@@ -41,6 +41,7 @@ SESSION_COOKIE_SECURE = True
 CSRF_TRUSTED_ORIGINS = [
     'https://*.hf.space',
     'https://huggingface.co',
+    'https://*.huggingface.co'
 ]
 
 # Application definition
@@ -120,7 +121,7 @@ WSGI_APPLICATION = 'config.wsgi.application'
 #         }
 #     }
 
-db_password = os.environ.get("DB_PASSWORD")
+db_password = os.environ.get("DB_PASSWORD", "")
 db_user = os.environ.get("DB_USER")
 db_host = os.environ.get("DB_HOST")
 db_port = os.environ.get("DB_PORT")

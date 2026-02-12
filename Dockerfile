@@ -23,7 +23,12 @@ RUN python -m nltk.downloader punkt punkt_tab
 
 COPY --chown=user:user . .
 
-RUN python manage.py collectstatic --noinput
+RUN DB_PASSWORD="dummy" \
+    DB_USER="dummy" \
+    DB_HOST="localhost" \
+    DB_PORT="5432" \
+    DB_NAME="dummy" \
+    python manage.py collectstatic --noinput
 
 EXPOSE 7860
 
