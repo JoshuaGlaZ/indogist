@@ -34,8 +34,15 @@ def extract_entities_from_tags(tokens, tags, confidences):
     return entities
 
 
+import hashlib
+from django.core.cache import cache
+
+def get_sentence_hash(sentence):
+    """Generate a consistent hash for a sentence for caching purposes."""
+    return hashlib.md5(sentence.encode('utf-8')).hexdigest()
+
 def predict_entities(sentences):
-    """Predicts entities on a list of sentences using the NLPService."""
+    """Predicts entities on a list of sentences using the NLPService, with caching and optimizations."""
     import re
     if not sentences:
         return []
@@ -46,7 +53,6 @@ def predict_entities(sentences):
         return [{'sentence': s, 'tokens': s.split(), 'entities': []} for s in sentences]
 
     def clean_and_space_punctuation(text):
-        import re
         """
         1. "(LSI)"        -> "(LSI)"      
         2. "21%"          -> "21%"         
@@ -69,9 +75,26 @@ def predict_entities(sentences):
         text = re.sub(r'(?<=\S)([,.:;?!])(?=\s|$)', r' \1', text)
         return text
 
+    cached_results = []
+    uncached_sentences = []
+    uncached_indices = []
+
+    for i, s in enumerate(sentences):
+        s_hash = f"ner_sent_{get_sentence_hash(s)}"
+        cached_result = cache.get(s_hash)
+        if cached_result:
+            cached_results.append((i, cached_result))
+        else:
+            uncached_sentences.append(s)
+            uncached_indices.append(i)
+
+    # Return immediately if everything is cached
+    if not uncached_sentences:
+        return [res for idx, res in sorted(cached_results, key=lambda x: x[0])]
+
     try:
-        # Tokenization
-        tokenized_sents = [clean_and_space_punctuation(s).split() for s in sentences]
+        # Tokenization of uncached sentences
+        tokenized_sents = [clean_and_space_punctuation(s).split() for s in uncached_sentences]
 
         # Token -> string
         text_inputs = [" ".join(s) for s in tokenized_sents]
@@ -79,12 +102,31 @@ def predict_entities(sentences):
         # Vectorize
         X_seq = nlp_service.vectorizer(text_inputs).numpy()
 
-        # Padding
-        X_padded = pad_sequences(
-            X_seq, maxlen=nlp_service.max_len, padding="post", value=0)
+        # Find the max length in THIS batch, bounded by the model's absolute max length
+        batch_max_len = min(nlp_service.max_len, max((len(seq) for seq in X_seq), default=0))
+        # Ensure at least length 1 to avoid empty tensor errors
+        batch_max_len = max(1, batch_max_len)
 
-        # Inference
-        preds_probs = nlp_service.ner_model.predict(X_padded, verbose=0, batch_size=256)
+        # Padding (only up to batch_max_len instead of fully to 256)
+        X_padded = pad_sequences(
+            X_seq, maxlen=batch_max_len, padding="post", value=0)
+
+        # Inference via TFLite Interpreter
+        interpreter = nlp_service.ner_model
+        
+        # Resize input tensor to handle the dynamic batch size and sequence length
+        input_details = interpreter.get_input_details()[0]
+        output_details = interpreter.get_output_details()[0]
+        
+        interpreter.resize_tensor_input(input_details['index'], X_padded.shape)
+        interpreter.allocate_tensors()
+        
+        # Set tensor (requires float32 based on conversion)
+        interpreter.set_tensor(input_details['index'], X_padded.astype(np.float32))
+        interpreter.invoke()
+        
+        preds_probs = interpreter.get_tensor(output_details['index'])
+        
         pred_ids = np.argmax(preds_probs, axis=-1)
         confidences = np.max(preds_probs, axis=-1)
 
@@ -97,13 +139,36 @@ def predict_entities(sentences):
 
             entities = extract_entities_from_tags(
                 tokens, tags, token_confidences)
-            results.append({
-                'sentence': sentences[i],
+            
+            result = {
+                'sentence': uncached_sentences[i],
                 'tokens': tokens,
                 'entities': entities
-            })
+            }
+            results.append(result)
 
-        return results
+            # Cache the new result (store for 24 hours)
+            s_hash = f"ner_sent_{get_sentence_hash(uncached_sentences[i])}"
+            cache.set(s_hash, result, timeout=60 * 60 * 24)
+
+        # Reconstruct final list in original order
+        final_results = [None] * len(sentences)
+        for original_idx, res in cached_results:
+            final_results[original_idx] = res
+        for new_idx, res in zip(uncached_indices, results):
+            final_results[new_idx] = res
+
+        return final_results
+
     except Exception as e:
         print(f"Error in predict_entities: {e}")
-        return [{'sentence': s, 'tokens': s.split(), 'entities': []} for s in sentences]
+        # Fallback for errors to prevent complete failure
+        fallback = [{'sentence': s, 'tokens': s.split(), 'entities': []} for s in uncached_sentences]
+        
+        final_results = [None] * len(sentences)
+        for original_idx, res in cached_results:
+            final_results[original_idx] = res
+        for new_idx, res in zip(uncached_indices, fallback):
+            final_results[new_idx] = res
+            
+        return final_results

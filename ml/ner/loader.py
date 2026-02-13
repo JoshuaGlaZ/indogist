@@ -68,18 +68,13 @@ class NLPService:
 
         # 2. Load Deep Learning Models (Heavy)
         model_dir = os.path.join(settings.BASE_DIR, 'ml', 'models', 'ner_experiment_30-November-2025_13.35')
-        model_path = os.path.join(model_dir, "best_model_by_f1.keras")
-        
-        # Fallback to standard name if best_model doesn't exist
-        if not os.path.exists(model_path):
-             model_path = os.path.join(model_dir, "model.keras")
+        tflite_path = os.path.join(model_dir, "optimized_model.tflite")
 
         try:
-            if os.path.exists(model_path):
-                self.ner_model = load_model(
-                    model_path,
-                    custom_objects={'masked_sparse_cce': masked_sparse_cce, 'masked_accuracy': masked_accuracy}
-                )
+            if os.path.exists(tflite_path):
+                # Load TFLite Model
+                self.ner_model = tf.lite.Interpreter(model_path=tflite_path)
+                self.ner_model.allocate_tensors()
             
                 vect_path = os.path.join(model_dir, "vectorizer.pkl")
                 if os.path.exists(vect_path):
@@ -99,9 +94,9 @@ class NLPService:
                 except:
                     self.max_len = 256
                 
-                print("NLPService: Deep learning models loaded successfully.")
+                print("NLPService: TFLite model loaded successfully.")
             else:
-                print(f" NLPService Warning: Model file not found at {model_path}")
+                print(f" NLPService Error: TFLite model not found at {tflite_path}")
 
         except Exception as e:
             print(f"NLPService Error: {e}")
