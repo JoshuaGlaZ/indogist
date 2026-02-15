@@ -319,7 +319,8 @@
                         <label for="id_title" class="form-label fw-bold text-white">
                             Document Title
                         </label>
-                        {% render_field form.title class="form-control" id="id_title" placeholder="e.g., Berita Ekonomi Hari Ini" %}
+                        {% render_field form.title class="form-control" id="id_title" placeholder="e.g., Berita Ekonomi
+                        Hari Ini" %}
                         {% if form.title.errors %}
                         <div class="invalid-feedback d-block">{{ form.title.errors|first }}</div>
                         {% endif %}
@@ -329,7 +330,8 @@
                         <label for="id_original_text" class="form-label fw-bold text-white">
                             Original Text (Indonesian)
                         </label>
-                        {% render_field form.original_text class="form-control" id="id_original_text" rows="8" placeholder="Paste your text here..." %}
+                        {% render_field form.original_text class="form-control" id="id_original_text" rows="8"
+                        placeholder="Paste your text here..." %}
                         {% if form.original_text.errors %}
                         <div class="invalid-feedback d-block">{{ form.original_text.errors|first }}</div>
                         {% endif %}
@@ -535,10 +537,10 @@
                 // Visual Updates
                 fileNameDisplay.innerHTML = `<span class="text-success"><i class="fas fa-check"></i> ${file.name}</span>`;
                 if (dropzone) dropzone.classList.add('has-file');
-                
+
                 // Update mode indicator
                 updateInputMode('file');
-                
+
                 // Disable manual inputs when file is uploaded
                 if (titleInput) {
                     titleInput.disabled = true;
@@ -548,7 +550,7 @@
                     textInput.disabled = true;
                     textInput.value = '';
                 }
-                
+
                 window.notify.success('File uploaded successfully', 3000);
             } else {
                 window.notify.error('Please upload a .txt file only');
@@ -570,24 +572,24 @@
                 // Reset UI
                 if (dropzone) dropzone.classList.remove('has-file');
                 fileNameDisplay.innerHTML = 'Supports template format only';
-                
+
                 // Update mode indicator back to manual
                 updateInputMode('manual');
-                
+
                 // Re-enable manual inputs
                 if (titleInput) titleInput.disabled = false;
                 if (textInput) textInput.disabled = false;
-                
+
                 // Show success notification
                 window.notify.success('File removed successfully', 3000);
             });
         }
-        
+
         // Function to update input mode indicator
         function updateInputMode(mode) {
             const indicator = document.getElementById('inputModeIndicator');
             if (!indicator) return;
-            
+
             if (mode === 'file') {
                 indicator.textContent = 'File Upload';
                 indicator.className = 'input-mode-indicator mode-file';
@@ -618,174 +620,233 @@
         const summaryOutput = document.getElementById('summaryOutput');
 
         let summaryIdForRedirect = null;
-        const isAuthenticated = {{ user.is_authenticated|yesno:"true,false" }};
+        const isAuthenticated = {{ user.is_authenticated| yesno: "true,false"
+    }};
 
-        if (summaryForm) {
-            summaryForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                e.stopPropagation();
+    if (summaryForm) {
+        summaryForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
 
-                const title = titleInput.value.trim();
-                const text = textInput.value.trim();
-                const hasFile = fileInput && fileInput.files.length > 0;
+            const title = titleInput.value.trim();
+            const text = textInput.value.trim();
+            const hasFile = fileInput && fileInput.files.length > 0;
 
-                const formData = new FormData(summaryForm);
+            const formData = new FormData(summaryForm);
 
-                Loading.buttonLoading(submitBtn, 'Processing...');
-                loadingIndicator.classList.remove('d-none');
-                summaryOutput.classList.add('d-none');
+            Loading.buttonLoading(submitBtn, 'Processing...');
+            loadingIndicator.classList.remove('d-none');
+            summaryOutput.classList.add('d-none');
 
-                document.querySelectorAll('.step-item').forEach(el => {
-                    el.classList.remove('active', 'done');
+            document.querySelectorAll('.step-item').forEach(el => {
+                el.classList.remove('active', 'done');
+            });
+
+            const updateStep = (id, state) => {
+                const el = document.getElementById(id);
+                if (state === 'active') el.classList.add('active');
+                if (state === 'done') {
+                    el.classList.remove('active');
+                    el.classList.add('done');
+                    el.querySelector('.step-circle').innerHTML = '<i class="fas fa-check"></i>';
+                }
+            };
+
+            // Mark previous steps as done when a new step arrives
+            const markStepActive = (stepNum) => {
+                for (let i = 1; i < stepNum; i++) {
+                    updateStep('step' + i, 'done');
+                }
+                if (stepNum <= 4) {
+                    updateStep('step' + stepNum, 'active');
+                }
+            };
+
+            try {
+                const response = await fetch(summaryForm.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
                 });
 
-                const updateStep = (id, state) => {
-                    const el = document.getElementById(id);
-                    if (state === 'active') el.classList.add('active');
-                    if (state === 'done') {
-                        el.classList.remove('active');
-                        el.classList.add('done');
-                        el.querySelector('.step-circle').innerHTML = '<i class="fas fa-check"></i>';
-                    }
-                };
-
-                updateStep('step1', 'active');
-
-                const step2Timer = setTimeout(() => {
-                    updateStep('step1', 'done');
-                    updateStep('step2', 'active');
-                }, 1000);
-
-                const step3Timer = setTimeout(() => {
-                    updateStep('step2', 'done');
-                    updateStep('step3', 'active');
-                }, 3000);
-
-                try {
-                    const response = await fetch(summaryForm.action, {
-                        method: 'POST',
-                        body: formData,
-                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
-                    });
-
-                    clearTimeout(step2Timer);
-                    clearTimeout(step3Timer);
-                    ['step1', 'step2', 'step3'].forEach(id => updateStep(id, 'done'));
-                    updateStep('step4', 'done');
-
-                    const data = await response.json();
-
-                    if (data.success) {
-                        summaryIdForRedirect = data.summary_id || null;
-
-                        setTimeout(() => {
-                            loadingIndicator.classList.add('d-none');
-                            displaySummary(data.summary, data.mode);
-                            window.notify.success('Summary generated successfully!', 5000);
-                        }, 800);
-                    } else {
-                        let errorMsg = data.error || "Please check your form for errors.";
-                        window.notify.error(errorMsg);
-                        loadingIndicator.classList.add('d-none');
-                    }
-                } catch (error) {
-                    console.error(error);
-                    window.notify.error('An error occurred during submission. Please try again.');
+                // Check for non-streaming error responses (validation, etc.)
+                const contentType = response.headers.get('content-type') || '';
+                if (contentType.includes('application/json')) {
+                    const errorData = await response.json();
+                    window.notify.error(errorData.error || 'Submission failed.');
                     loadingIndicator.classList.add('d-none');
-                } finally {
                     Loading.buttonReady(submitBtn);
+                    return;
                 }
-                
-                return false;
-            });
-            
-            summaryForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                return false;
-            }, true);
-        }
 
-        function displaySummary(summary, mode) {
-            const summaryTextEl = document.getElementById('summaryText');
-            const guestNotice = document.getElementById('guestNotice');
-            const viewDetailsBtn = document.getElementById('viewDetailsBtn');
+                // Read SSE stream
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
 
-            summaryTextEl.textContent = summary;
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
 
-            if (mode === 'guest' || !isAuthenticated) {
-                guestNotice.classList.remove('d-none');
-                viewDetailsBtn.disabled = true;
-                viewDetailsBtn.innerHTML = '<i class="fas fa-lock"></i> Login to View Details';
+                    buffer += decoder.decode(value, { stream: true });
+
+                    // Parse SSE events from buffer
+                    const events = buffer.split('\n\n');
+                    buffer = events.pop(); // keep incomplete last chunk
+
+                    for (const eventStr of events) {
+                        const dataLine = eventStr.trim();
+                        if (!dataLine.startsWith('data: ')) continue;
+
+                        const jsonStr = dataLine.substring(6);
+                        try {
+                            const eventData = JSON.parse(jsonStr);
+
+                            if (eventData.error) {
+                                window.notify.error(eventData.error);
+                                loadingIndicator.classList.add('d-none');
+                                Loading.buttonReady(submitBtn);
+                                return;
+                            }
+
+                            if (eventData.step && !eventData.done) {
+                                // Progress step
+                                markStepActive(eventData.step);
+                            }
+
+                            if (eventData.done && eventData.success) {
+                                // Final result
+                                ['step1', 'step2', 'step3', 'step4'].forEach(id => updateStep(id, 'done'));
+
+                                summaryIdForRedirect = eventData.summary_id || null;
+
+                                setTimeout(() => {
+                                    loadingIndicator.classList.add('d-none');
+                                    displaySummary(eventData.summary, eventData.mode, eventData.entities);
+                                    window.notify.success('Summary generated successfully!', 5000);
+                                }, 500);
+                            }
+                        } catch (parseErr) {
+                            console.warn('SSE parse error:', parseErr, jsonStr);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error(error);
+                window.notify.error('An error occurred during submission. Please try again.');
+                loadingIndicator.classList.add('d-none');
+            } finally {
+                Loading.buttonReady(submitBtn);
+            }
+
+            return false;
+        });
+
+        summaryForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            return false;
+        }, true);
+    }
+
+    function displaySummary(summary, mode, entities) {
+        const summaryTextEl = document.getElementById('summaryText');
+        const guestNotice = document.getElementById('guestNotice');
+        const viewDetailsBtn = document.getElementById('viewDetailsBtn');
+        const inlineEntitiesContainer = document.getElementById('inlineEntitiesContainer');
+        const inlineEntitiesList = document.getElementById('inlineEntitiesList');
+
+        summaryTextEl.textContent = summary;
+
+        // Handle SPA Entity Display
+        if (inlineEntitiesContainer && inlineEntitiesList) {
+            inlineEntitiesList.innerHTML = ''; // clear previous
+            if (entities && entities.length > 0) {
+                entities.forEach(ent => {
+                    const badge = document.createElement('span');
+                    badge.className = 'badge bg-light text-dark border';
+                    badge.innerHTML = `<strong>${ent.text}</strong> <span class="text-primary" style="font-size: 0.8em; margin-left: 4px;">${ent.label}</span>`;
+                    inlineEntitiesList.appendChild(badge);
+                });
+                inlineEntitiesContainer.classList.remove('d-none');
             } else {
-                guestNotice.classList.add('d-none');
-                viewDetailsBtn.disabled = false;
-                viewDetailsBtn.innerHTML = '<i class="fas fa-eye"></i> View Full Details';
-            }
-
-            summaryOutput.classList.remove('d-none');
-            summaryOutput.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
-
-        // SPA-friendly navigation to details page
-        window.handleViewDetails = function () {
-            if (summaryIdForRedirect && isAuthenticated) {
-                // Use pushState for SPA navigation instead of full page reload
-                window.location.href = `/summary/${summaryIdForRedirect}/`;
-            } else if (!isAuthenticated) {
-                window.location.href = '/accounts/login/?next={% url "summarizer:summarize" %}';
+                inlineEntitiesContainer.classList.add('d-none');
             }
         }
 
-        window.copyToClipboard = function () {
-            const text = document.getElementById("summaryText").innerText;
-            navigator.clipboard.writeText(text).then(() => {
-                window.notify.success('Summary copied to clipboard!', 3000);
-            }).catch(err => {
-                window.notify.error('Failed to copy text. Please try again.', 5000);
-            });
+        if (mode === 'guest' || !isAuthenticated) {
+            guestNotice.classList.remove('d-none');
+            viewDetailsBtn.disabled = true;
+            viewDetailsBtn.innerHTML = '<i class="fas fa-lock"></i> Login to Save';
+        } else {
+            guestNotice.classList.add('d-none');
+            viewDetailsBtn.disabled = false;
+            viewDetailsBtn.innerHTML = '<i class="fas fa-eye"></i> View Full Details';
         }
-        
-        // Reset form function for "Create Another" button
-        window.resetForm = function () {
-            // Reset form fields
-            summaryForm.reset();
-            
-            // Clear file input
-            if (fileInput) {
-                fileInput.value = "";
-                const dt = new DataTransfer();
-                fileInput.files = dt.files;
-            }
-            
-            // Reset UI
-            if (dropzone) dropzone.classList.remove('has-file');
-            if (fileNameDisplay) fileNameDisplay.innerHTML = 'Supports template format only';
-            
-            // Re-enable inputs
-            if (titleInput) titleInput.disabled = false;
-            if (textInput) textInput.disabled = false;
-            
-            // Update mode indicator
-            updateInputMode('manual');
-            
-            // Hide summary output
-            summaryOutput.classList.add('d-none');
-            
-            // Reset slider
-            if (slider && hiddenInput && label) {
-                slider.value = 0.3;
-                hiddenInput.value = 0.3;
-                label.textContent = '30%';
-            }
-            
-            // Clear summary ID
-            summaryIdForRedirect = null;
-            
-            // Scroll to top of form
-            summaryForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            
-            window.notify.success('Form reset. Ready for new summary!', 3000);
+
+        summaryOutput.classList.remove('d-none');
+        summaryOutput.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    // SPA-friendly navigation to details page
+    window.handleViewDetails = function () {
+        if (summaryIdForRedirect && isAuthenticated) {
+            // Use pushState for SPA navigation instead of full page reload
+            window.location.href = `/summary/${summaryIdForRedirect}/`;
+        } else if (!isAuthenticated) {
+            window.location.href = '/accounts/login/?next={% url "summarizer:summarize" %}';
         }
+    }
+
+    window.copyToClipboard = function () {
+        const text = document.getElementById("summaryText").innerText;
+        navigator.clipboard.writeText(text).then(() => {
+            window.notify.success('Summary copied to clipboard!', 3000);
+        }).catch(err => {
+            window.notify.error('Failed to copy text. Please try again.', 5000);
+        });
+    }
+
+    // Reset form function for "Create Another" button
+    window.resetForm = function () {
+        // Reset form fields
+        summaryForm.reset();
+
+        // Clear file input
+        if (fileInput) {
+            fileInput.value = "";
+            const dt = new DataTransfer();
+            fileInput.files = dt.files;
+        }
+
+        // Reset UI
+        if (dropzone) dropzone.classList.remove('has-file');
+        if (fileNameDisplay) fileNameDisplay.innerHTML = 'Supports template format only';
+
+        // Re-enable inputs
+        if (titleInput) titleInput.disabled = false;
+        if (textInput) textInput.disabled = false;
+
+        // Update mode indicator
+        updateInputMode('manual');
+
+        // Hide summary output
+        summaryOutput.classList.add('d-none');
+
+        // Reset slider
+        if (slider && hiddenInput && label) {
+            slider.value = 0.3;
+            hiddenInput.value = 0.3;
+            label.textContent = '30%';
+        }
+
+        // Clear summary ID
+        summaryIdForRedirect = null;
+
+        // Scroll to top of form
+        summaryForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        window.notify.success('Form reset. Ready for new summary!', 3000);
+    }
     });
 </script>
 {% endblock %}
