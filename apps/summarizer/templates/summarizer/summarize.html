@@ -319,8 +319,7 @@
                         <label for="id_title" class="form-label fw-bold text-white">
                             Document Title
                         </label>
-                        {% render_field form.title class="form-control" id="id_title" placeholder="e.g., Berita Ekonomi
-                        Hari Ini" %}
+                        {% render_field form.title class="form-control" id="id_title" placeholder="e.g., Berita Ekonomi Hari Ini" %}
                         {% if form.title.errors %}
                         <div class="invalid-feedback d-block">{{ form.title.errors|first }}</div>
                         {% endif %}
@@ -330,8 +329,7 @@
                         <label for="id_original_text" class="form-label fw-bold text-white">
                             Original Text (Indonesian)
                         </label>
-                        {% render_field form.original_text class="form-control" id="id_original_text" rows="8"
-                        placeholder="Paste your text here..." %}
+                        {% render_field form.original_text class="form-control" id="id_original_text" rows="8" placeholder="Paste your text here..." %}
                         {% if form.original_text.errors %}
                         <div class="invalid-feedback d-block">{{ form.original_text.errors|first }}</div>
                         {% endif %}
