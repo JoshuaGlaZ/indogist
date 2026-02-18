@@ -126,11 +126,12 @@
         cursor: pointer;
     }
 
+    /* ── Step Loader ─────────────────────────────────────────────── */
     .step-loader {
         display: flex;
         flex-direction: column;
         gap: 15px;
-        max-width: 400px;
+        max-width: 420px;
         margin: 0 auto;
     }
 
@@ -138,9 +139,8 @@
         display: flex;
         align-items: center;
         gap: 15px;
-        opacity: 0.4;
-        transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-        transform: translateX(0);
+        opacity: 0.35;
+        transition: all 0.45s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .step-item.active {
@@ -148,9 +148,13 @@
         transform: translateX(10px);
     }
 
+    .step-item.done {
+        opacity: 0.75;
+    }
+
     .step-circle {
-        width: 30px;
-        height: 30px;
+        width: 32px;
+        height: 32px;
         border-radius: 50%;
         border: 2px solid rgba(255, 255, 255, 0.2);
         display: flex;
@@ -159,28 +163,39 @@
         font-size: 14px;
         background: rgba(15, 23, 42, 0.5);
         color: rgba(255, 255, 255, 0.5);
-        transition: all var(--transition-base);
+        transition: all 0.35s ease;
         flex-shrink: 0;
     }
 
     .step-item.active .step-circle {
         border-color: var(--primary-color);
-        box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
-        background: rgba(56, 189, 248, 0.1);
+        box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
+        background: rgba(56, 189, 248, 0.12);
         color: var(--primary-color);
-        animation: pulse 2s ease-in-out infinite;
+        animation: pulse 1.6s ease-in-out infinite;
     }
 
     .step-item.done .step-circle {
         background: var(--primary-color);
         border-color: var(--primary-color);
         color: #0f172a;
+        animation: none;
     }
 
-    .step-text {
+    /* live label that updates per SSE event */
+    .step-label {
         font-family: 'JetBrains Mono', monospace;
-        font-size: 0.95rem;
+        font-size: 0.9rem;
         color: #e2e8f0;
+        transition: color 0.3s ease;
+    }
+
+    .step-item.active .step-label {
+        color: var(--primary-color);
+    }
+
+    .step-item.done .step-label {
+        color: #64748b;
     }
 
     .success-icon {
@@ -188,19 +203,9 @@
     }
 
     @keyframes successPop {
-        0% {
-            transform: scale(0);
-            opacity: 0;
-        }
-
-        50% {
-            transform: scale(1.2);
-        }
-
-        100% {
-            transform: scale(1);
-            opacity: 1;
-        }
+        0%   { transform: scale(0); opacity: 0; }
+        50%  { transform: scale(1.2); }
+        100% { transform: scale(1); opacity: 1; }
     }
 
     .result-actions {
@@ -246,34 +251,15 @@
     }
 
     @keyframes slideInUp {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
+        from { opacity: 0; transform: translateY(20px); }
+        to   { opacity: 1; transform: translateY(0); }
     }
 
     @media (max-width: 768px) {
-        .result-actions {
-            flex-direction: column;
-        }
-
-        .result-actions .btn {
-            width: 100%;
-            min-width: 100%;
-        }
-
-        .step-loader {
-            gap: 12px;
-        }
-
-        .step-text {
-            font-size: 0.85rem;
-        }
+        .result-actions { flex-direction: column; }
+        .result-actions .btn { width: 100%; min-width: 100%; }
+        .step-loader { gap: 12px; }
+        .step-label { font-size: 0.82rem; }
     }
 </style>
 {% endblock %}
@@ -412,32 +398,34 @@
                     </div>
                 </form>
 
+                <!-- Loading indicator with real SSE-driven steps -->
                 <div id="loadingIndicator" class="d-none mt-5">
                     <div class="text-center mb-4">
                         <div class="spinner-ring"></div>
-                        <h5 class="text-white animate-pulse mt-3">Processing Document...</h5>
+                        <h5 class="text-white animate-pulse mt-3" id="loadingTitle">Processing Document...</h5>
                     </div>
 
                     <div class="step-loader">
                         <div class="step-item" id="step1">
                             <div class="step-circle"><i class="fas fa-file-alt"></i></div>
-                            <div class="step-text">Reading & Preprocessing</div>
+                            <div class="step-label" data-default="Sentence Tokenization">Sentence Tokenization</div>
                         </div>
                         <div class="step-item" id="step2">
-                            <div class="step-circle"><i class="fas fa-brain"></i></div>
-                            <div class="step-text">Analyzing Content</div>
+                            <div class="step-circle"><i class="fas fa-table"></i></div>
+                            <div class="step-label" data-default="Building TF-IDF Matrix">Building TF-IDF Matrix</div>
                         </div>
                         <div class="step-item" id="step3">
-                            <div class="step-circle"><i class="fas fa-compress-arrows-alt"></i></div>
-                            <div class="step-text">Compressing Text</div>
+                            <div class="step-circle"><i class="fas fa-brain"></i></div>
+                            <div class="step-label" data-default="Feature Extraction">Feature Extraction</div>
                         </div>
                         <div class="step-item" id="step4">
-                            <div class="step-circle"><i class="fas fa-check"></i></div>
-                            <div class="step-text">Finalizing Output</div>
+                            <div class="step-circle"><i class="fas fa-sort-amount-down"></i></div>
+                            <div class="step-label" data-default="Scoring & Selection">Scoring & Selection</div>
                         </div>
                     </div>
                 </div>
 
+                <!-- Summary output -->
                 <div id="summaryOutput" class="mt-5 d-none">
                     <hr class="my-4" style="border-color: var(--card-border);">
 
@@ -477,6 +465,7 @@
                         </div>
                     </div>
                 </div>
+
             </div>
         </div>
     </div>
@@ -485,202 +474,181 @@
 
 {% block extra_js %}
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const dropzone = document.getElementById('fileDropzone');
-        const fileInput = document.querySelector('input[name="file"]');
-        const fileNameDisplay = document.getElementById('fileName');
-        const cancelBtn = document.getElementById('cancelFileBtn');
-        const titleInput = document.getElementById('id_title');
-        const textInput = document.getElementById('id_original_text');
+document.addEventListener('DOMContentLoaded', () => {
 
-        // Remove automated required attributes logic
-        if (titleInput) titleInput.removeAttribute('required');
-        if (textInput) textInput.removeAttribute('required');
+    // ── Element references ────────────────────────────────────────────────
+    const dropzone        = document.getElementById('fileDropzone');
+    const fileInput       = document.querySelector('input[name="file"]');
+    const fileNameDisplay = document.getElementById('fileName');
+    const cancelBtn       = document.getElementById('cancelFileBtn');
+    const titleInput      = document.getElementById('id_title');
+    const textInput       = document.getElementById('id_original_text');
+    const summaryForm     = document.getElementById('summaryForm');
+    const submitBtn       = document.getElementById('submitBtn');
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    const summaryOutput   = document.getElementById('summaryOutput');
+    const slider          = document.getElementById('compressionSlider');
+    const hiddenInput     = document.getElementById('id_compression_ratio');
+    const lengthLabel     = document.getElementById('lengthLabel');
 
-        if (dropzone && fileInput) {
-            dropzone.addEventListener('click', (e) => {
-                // Don't trigger file input if clicking the cancel button
-                if (e.target.closest('#cancelFileBtn')) return;
-                fileInput.click();
-            });
+    const isAuthenticated = {{ user.is_authenticated|yesno:"true,false" }};
+    let summaryIdForRedirect = null;
 
-            dropzone.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                dropzone.classList.add('dragover');
-            });
+    // ── Remove HTML5 required so browser never blocks submit ─────────────
+    if (titleInput) titleInput.removeAttribute('required');
+    if (textInput)  textInput.removeAttribute('required');
 
-            dropzone.addEventListener('dragleave', () => {
-                dropzone.classList.remove('dragover');
-            });
+    // ── File drag-and-drop ────────────────────────────────────────────────
+    if (dropzone && fileInput) {
+        dropzone.addEventListener('click', (e) => {
+            if (e.target.closest('#cancelFileBtn')) return;
+            fileInput.click();
+        });
+        dropzone.addEventListener('dragover',  (e) => { e.preventDefault(); dropzone.classList.add('dragover'); });
+        dropzone.addEventListener('dragleave', ()  => { dropzone.classList.remove('dragover'); });
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('dragover');
+            if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+        });
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length) handleFile(e.target.files[0]);
+        });
+    }
 
-            dropzone.addEventListener('drop', (e) => {
-                e.preventDefault();
-                dropzone.classList.remove('dragover');
-                if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
-            });
-
-            fileInput.addEventListener('change', (e) => {
-                if (e.target.files.length) {
-                    handleFile(e.target.files[0]);
-                }
-            });
+    function handleFile(file) {
+        if (!file.name.endsWith('.txt')) {
+            window.notify.error('Please upload a .txt file only');
+            fileInput.value = '';
+            return;
         }
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        fileInput.files = dt.files;
 
-        function handleFile(file) {
-            if (file.name.endsWith('.txt')) {
-                const dt = new DataTransfer();
-                dt.items.add(file);
-                fileInput.files = dt.files;
+        fileNameDisplay.innerHTML = `<span class="text-success"><i class="fas fa-check"></i> ${file.name}</span>`;
+        dropzone.classList.add('has-file');
+        updateInputMode('file');
 
-                // Visual Updates
-                fileNameDisplay.innerHTML = `<span class="text-success"><i class="fas fa-check"></i> ${file.name}</span>`;
-                if (dropzone) dropzone.classList.add('has-file');
+        if (titleInput) { titleInput.disabled = true; titleInput.value = ''; }
+        if (textInput)  { textInput.disabled  = true; textInput.value  = ''; }
+        window.notify.success('File uploaded successfully', 3000);
+    }
 
-                // Update mode indicator
-                updateInputMode('file');
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            fileInput.value = '';
+            const dt = new DataTransfer();
+            fileInput.files = dt.files;
+            dropzone.classList.remove('has-file');
+            fileNameDisplay.innerHTML = 'Supports template format only';
+            updateInputMode('manual');
+            if (titleInput) titleInput.disabled = false;
+            if (textInput)  textInput.disabled  = false;
+            window.notify.success('File removed successfully', 3000);
+        });
+    }
 
-                // Disable manual inputs when file is uploaded
-                if (titleInput) {
-                    titleInput.disabled = true;
-                    titleInput.value = '';
-                }
-                if (textInput) {
-                    textInput.disabled = true;
-                    textInput.value = '';
-                }
-
-                window.notify.success('File uploaded successfully', 3000);
-            } else {
-                window.notify.error('Please upload a .txt file only');
-                fileInput.value = "";
-            }
+    function updateInputMode(mode) {
+        const indicator = document.getElementById('inputModeIndicator');
+        if (!indicator) return;
+        if (mode === 'file') {
+            indicator.textContent = 'File Upload';
+            indicator.className = 'input-mode-indicator mode-file';
+        } else {
+            indicator.textContent = 'Manual Input';
+            indicator.className = 'input-mode-indicator mode-manual';
         }
+    }
 
-        // Cancel File Logic
-        if (cancelBtn) {
-            cancelBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                e.preventDefault();
+    // ── Compression slider ────────────────────────────────────────────────
+    if (slider && hiddenInput && lengthLabel) {
+        const initVal = parseFloat(slider.value);
+        lengthLabel.textContent = Math.round(initVal * 100) + '%';
+        slider.addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value);
+            hiddenInput.value = val;
+            lengthLabel.textContent = Math.round(val * 100) + '%';
+        });
+    }
 
-                // Clear File
-                fileInput.value = "";
-                const dt = new DataTransfer();
-                fileInput.files = dt.files;
+    // ── SSE step helpers ──────────────────────────────────────────────────
+    const STEP_DEFAULTS = {
+        step1: 'Sentence Tokenization',
+        step2: 'Building TF-IDF Matrix',
+        step3: 'Feature Extraction',
+        step4: 'Scoring & Selection',
+    };
 
-                // Reset UI
-                if (dropzone) dropzone.classList.remove('has-file');
-                fileNameDisplay.innerHTML = 'Supports template format only';
+    function resetSteps() {
+        document.querySelectorAll('.step-item').forEach(el => {
+            el.classList.remove('active', 'done');
+            const labelEl = el.querySelector('.step-label');
+            if (labelEl) labelEl.textContent = labelEl.dataset.default || '';
+            const circle = el.querySelector('.step-circle i');
+            // restore original icon per step
+            const icons = { step1: 'fa-file-alt', step2: 'fa-table', step3: 'fa-brain', step4: 'fa-sort-amount-down' };
+            if (circle) circle.className = `fas ${icons[el.id] || 'fa-circle'}`;
+        });
+    }
 
-                // Update mode indicator back to manual
-                updateInputMode('manual');
+    function setStep(stepId, status, label) {
+        const el = document.getElementById(stepId);
+        if (!el) return;
 
-                // Re-enable manual inputs
-                if (titleInput) titleInput.disabled = false;
-                if (textInput) textInput.disabled = false;
-
-                // Show success notification
-                window.notify.success('File removed successfully', 3000);
-            });
+        if (status === 'active') {
+            el.classList.add('active');
+            el.classList.remove('done');
+            if (label) el.querySelector('.step-label').textContent = label;
+        } else if (status === 'done') {
+            el.classList.remove('active');
+            el.classList.add('done');
+            // swap icon to checkmark
+            const circle = el.querySelector('.step-circle i');
+            if (circle) circle.className = 'fas fa-check';
+            // restore default label text so done steps are still readable
+            const labelEl = el.querySelector('.step-label');
+            if (labelEl) labelEl.textContent = labelEl.dataset.default || labelEl.textContent;
         }
+    }
 
-        // Function to update input mode indicator
-        function updateInputMode(mode) {
-            const indicator = document.getElementById('inputModeIndicator');
-            if (!indicator) return;
-
-            if (mode === 'file') {
-                indicator.textContent = 'File Upload';
-                indicator.className = 'input-mode-indicator mode-file';
-            } else {
-                indicator.textContent = 'Manual Input';
-                indicator.className = 'input-mode-indicator mode-manual';
-            }
-        }
-
-        const slider = document.getElementById('compressionSlider');
-        const hiddenInput = document.getElementById('id_compression_ratio');
-        const label = document.getElementById('lengthLabel');
-
-        if (slider && hiddenInput && label) {
-            const initVal = parseFloat(slider.value);
-            label.textContent = Math.round(initVal * 100) + "%";
-
-            slider.addEventListener('input', (e) => {
-                const val = parseFloat(e.target.value);
-                hiddenInput.value = val;
-                label.textContent = Math.round(val * 100) + "%";
-            });
-        }
-
-        const summaryForm = document.getElementById('summaryForm');
-        const submitBtn = document.getElementById('submitBtn');
-        const loadingIndicator = document.getElementById('loadingIndicator');
-        const summaryOutput = document.getElementById('summaryOutput');
-
-        let summaryIdForRedirect = null;
-        const isAuthenticated = {{ user.is_authenticated| yesno: "true,false"
-    }};
-
+    // ── SSE fetch-stream submission ───────────────────────────────────────
     if (summaryForm) {
         summaryForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            e.stopPropagation();
+            e.stopImmediatePropagation();
 
-            const title = titleInput.value.trim();
-            const text = textInput.value.trim();
-            const hasFile = fileInput && fileInput.files.length > 0;
-
-            const formData = new FormData(summaryForm);
-
+            // UI reset
             Loading.buttonLoading(submitBtn, 'Processing...');
             loadingIndicator.classList.remove('d-none');
             summaryOutput.classList.add('d-none');
+            resetSteps();
 
-            document.querySelectorAll('.step-item').forEach(el => {
-                el.classList.remove('active', 'done');
-            });
-
-            const updateStep = (id, state) => {
-                const el = document.getElementById(id);
-                if (state === 'active') el.classList.add('active');
-                if (state === 'done') {
-                    el.classList.remove('active');
-                    el.classList.add('done');
-                    el.querySelector('.step-circle').innerHTML = '<i class="fas fa-check"></i>';
-                }
-            };
-
-            // Mark previous steps as done when a new step arrives
-            const markStepActive = (stepNum) => {
-                for (let i = 1; i < stepNum; i++) {
-                    updateStep('step' + i, 'done');
-                }
-                if (stepNum <= 4) {
-                    updateStep('step' + stepNum, 'active');
-                }
-            };
+            const formData = new FormData(summaryForm);
 
             try {
-                const response = await fetch(summaryForm.action, {
+                const response = await fetch("{% url 'summarizer:summarize_sse' %}", {
                     method: 'POST',
                     body: formData,
                     headers: { 'X-Requested-With': 'XMLHttpRequest' }
                 });
 
-                // Check for non-streaming error responses (validation, etc.)
-                const contentType = response.headers.get('content-type') || '';
-                if (contentType.includes('application/json')) {
-                    const errorData = await response.json();
-                    window.notify.error(errorData.error || 'Submission failed.');
-                    loadingIndicator.classList.add('d-none');
-                    Loading.buttonReady(submitBtn);
-                    return;
+                // Non-streaming error (validation rejected before stream started)
+                if (!response.ok) {
+                    let errMsg = 'Request failed. Please check your input.';
+                    try {
+                        const errData = await response.json();
+                        if (errData.error) errMsg = errData.error;
+                    } catch (_) { /* ignore */ }
+                    throw new Error(errMsg);
                 }
 
-                // Read SSE stream
-                const reader = response.body.getReader();
+                // ── Read SSE stream ───────────────────────────────────────
+                const reader  = response.body.getReader();
                 const decoder = new TextDecoder();
-                let buffer = '';
+                let buffer    = '';
 
                 while (true) {
                     const { done, value } = await reader.read();
@@ -688,93 +656,83 @@
 
                     buffer += decoder.decode(value, { stream: true });
 
-                    // Parse SSE events from buffer
-                    const events = buffer.split('\n\n');
-                    buffer = events.pop(); // keep incomplete last chunk
+                    // SSE lines end with \n\n; split on double-newline for events
+                    const parts = buffer.split('\n\n');
+                    buffer = parts.pop();          // keep last (possibly incomplete) chunk
 
-                    for (const eventStr of events) {
-                        const dataLine = eventStr.trim();
-                        if (!dataLine.startsWith('data: ')) continue;
+                    for (const part of parts) {
+                        // Each part may be "data: {...}"
+                        const dataLine = part.split('\n').find(l => l.startsWith('data: '));
+                        if (!dataLine) continue;
 
-                        const jsonStr = dataLine.substring(6);
+                        let event;
                         try {
-                            const eventData = JSON.parse(jsonStr);
-
-                            if (eventData.error) {
-                                window.notify.error(eventData.error);
-                                loadingIndicator.classList.add('d-none');
-                                Loading.buttonReady(submitBtn);
-                                return;
-                            }
-
-                            if (eventData.step && !eventData.done) {
-                                // Progress step
-                                markStepActive(eventData.step);
-                            }
-
-                            if (eventData.done && eventData.success) {
-                                // Final result
-                                ['step1', 'step2', 'step3', 'step4'].forEach(id => updateStep(id, 'done'));
-
-                                summaryIdForRedirect = eventData.summary_id || null;
-
-                                setTimeout(() => {
-                                    loadingIndicator.classList.add('d-none');
-                                    displaySummary(eventData.summary, eventData.mode, eventData.entities);
-                                    window.notify.success('Summary generated successfully!', 5000);
-                                }, 500);
-                            }
-                        } catch (parseErr) {
-                            console.warn('SSE parse error:', parseErr, jsonStr);
+                            event = JSON.parse(dataLine.slice(6));
+                        } catch (_) {
+                            continue;
                         }
+
+                        handleSSEEvent(event);
                     }
                 }
+
             } catch (error) {
-                console.error(error);
-                window.notify.error('An error occurred during submission. Please try again.');
+                console.error('[SSE] Error:', error);
+                window.notify.error(error.message || 'An error occurred. Please try again.');
                 loadingIndicator.classList.add('d-none');
             } finally {
                 Loading.buttonReady(submitBtn);
             }
-
-            return false;
-        });
-
-        summaryForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            return false;
-        }, true);
+        }, { capture: true });
     }
 
-    function displaySummary(summary, mode, entities) {
-        const summaryTextEl = document.getElementById('summaryText');
-        const guestNotice = document.getElementById('guestNotice');
-        const viewDetailsBtn = document.getElementById('viewDetailsBtn');
-        const inlineEntitiesContainer = document.getElementById('inlineEntitiesContainer');
-        const inlineEntitiesList = document.getElementById('inlineEntitiesList');
+    // ── SSE event dispatcher ──────────────────────────────────────────────
+    function handleSSEEvent(event) {
+        switch (event.type) {
 
-        summaryTextEl.textContent = summary;
+            case 'connected':
+                // Stream open — activate first step immediately
+                setStep('step1', 'active');
+                break;
 
-        // Handle SPA Entity Display
-        if (inlineEntitiesContainer && inlineEntitiesList) {
-            inlineEntitiesList.innerHTML = ''; // clear previous
-            if (entities && entities.length > 0) {
-                entities.forEach(ent => {
-                    const badge = document.createElement('span');
-                    badge.className = 'badge bg-light text-dark border';
-                    badge.innerHTML = `<strong>${ent.text}</strong> <span class="text-primary" style="font-size: 0.8em; margin-left: 4px;">${ent.label}</span>`;
-                    inlineEntitiesList.appendChild(badge);
-                });
-                inlineEntitiesContainer.classList.remove('d-none');
-            } else {
-                inlineEntitiesContainer.classList.add('d-none');
-            }
+            case 'step':
+                setStep(event.step, event.status, event.label || null);
+                break;
+
+            case 'complete':
+                // All steps done
+                ['step1', 'step2', 'step3', 'step4'].forEach(s => setStep(s, 'done'));
+
+                setTimeout(() => {
+                    loadingIndicator.classList.add('d-none');
+                    displaySummary(event.summary, event.mode, event.summary_id);
+                    window.notify.success('Summary generated successfully!', 5000);
+                }, 500);
+                break;
+
+            case 'error':
+                loadingIndicator.classList.add('d-none');
+                window.notify.error(event.message || 'Processing failed. Please try again.');
+                break;
+
+            default:
+                break;
         }
+    }
+
+    // ── Display final summary ─────────────────────────────────────────────
+    function displaySummary(summary, mode, summaryId) {
+        const summaryTextEl  = document.getElementById('summaryText');
+        const guestNotice    = document.getElementById('guestNotice');
+        const viewDetailsBtn = document.getElementById('viewDetailsBtn');
+
+        summaryIdForRedirect = summaryId || null;
+        summaryTextEl.textContent = summary;
 
         if (mode === 'guest' || !isAuthenticated) {
             guestNotice.classList.remove('d-none');
             viewDetailsBtn.disabled = true;
-            viewDetailsBtn.innerHTML = '<i class="fas fa-lock"></i> Login to Save';
+            viewDetailsBtn.innerHTML = '<i class="fas fa-lock"></i> Login to View Details';
         } else {
             guestNotice.classList.add('d-none');
             viewDetailsBtn.disabled = false;
@@ -785,66 +743,52 @@
         summaryOutput.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
-    // SPA-friendly navigation to details page
+    // ── Public helpers ────────────────────────────────────────────────────
     window.handleViewDetails = function () {
         if (summaryIdForRedirect && isAuthenticated) {
-            // Use pushState for SPA navigation instead of full page reload
             window.location.href = `/summary/${summaryIdForRedirect}/`;
         } else if (!isAuthenticated) {
             window.location.href = '/accounts/login/?next={% url "summarizer:summarize" %}';
         }
-    }
+    };
 
     window.copyToClipboard = function () {
-        const text = document.getElementById("summaryText").innerText;
+        const text = document.getElementById('summaryText').innerText;
         navigator.clipboard.writeText(text).then(() => {
             window.notify.success('Summary copied to clipboard!', 3000);
-        }).catch(err => {
+        }).catch(() => {
             window.notify.error('Failed to copy text. Please try again.', 5000);
         });
-    }
+    };
 
-    // Reset form function for "Create Another" button
     window.resetForm = function () {
-        // Reset form fields
         summaryForm.reset();
 
-        // Clear file input
         if (fileInput) {
-            fileInput.value = "";
+            fileInput.value = '';
             const dt = new DataTransfer();
             fileInput.files = dt.files;
         }
 
-        // Reset UI
-        if (dropzone) dropzone.classList.remove('has-file');
+        if (dropzone)        dropzone.classList.remove('has-file');
         if (fileNameDisplay) fileNameDisplay.innerHTML = 'Supports template format only';
+        if (titleInput)      titleInput.disabled = false;
+        if (textInput)       textInput.disabled  = false;
 
-        // Re-enable inputs
-        if (titleInput) titleInput.disabled = false;
-        if (textInput) textInput.disabled = false;
-
-        // Update mode indicator
         updateInputMode('manual');
-
-        // Hide summary output
         summaryOutput.classList.add('d-none');
 
-        // Reset slider
-        if (slider && hiddenInput && label) {
+        if (slider && hiddenInput && lengthLabel) {
             slider.value = 0.3;
             hiddenInput.value = 0.3;
-            label.textContent = '30%';
+            lengthLabel.textContent = '30%';
         }
 
-        // Clear summary ID
         summaryIdForRedirect = null;
-
-        // Scroll to top of form
         summaryForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
         window.notify.success('Form reset. Ready for new summary!', 3000);
-    }
-    });
+    };
+
+});
 </script>
 {% endblock %}
