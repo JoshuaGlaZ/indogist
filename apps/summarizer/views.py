@@ -2,6 +2,8 @@ import base64
 import os
 import json
 import re
+import threading
+import queue as queue_module
 from datetime import datetime
 
 from django.shortcuts import render, redirect, get_object_or_404
@@ -12,13 +14,14 @@ from django.views.decorators.http import require_http_methods
 from django.db.models import Q
 from django.core.paginator import Paginator
 from django.utils.safestring import mark_safe
-from ml.summarization.hybrid import predict_and_summarize
-from ml.summarization.traditional import summarize_traditional
 from config import settings
 from ml.summarization.utils import add_to_indosum_dataset
 
 from .models import Summary
 from .forms import SummaryForm
+
+from ml.summarization.hybrid import predict_and_summarize
+from ml.summarization.traditional import summarize_traditional
 
 def home(request):
     """Home page logic."""
@@ -73,6 +76,52 @@ def _parse_uploaded_file(uploaded_file):
         raise ValueError("Unable to read file. Please ensure it's a valid UTF-8 text file.")
 
 
+def _is_template_file(uploaded_file):
+    """Check if uploaded file follows the template format."""
+    try:
+        content = uploaded_file.read().decode('utf-8')
+        uploaded_file.seek(0)
+        has_title_marker = 'TITLE=' in content
+        has_text_marker = 'TEXT=' in content
+        return has_title_marker and has_text_marker
+    except Exception:
+        return False
+
+
+def _validate_input_edge_cases(title, original_text, uploaded_file):
+    """
+    Validate input edge cases before processing.
+
+    Edge Cases:
+    1. No title, no text, no file → FAIL
+    2. Title only, no text, no file → FAIL
+    3. Text only, no title, no file → PROCEED (ML will generate title)
+    4. No title, no text, file uploaded (not template) → FAIL
+    5. No title, no text, file uploaded (is template) → PROCEED
+
+    Returns:
+        tuple: (is_valid, error_message)
+    """
+    has_title = bool(title and title.strip())
+    has_text = bool(original_text and original_text.strip())
+    has_file = bool(uploaded_file)
+
+    if not has_title and not has_text and not has_file:
+        return False, "Please provide content to summarize. You must either:\n• Enter a title and text manually, OR\n• Upload a file using the template format"
+
+    if has_title and not has_text and not has_file:
+        return False, "Title provided but no text content found. Please either:\n• Enter text in the 'Original Text' field, OR\n• Upload a file using the template format"
+
+    if not has_title and has_text and not has_file:
+        return True, None
+
+    if not has_title and not has_text and has_file:
+        if not _is_template_file(uploaded_file):
+            return False, "Uploaded file does not follow the template format. Please:\n• Download the template file\n• Fill it with TITLE= and TEXT= markers\n• Upload the completed template"
+        return True, None
+
+    return True, None
+
 
 def _validate_text_content(text, min_words=10):
     """Validate that text has sufficient content for summarization."""
@@ -91,161 +140,301 @@ def _validate_text_content(text, min_words=10):
             "Text contains insufficient meaningful content. "
             "Please provide more substantial text for summarization."
         )
-    
     return True
-  
+
+
+def _parse_and_validate_form(request):
+    """
+    Shared helper: parse, validate, and return cleaned form data.
+    Returns (form_data_dict, error_response_or_None).
+    error_response is a JsonResponse if there's an error, else None.
+    """
+    raw_title = request.POST.get('title', '').strip()
+    raw_text = request.POST.get('original_text', '').strip()
+    uploaded_file = request.FILES.get('file', None)
+
+    is_valid, error_message = _validate_input_edge_cases(
+        title=raw_title,
+        original_text=raw_text,
+        uploaded_file=uploaded_file
+    )
+    if not is_valid:
+        return None, JsonResponse({'success': False, 'error': error_message}, status=400)
+
+    post_data = request.POST.copy()
+    if uploaded_file:
+        try:
+            file_title, file_text = _parse_uploaded_file(uploaded_file)
+            post_data.update({'title': file_title, 'original_text': file_text})
+        except ValueError as e:
+            return None, JsonResponse({'success': False, 'error': str(e)}, status=400)
+
+    form = SummaryForm(post_data, request.FILES)
+    if not form.is_valid():
+        error_messages = []
+        for field, errors in form.errors.items():
+            for error in errors:
+                if field == '__all__':
+                    error_messages.append(error)
+                else:
+                    field_name = form.fields[field].label if field in form.fields else field
+                    error_messages.append(f"{field_name}: {error}")
+        return None, JsonResponse({'success': False, 'error': ' | '.join(error_messages)}, status=400)
+
+    data = form.cleaned_data
+    try:
+        _validate_text_content(data['original_text'])
+    except ValueError as e:
+        return None, JsonResponse({'success': False, 'error': str(e)}, status=400)
+
+    return data, None
+
+
+# =============================================================================
+# SSE STREAMING SUMMARIZATION VIEW
+# =============================================================================
+
+def summarize_sse(request):
+    """
+    Server-Sent Events endpoint for real-time summarization progress.
+    The client connects via fetch() + ReadableStream (POST).
+    Events emitted:
+      {"type": "step",     "step": "step1|step2|step3|step4", "status": "active|done"}
+      {"type": "complete", "success": true, "summary": "...", "entities": [...], ...}
+      {"type": "error",    "message": "..."}
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+    data, err = _parse_and_validate_form(request)
+    if err:
+        return err
+
+    progress_queue = queue_module.Queue()
+
+    def run_processing():
+        try:
+            def on_progress(event):
+                progress_queue.put(event)
+
+            if data['method'] == 'hybrid':
+                result = predict_and_summarize(
+                    text=data['original_text'],
+                    title=data['title'],
+                    compression_ratio=data['compression_ratio'],
+                    progress_callback=on_progress
+                )
+                entities = result.get('entities', [])
+                effective_title = result.get('effective_title', data['title'])
+            else:
+                result = summarize_traditional(
+                    text=data['original_text'],
+                    title=data['title'],
+                    compression_ratio=data['compression_ratio'],
+                    progress_callback=on_progress
+                )
+                entities = []
+                effective_title = result.get('effective_title', data['title'])
+
+            summary_text = result['summary']
+            final_title = data['title'] if data['title'] else effective_title
+
+            # Save to DB
+            summary_id = None
+            if request.user.is_authenticated:
+                summary_obj = Summary.objects.create(
+                    user=request.user,
+                    title=final_title,
+                    original_text=data['original_text'],
+                    summary_text=summary_text,
+                    compression_ratio=data['compression_ratio'],
+                    entities=entities,
+                    method=data['method']
+                )
+                summary_id = summary_obj.id
+
+            progress_queue.put({
+                'type': 'complete',
+                'success': True,
+                'mode': 'user' if request.user.is_authenticated else 'guest',
+                'summary': summary_text,
+                'entities': entities,
+                'summary_id': summary_id,
+                'effective_title': final_title
+            })
+
+        except Exception as e:
+            print(f"[ERROR] summarize_sse processing: {e}")
+            import traceback
+            traceback.print_exc()
+            progress_queue.put({'type': 'error', 'message': str(e)})
+
+    thread = threading.Thread(target=run_processing, daemon=True)
+    thread.start()
+
+    def generate():
+        # Immediately signal connection
+        yield f"data: {json.dumps({'type': 'connected'})}\n\n"
+
+        while True:
+            try:
+                event = progress_queue.get(timeout=180)
+                yield f"data: {json.dumps(event)}\n\n"
+                if event.get('type') in ('complete', 'error'):
+                    break
+            except queue_module.Empty:
+                yield f"data: {json.dumps({'type': 'error', 'message': 'Processing timed out after 3 minutes.'})}\n\n"
+                break
+
+    response = StreamingHttpResponse(generate(), content_type='text/event-stream')
+    response['Cache-Control'] = 'no-cache'
+    response['X-Accel-Buffering'] = 'no'
+    return response
+
+
+# =============================================================================
+# STANDARD SUMMARIZATION VIEW (kept for non-SSE fallback / form rendering)
+# =============================================================================
 
 def summarize_view(request):
-    """Main summarization view that handles both standard and streaming AJAX requests."""
+    """Main summarization view — renders the form. POST is handled via SSE."""
     form = SummaryForm()
 
     if request.method == 'POST':
+        # Legacy non-SSE AJAX fallback (kept for compatibility)
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+
+        raw_title = request.POST.get('title', '').strip()
+        raw_text = request.POST.get('original_text', '').strip()
+        uploaded_file = request.FILES.get('file', None)
+
+        is_valid, error_message = _validate_input_edge_cases(
+            title=raw_title,
+            original_text=raw_text,
+            uploaded_file=uploaded_file
+        )
+
+        if not is_valid:
+            if is_ajax:
+                return JsonResponse({'success': False, 'error': error_message}, status=400)
+            messages.error(request, error_message)
+            return render(request, 'summarizer/summarize.html', {'form': form})
+
         post_data = request.POST.copy()
-        
-        # Handle File Upload
-        if 'file' in request.FILES and request.FILES['file']:
+
+        if uploaded_file:
             try:
-                title, text = _parse_uploaded_file(request.FILES['file'])
-                post_data.update({'title': title, 'original_text': text})
+                file_title, file_text = _parse_uploaded_file(uploaded_file)
+                post_data.update({'title': file_title, 'original_text': file_text})
             except ValueError as e:
-                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                if is_ajax:
                     return JsonResponse({'success': False, 'error': str(e)}, status=400)
                 messages.error(request, str(e))
                 return render(request, 'summarizer/summarize.html', {'form': form})
 
         form = SummaryForm(post_data, request.FILES)
 
-        # Validation & Processing
         if form.is_valid():
             data = form.cleaned_data
+
             try:
                 _validate_text_content(data['original_text'])
             except ValueError as e:
                 error_msg = str(e)
-                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                if is_ajax:
                     return JsonResponse({'success': False, 'error': error_msg}, status=400)
                 messages.error(request, error_msg)
                 return render(request, 'summarizer/summarize.html', {'form': form})
-            
-            user = request.user
 
-            # If it's an AJAX request, returns SSE stream
-            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                def event_stream():
-                    try:
-                        if data['method'] == 'hybrid':
-                            gen = predict_and_summarize(
-                                text=data['original_text'],
-                                title=data['title'],
-                                compression_ratio=data['compression_ratio'],
-                                stream=True
-                            )
-                        else:
-                            gen = summarize_traditional(
-                                text=data['original_text'],
-                                title=data['title'],
-                                compression_ratio=data['compression_ratio'],
-                                stream=True
-                            )
+            try:
+                if data['method'] == 'hybrid':
+                    result = predict_and_summarize(
+                        text=data['original_text'],
+                        title=data['title'],
+                        compression_ratio=data['compression_ratio']
+                    )
+                    summary_text = result['summary']
+                    entities = result['entities']
+                    effective_title = result.get('effective_title', data['title'])
+                else:
+                    result = summarize_traditional(
+                        text=data['original_text'],
+                        title=data['title'],
+                        compression_ratio=data['compression_ratio']
+                    )
+                    summary_text = result['summary']
+                    entities = []
+                    effective_title = result.get('effective_title', data['title'])
 
-                        result_data = None
-                        for event in gen:
-                            step = event['step']
-                            if step == 4 and 'result' in event:
-                                result_data = event['result']
-                                summary_text = result_data['summary']
-                                entities = result_data.get('entities', [])
+                final_title = data['title'] if data['title'] else effective_title
 
-                                # Save (if authenticated)
-                                summary_id = None
-                                if user.is_authenticated:
-                                    summary_obj = Summary.objects.create(
-                                        user=user,
-                                        title=data['title'],
-                                        original_text=data['original_text'],
-                                        summary_text=summary_text,
-                                        compression_ratio=data['compression_ratio'],
-                                        entities=entities,
-                                        method=data['method']
-                                    )
-                                    summary_id = summary_obj.id
+                summary_id = None
+                if request.user.is_authenticated:
+                    summary_obj = Summary.objects.create(
+                        user=request.user,
+                        title=final_title,
+                        original_text=data['original_text'],
+                        summary_text=summary_text,
+                        compression_ratio=data['compression_ratio'],
+                        entities=entities,
+                        method=data['method']
+                    )
+                    summary_id = summary_obj.id
 
-                                yield f"data: {json.dumps({'step': 4, 'done': True, 'success': True, 'mode': 'user' if user.is_authenticated else 'guest', 'summary': summary_text, 'entities': entities, 'summary_id': summary_id})}\n\n"
-                            else:
-                                yield f"data: {json.dumps({'step': step})}\n\n"
-
-                    except Exception as e:
-                        print(f"[ERROR] summarize_view SSE: {e}")
-                        yield f"data: {json.dumps({'error': str(e)})}\n\n"
-
-                response = StreamingHttpResponse(event_stream(), content_type='text/event-stream')
-                response['Cache-Control'] = 'no-cache'
-                response['X-Accel-Buffering'] = 'no'
-                return response
-
-            # Standard Response (Fallback for non-JS clients)
-            else:
-                try:
-                    if data['method'] == 'hybrid':
-                        result = predict_and_summarize(
-                            text=data['original_text'],
-                            title=data['title'],
-                            compression_ratio=data['compression_ratio'],
-                            stream=False
-                        )
-                        summary_text = result['summary']
-                        entities = result['entities']
-                    else:
-                        summary_text = summarize_traditional(
-                            text=data['original_text'],
-                            title=data['title'],
-                            compression_ratio=data['compression_ratio'],
-                            stream=False
-                        )
-                        entities = []
-
-                    summary_id = None
-                    if user.is_authenticated:
-                        summary_obj = Summary.objects.create(
-                            user=user,
-                            title=data['title'],
-                            original_text=data['original_text'],
-                            summary_text=summary_text,
-                            compression_ratio=data['compression_ratio'],
-                            entities=entities,
-                            method=data['method']
-                        )
-                        summary_id = summary_obj.id
-
-                    messages.success(request, '✓ Summary generated successfully!')
-                    return render(request, 'summarizer/summarize.html', {
-                        'form': form,
-                        'result': {'summary': summary_text, 'entities': entities, 'id': summary_id}
+                if is_ajax:
+                    return JsonResponse({
+                        'success': True,
+                        'mode': 'user' if request.user.is_authenticated else 'guest',
+                        'summary': summary_text,
+                        'entities': entities,
+                        'summary_id': summary_id,
+                        'effective_title': final_title
                     })
 
-                except Exception as e:
-                    error_msg = f'Failed to generate summary: {str(e)}'
-                    print(f"[ERROR] summarize_view fallback: {e}")
-                    messages.error(request, error_msg)
+                messages.success(request, '✓ Summary generated successfully!')
+                return render(request, 'summarizer/summarize.html', {
+                    'form': form,
+                    'result': {
+                        'summary': summary_text,
+                        'entities': entities,
+                        'id': summary_id,
+                        'title': final_title
+                    }
+                })
 
+            except Exception as e:
+                error_msg = f'Failed to generate summary: {str(e)}'
+                print(f"[ERROR] summarize_view: {e}")
+
+                if is_ajax:
+                    return JsonResponse({'success': False, 'error': error_msg}, status=500)
+                messages.error(request, error_msg)
         else:
-            # Form validation failed
-            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                errors = [f"{field}: {', '.join(errs)}" for field, errs in form.errors.items()]
-                return JsonResponse({
-                    'success': False, 
-                    'error': 'Validation failed: ' + '; '.join(errors)
-                }, status=400)
-            messages.error(request, 'Please correct the errors below.')
+            error_messages = []
+            for field, errors in form.errors.items():
+                for error in errors:
+                    if field == '__all__':
+                        error_messages.append(error)
+                    else:
+                        field_name = form.fields[field].label if field in form.fields else field
+                        error_messages.append(f"{field_name}: {error}")
+
+            combined_error = " | ".join(error_messages)
+
+            if is_ajax:
+                return JsonResponse({'success': False, 'error': combined_error}, status=400)
+
+            for msg in error_messages:
+                messages.error(request, msg)
 
     return render(request, 'summarizer/summarize.html', {'form': form})
+
 
 @login_required
 def summary_detail(request, pk):
     """Detail view for a single summary"""
     summary = get_object_or_404(Summary, pk=pk, user=request.user)
 
-    # Process entities for display
     entities_list = []
     if summary.entities and isinstance(summary.entities, list):
         for entity in summary.entities:
@@ -314,8 +503,7 @@ def charts_view(request):
         img_path = os.path.join(base_path, 'training_history.png')
         if os.path.exists(img_path):
             with open(img_path, "rb") as image_file:
-                encoded_string = base64.b64encode(
-                    image_file.read()).decode('utf-8')
+                encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
                 context['chart_image'] = f"data:image/png;base64,{encoded_string}"
 
         report_path = os.path.join(base_path, 'classification_report.txt')
@@ -323,9 +511,10 @@ def charts_view(request):
         if os.path.exists(report_path):
             with open(report_path, 'r') as f:
                 lines = f.readlines()
-                for line in lines[2:]: 
+                for line in lines[2:]:
                     parts = line.split()
-                    if not parts: continue
+                    if not parts:
+                        continue
 
                     if parts[0] == 'accuracy':
                         report_data.append({
@@ -392,19 +581,21 @@ def comparison_view(request):
         except ValueError:
             compression_ratio = 0.3
 
-        if not text or not title:
-            error_msg = 'Please provide both title and text'
+        if not text:
+            error_msg = 'Please provide text for comparison'
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                 return JsonResponse({'success': False, 'error': error_msg}, status=400)
             messages.error(request, error_msg)
             return render(request, 'summarizer/comparison.html')
 
         try:
-            traditional_summary = summarize_traditional(
+            traditional_result = summarize_traditional(
                 text=text,
                 title=title,
                 compression_ratio=compression_ratio
             )
+            traditional_summary = traditional_result['summary']
+            final_title = title if title else traditional_result.get('effective_title', 'Untitled Comparison')
 
             hybrid_result = predict_and_summarize(
                 text=text,
@@ -414,6 +605,7 @@ def comparison_view(request):
 
             response_data = {
                 'success': True,
+                'title': final_title,
                 'traditional': traditional_summary,
                 'hybrid': hybrid_result['summary'],
                 'traditional_words': len(traditional_summary.split()),
@@ -429,7 +621,7 @@ def comparison_view(request):
         except Exception as e:
             error_msg = f'Comparison failed: {str(e)}'
             print(f"[ERROR] comparison_view: {e}")
-            
+
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                 return JsonResponse({'success': False, 'error': error_msg}, status=500)
             messages.error(request, error_msg)

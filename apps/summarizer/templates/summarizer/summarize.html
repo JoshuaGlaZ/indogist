@@ -471,324 +471,286 @@
     </div>
 </div>
 {% endblock %}
-
 {% block extra_js %}
 <script>
-document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', () => {
+        const dropzone = document.getElementById('fileDropzone');
+        const fileInput = document.querySelector('input[name="file"]');
+        const fileNameDisplay = document.getElementById('fileName');
+        const cancelBtn = document.getElementById('cancelFileBtn');
+        const titleInput = document.getElementById('id_title');
+        const textInput = document.getElementById('id_original_text');
 
-    // ── Element references ────────────────────────────────────────────────
-    const dropzone        = document.getElementById('fileDropzone');
-    const fileInput       = document.querySelector('input[name="file"]');
-    const fileNameDisplay = document.getElementById('fileName');
-    const cancelBtn       = document.getElementById('cancelFileBtn');
-    const titleInput      = document.getElementById('id_title');
-    const textInput       = document.getElementById('id_original_text');
-    const summaryForm     = document.getElementById('summaryForm');
-    const submitBtn       = document.getElementById('submitBtn');
-    const loadingIndicator = document.getElementById('loadingIndicator');
-    const summaryOutput   = document.getElementById('summaryOutput');
-    const slider          = document.getElementById('compressionSlider');
-    const hiddenInput     = document.getElementById('id_compression_ratio');
-    const lengthLabel     = document.getElementById('lengthLabel');
+        if (titleInput) titleInput.removeAttribute('required');
+        if (textInput) textInput.removeAttribute('required');
 
-    const isAuthenticated = {{ user.is_authenticated|yesno:"true,false" }};
-    let summaryIdForRedirect = null;
-
-    // ── Remove HTML5 required so browser never blocks submit ─────────────
-    if (titleInput) titleInput.removeAttribute('required');
-    if (textInput)  textInput.removeAttribute('required');
-
-    // ── File drag-and-drop ────────────────────────────────────────────────
-    if (dropzone && fileInput) {
-        dropzone.addEventListener('click', (e) => {
-            if (e.target.closest('#cancelFileBtn')) return;
-            fileInput.click();
-        });
-        dropzone.addEventListener('dragover',  (e) => { e.preventDefault(); dropzone.classList.add('dragover'); });
-        dropzone.addEventListener('dragleave', ()  => { dropzone.classList.remove('dragover'); });
-        dropzone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropzone.classList.remove('dragover');
-            if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
-        });
-        fileInput.addEventListener('change', (e) => {
-            if (e.target.files.length) handleFile(e.target.files[0]);
-        });
-    }
-
-    function handleFile(file) {
-        if (!file.name.endsWith('.txt')) {
-            window.notify.error('Please upload a .txt file only');
-            fileInput.value = '';
-            return;
+        if (dropzone && fileInput) {
+            dropzone.addEventListener('click', (e) => {
+                if (e.target.closest('#cancelFileBtn')) return;
+                fileInput.click();
+            });
+            dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('dragover'); });
+            dropzone.addEventListener('dragleave', () => { dropzone.classList.remove('dragover'); });
+            dropzone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropzone.classList.remove('dragover');
+                if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+            });
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length) handleFile(e.target.files[0]);
+            });
         }
-        const dt = new DataTransfer();
-        dt.items.add(file);
-        fileInput.files = dt.files;
 
-        fileNameDisplay.innerHTML = `<span class="text-success"><i class="fas fa-check"></i> ${file.name}</span>`;
-        dropzone.classList.add('has-file');
-        updateInputMode('file');
-
-        if (titleInput) { titleInput.disabled = true; titleInput.value = ''; }
-        if (textInput)  { textInput.disabled  = true; textInput.value  = ''; }
-        window.notify.success('File uploaded successfully', 3000);
-    }
-
-    if (cancelBtn) {
-        cancelBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            fileInput.value = '';
-            const dt = new DataTransfer();
-            fileInput.files = dt.files;
-            dropzone.classList.remove('has-file');
-            fileNameDisplay.innerHTML = 'Supports template format only';
-            updateInputMode('manual');
-            if (titleInput) titleInput.disabled = false;
-            if (textInput)  textInput.disabled  = false;
-            window.notify.success('File removed successfully', 3000);
-        });
-    }
-
-    function updateInputMode(mode) {
-        const indicator = document.getElementById('inputModeIndicator');
-        if (!indicator) return;
-        if (mode === 'file') {
-            indicator.textContent = 'File Upload';
-            indicator.className = 'input-mode-indicator mode-file';
-        } else {
-            indicator.textContent = 'Manual Input';
-            indicator.className = 'input-mode-indicator mode-manual';
+        function handleFile(file) {
+            if (file.name.endsWith('.txt')) {
+                const dt = new DataTransfer();
+                dt.items.add(file);
+                fileInput.files = dt.files;
+                fileNameDisplay.innerHTML = `<span class="text-success"><i class="fas fa-check"></i> ${file.name}</span>`;
+                if (dropzone) dropzone.classList.add('has-file');
+                updateInputMode('file');
+                if (titleInput) { titleInput.disabled = true; titleInput.value = ''; }
+                if (textInput) { textInput.disabled = true; textInput.value = ''; }
+                window.notify.success('File uploaded successfully', 3000);
+            } else {
+                window.notify.error('Please upload a .txt file only');
+                fileInput.value = "";
+            }
         }
-    }
 
-    // ── Compression slider ────────────────────────────────────────────────
-    if (slider && hiddenInput && lengthLabel) {
-        const initVal = parseFloat(slider.value);
-        lengthLabel.textContent = Math.round(initVal * 100) + '%';
-        slider.addEventListener('input', (e) => {
-            const val = parseFloat(e.target.value);
-            hiddenInput.value = val;
-            lengthLabel.textContent = Math.round(val * 100) + '%';
-        });
-    }
-
-    // ── SSE step helpers ──────────────────────────────────────────────────
-    const STEP_DEFAULTS = {
-        step1: 'Sentence Tokenization',
-        step2: 'Building TF-IDF Matrix',
-        step3: 'Feature Extraction',
-        step4: 'Scoring & Selection',
-    };
-
-    function resetSteps() {
-        document.querySelectorAll('.step-item').forEach(el => {
-            el.classList.remove('active', 'done');
-            const labelEl = el.querySelector('.step-label');
-            if (labelEl) labelEl.textContent = labelEl.dataset.default || '';
-            const circle = el.querySelector('.step-circle i');
-            // restore original icon per step
-            const icons = { step1: 'fa-file-alt', step2: 'fa-table', step3: 'fa-brain', step4: 'fa-sort-amount-down' };
-            if (circle) circle.className = `fas ${icons[el.id] || 'fa-circle'}`;
-        });
-    }
-
-    function setStep(stepId, status, label) {
-        const el = document.getElementById(stepId);
-        if (!el) return;
-
-        if (status === 'active') {
-            el.classList.add('active');
-            el.classList.remove('done');
-            if (label) el.querySelector('.step-label').textContent = label;
-        } else if (status === 'done') {
-            el.classList.remove('active');
-            el.classList.add('done');
-            // swap icon to checkmark
-            const circle = el.querySelector('.step-circle i');
-            if (circle) circle.className = 'fas fa-check';
-            // restore default label text so done steps are still readable
-            const labelEl = el.querySelector('.step-label');
-            if (labelEl) labelEl.textContent = labelEl.dataset.default || labelEl.textContent;
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                fileInput.value = "";
+                const dt = new DataTransfer();
+                fileInput.files = dt.files;
+                if (dropzone) dropzone.classList.remove('has-file');
+                fileNameDisplay.innerHTML = 'Supports template format only';
+                updateInputMode('manual');
+                if (titleInput) titleInput.disabled = false;
+                if (textInput) textInput.disabled = false;
+                window.notify.success('File removed successfully', 3000);
+            });
         }
-    }
 
-    // ── SSE fetch-stream submission ───────────────────────────────────────
-    if (summaryForm) {
-        summaryForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            e.stopImmediatePropagation();
+        function updateInputMode(mode) {
+            const indicator = document.getElementById('inputModeIndicator');
+            if (!indicator) return;
+            if (mode === 'file') {
+                indicator.textContent = 'File Upload';
+                indicator.className = 'input-mode-indicator mode-file';
+            } else {
+                indicator.textContent = 'Manual Input';
+                indicator.className = 'input-mode-indicator mode-manual';
+            }
+        }
 
-            // UI reset
-            Loading.buttonLoading(submitBtn, 'Processing...');
-            loadingIndicator.classList.remove('d-none');
-            summaryOutput.classList.add('d-none');
-            resetSteps();
+        const slider = document.getElementById('compressionSlider');
+        const hiddenInput = document.getElementById('id_compression_ratio');
+        const label = document.getElementById('lengthLabel');
 
-            const formData = new FormData(summaryForm);
+        if (slider && hiddenInput && label) {
+            label.textContent = Math.round(parseFloat(slider.value) * 100) + "%";
+            slider.addEventListener('input', (e) => {
+                const val = parseFloat(e.target.value);
+                hiddenInput.value = val;
+                label.textContent = Math.round(val * 100) + "%";
+            });
+        }
 
-            try {
-                const response = await fetch("{% url 'summarizer:summarize_sse' %}", {
-                    method: 'POST',
-                    body: formData,
-                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
-                });
+        const summaryForm = document.getElementById('summaryForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const summaryOutput = document.getElementById('summaryOutput');
 
-                // Non-streaming error (validation rejected before stream started)
-                if (!response.ok) {
-                    let errMsg = 'Request failed. Please check your input.';
+        let summaryIdForRedirect = null;
+        const isAuthenticated = {{ user.is_authenticated|yesno:"true,false" }};
+
+        // Step helpers
+        const updateStep = (id, state) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            if (state === 'active') {
+                el.classList.add('active');
+                el.classList.remove('done');
+            } else if (state === 'done') {
+                el.classList.remove('active');
+                el.classList.add('done');
+                el.querySelector('.step-circle').innerHTML = '<i class="fas fa-check"></i>';
+            } else if (state === 'reset') {
+                el.classList.remove('active', 'done');
+            }
+        };
+
+        const resetSteps = () => ['step1', 'step2', 'step3', 'step4'].forEach(id => updateStep(id, 'reset'));
+
+        // SSE stream reader — works with POST via fetch ReadableStream
+        async function consumeSSEStream(response, onStep, onDone, onError) {
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split('\n');
+                buffer = lines.pop(); // keep any incomplete line for next chunk
+
+                for (const line of lines) {
+                    if (!line.startsWith('data: ')) continue;
+                    const raw = line.slice(6).trim();
+                    if (!raw) continue;
+
                     try {
-                        const errData = await response.json();
-                        if (errData.error) errMsg = errData.error;
-                    } catch (_) { /* ignore */ }
-                    throw new Error(errMsg);
-                }
+                        const data = JSON.parse(raw);
 
-                // ── Read SSE stream ───────────────────────────────────────
-                const reader  = response.body.getReader();
-                const decoder = new TextDecoder();
-                let buffer    = '';
-
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-
-                    buffer += decoder.decode(value, { stream: true });
-
-                    // SSE lines end with \n\n; split on double-newline for events
-                    const parts = buffer.split('\n\n');
-                    buffer = parts.pop();          // keep last (possibly incomplete) chunk
-
-                    for (const part of parts) {
-                        // Each part may be "data: {...}"
-                        const dataLine = part.split('\n').find(l => l.startsWith('data: '));
-                        if (!dataLine) continue;
-
-                        let event;
-                        try {
-                            event = JSON.parse(dataLine.slice(6));
-                        } catch (_) {
-                            continue;
+                        if (data.error) {
+                            onError(data.error);
+                            return;
                         }
-
-                        handleSSEEvent(event);
+                        if (data.done && data.success) {
+                            onDone(data);
+                            return;
+                        }
+                        if (data.step) {
+                            onStep(data.step);
+                        }
+                    } catch (parseErr) {
+                        console.warn('[SSE] Could not parse line:', raw);
                     }
                 }
-
-            } catch (error) {
-                console.error('[SSE] Error:', error);
-                window.notify.error(error.message || 'An error occurred. Please try again.');
-                loadingIndicator.classList.add('d-none');
-            } finally {
-                Loading.buttonReady(submitBtn);
             }
-        }, { capture: true });
-    }
+        }
 
-    // ── SSE event dispatcher ──────────────────────────────────────────────
-    function handleSSEEvent(event) {
-        switch (event.type) {
+        if (summaryForm) {
+            summaryForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
 
-            case 'connected':
-                // Stream open — activate first step immediately
-                setStep('step1', 'active');
-                break;
+                const formData = new FormData(summaryForm);
 
-            case 'step':
-                setStep(event.step, event.status, event.label || null);
-                break;
+                Loading.buttonLoading(submitBtn, 'Processing...');
+                loadingIndicator.classList.remove('d-none');
+                summaryOutput.classList.add('d-none');
+                resetSteps();
+                updateStep('step1', 'active');
 
-            case 'complete':
-                // All steps done
-                ['step1', 'step2', 'step3', 'step4'].forEach(s => setStep(s, 'done'));
+                try {
+                    const response = await fetch(summaryForm.action, {
+                        method: 'POST',
+                        body: formData,
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    });
 
-                setTimeout(() => {
+                    if (!response.ok) {
+                        const errData = await response.json().catch(() => ({ error: `Server error ${response.status}` }));
+                        throw new Error(errData.error || `Server error ${response.status}`);
+                    }
+
+                    const contentType = response.headers.get('Content-Type') || '';
+
+                    if (contentType.includes('text/event-stream')) {
+                        await consumeSSEStream(
+                            response,
+                            // onStep — advance indicators as backend yields each step
+                            (step) => {
+                                for (let i = 1; i < step; i++) updateStep(`step${i}`, 'done');
+                                updateStep(`step${step}`, 'active');
+                            },
+                            // onDone — display result
+                            (data) => {
+                                summaryIdForRedirect = data.summary_id || null;
+                                ['step1', 'step2', 'step3', 'step4'].forEach(id => updateStep(id, 'done'));
+                                setTimeout(() => {
+                                    loadingIndicator.classList.add('d-none');
+                                    displaySummary(data.summary, data.mode);
+                                    window.notify.success('Summary generated successfully!', 5000);
+                                }, 400);
+                            },
+                            // onError
+                            (msg) => {
+                                loadingIndicator.classList.add('d-none');
+                                window.notify.error(msg);
+                            }
+                        );
+                    } else {
+                        // Fallback for plain JSON (e.g. validation errors returned before streaming starts)
+                        const data = await response.json();
+                        if (data.success) {
+                            summaryIdForRedirect = data.summary_id || null;
+                            ['step1', 'step2', 'step3', 'step4'].forEach(id => updateStep(id, 'done'));
+                            setTimeout(() => {
+                                loadingIndicator.classList.add('d-none');
+                                displaySummary(data.summary, data.mode);
+                                window.notify.success('Summary generated successfully!', 5000);
+                            }, 400);
+                        } else {
+                            throw new Error(data.error || 'Summarization failed.');
+                        }
+                    }
+
+                } catch (error) {
+                    console.error('[summarize]', error);
                     loadingIndicator.classList.add('d-none');
-                    displaySummary(event.summary, event.mode, event.summary_id);
-                    window.notify.success('Summary generated successfully!', 5000);
-                }, 500);
-                break;
-
-            case 'error':
-                loadingIndicator.classList.add('d-none');
-                window.notify.error(event.message || 'Processing failed. Please try again.');
-                break;
-
-            default:
-                break;
-        }
-    }
-
-    // ── Display final summary ─────────────────────────────────────────────
-    function displaySummary(summary, mode, summaryId) {
-        const summaryTextEl  = document.getElementById('summaryText');
-        const guestNotice    = document.getElementById('guestNotice');
-        const viewDetailsBtn = document.getElementById('viewDetailsBtn');
-
-        summaryIdForRedirect = summaryId || null;
-        summaryTextEl.textContent = summary;
-
-        if (mode === 'guest' || !isAuthenticated) {
-            guestNotice.classList.remove('d-none');
-            viewDetailsBtn.disabled = true;
-            viewDetailsBtn.innerHTML = '<i class="fas fa-lock"></i> Login to View Details';
-        } else {
-            guestNotice.classList.add('d-none');
-            viewDetailsBtn.disabled = false;
-            viewDetailsBtn.innerHTML = '<i class="fas fa-eye"></i> View Full Details';
+                    window.notify.error(error.message || 'An unexpected error occurred. Please try again.');
+                } finally {
+                    Loading.buttonReady(submitBtn);
+                }
+            });
         }
 
-        summaryOutput.classList.remove('d-none');
-        summaryOutput.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
+        function displaySummary(summary, mode) {
+            const summaryTextEl = document.getElementById('summaryText');
+            const guestNotice = document.getElementById('guestNotice');
+            const viewDetailsBtn = document.getElementById('viewDetailsBtn');
 
-    // ── Public helpers ────────────────────────────────────────────────────
-    window.handleViewDetails = function () {
-        if (summaryIdForRedirect && isAuthenticated) {
-            window.location.href = `/summary/${summaryIdForRedirect}/`;
-        } else if (!isAuthenticated) {
-            window.location.href = '/accounts/login/?next={% url "summarizer:summarize" %}';
-        }
-    };
+            summaryTextEl.textContent = summary;
 
-    window.copyToClipboard = function () {
-        const text = document.getElementById('summaryText').innerText;
-        navigator.clipboard.writeText(text).then(() => {
-            window.notify.success('Summary copied to clipboard!', 3000);
-        }).catch(() => {
-            window.notify.error('Failed to copy text. Please try again.', 5000);
-        });
-    };
+            if (mode === 'guest' || !isAuthenticated) {
+                guestNotice.classList.remove('d-none');
+                viewDetailsBtn.disabled = true;
+                viewDetailsBtn.innerHTML = '<i class="fas fa-lock"></i> Login to View Details';
+            } else {
+                guestNotice.classList.add('d-none');
+                viewDetailsBtn.disabled = false;
+                viewDetailsBtn.innerHTML = '<i class="fas fa-eye"></i> View Full Details';
+            }
 
-    window.resetForm = function () {
-        summaryForm.reset();
-
-        if (fileInput) {
-            fileInput.value = '';
-            const dt = new DataTransfer();
-            fileInput.files = dt.files;
+            summaryOutput.classList.remove('d-none');
+            summaryOutput.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
 
-        if (dropzone)        dropzone.classList.remove('has-file');
-        if (fileNameDisplay) fileNameDisplay.innerHTML = 'Supports template format only';
-        if (titleInput)      titleInput.disabled = false;
-        if (textInput)       textInput.disabled  = false;
+        window.handleViewDetails = function () {
+            if (summaryIdForRedirect && isAuthenticated) {
+                window.location.href = `/summary/${summaryIdForRedirect}/`;
+            } else if (!isAuthenticated) {
+                window.location.href = '/accounts/login/?next={% url "summarizer:summarize" %}';
+            }
+        };
 
-        updateInputMode('manual');
-        summaryOutput.classList.add('d-none');
+        window.copyToClipboard = function () {
+            const text = document.getElementById('summaryText').innerText;
+            navigator.clipboard.writeText(text)
+                .then(() => window.notify.success('Summary copied to clipboard!', 3000))
+                .catch(() => window.notify.error('Failed to copy text. Please try again.', 5000));
+        };
 
-        if (slider && hiddenInput && lengthLabel) {
-            slider.value = 0.3;
-            hiddenInput.value = 0.3;
-            lengthLabel.textContent = '30%';
-        }
-
-        summaryIdForRedirect = null;
-        summaryForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        window.notify.success('Form reset. Ready for new summary!', 3000);
-    };
-
-});
+        window.resetForm = function () {
+            summaryForm.reset();
+            if (fileInput) { fileInput.value = ""; const dt = new DataTransfer(); fileInput.files = dt.files; }
+            if (dropzone) dropzone.classList.remove('has-file');
+            if (fileNameDisplay) fileNameDisplay.innerHTML = 'Supports template format only';
+            if (titleInput) titleInput.disabled = false;
+            if (textInput) textInput.disabled = false;
+            updateInputMode('manual');
+            summaryOutput.classList.add('d-none');
+            if (slider && hiddenInput && label) { slider.value = 0.3; hiddenInput.value = 0.3; label.textContent = '30%'; }
+            summaryIdForRedirect = null;
+            summaryForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            window.notify.success('Form reset. Ready for new summary!', 3000);
+        };
+    });
 </script>
 {% endblock %}
