@@ -190,10 +190,6 @@ def _parse_and_validate_form(request):
     return data, None
 
 
-# =============================================================================
-# SSE STREAMING SUMMARIZATION VIEW
-# =============================================================================
-
 def summarize_sse(request):
     """
     Server-Sent Events endpoint for real-time summarization progress.
@@ -292,10 +288,6 @@ def summarize_sse(request):
     return response
 
 
-# =============================================================================
-# STANDARD SUMMARIZATION VIEW (kept for non-SSE fallback / form rendering)
-# =============================================================================
-
 def summarize_view(request):
     """Main summarization view — renders the form. POST is handled via SSE."""
     form = SummaryForm()
@@ -360,7 +352,8 @@ def summarize_view(request):
                     result = summarize_traditional(
                         text=data['original_text'],
                         title=data['title'],
-                        compression_ratio=data['compression_ratio']
+                        compression_ratio=data['compression_ratio'],
+                        stream=False
                     )
                     summary_text = result['summary']
                     entities = []
