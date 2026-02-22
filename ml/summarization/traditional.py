@@ -6,11 +6,17 @@ from .utils import text_to_sentences, preprocess_tfidf, extract_tf_query
 from ml.ner.loader import stemmer, stopword_remover
 
 
-def summarize_traditional(text, title, compression_ratio=0.3, stream=True):
+def summarize_traditional(text, title, compression_ratio=0.3, stream=True, progress_callback=None):
     """
-    If stream=True, acts as a generator yielding progress steps: {'step': N}
-    until the final {'step': 4, 'result': ...}.
-    Otherwise, returns the final summary text directly.
+    Summarize text using traditional statistical methods (TF-IDF).
+
+    Modes:
+      - progress_callback provided: runs synchronously, calls callback with
+        {'step': N} events, returns the result dict directly.
+      - stream=True (no callback): returns a generator yielding {'step': N}
+        events until {'step': 4, 'result': {...}}.
+      - stream=False (no callback): runs to completion and returns the result
+        dict: {'summary': ..., 'entities': [], 'effective_title': ...}.
     """
     def _generator():
         # --- Step 1: Preprocessing ---
@@ -20,7 +26,6 @@ def summarize_traditional(text, title, compression_ratio=0.3, stream=True):
         n_sentences = len(sentences)
 
         processed_sents = preprocess_tfidf(sentences)
-        processed_title = stopword_remover.remove(stemmer.stem(title))
 
         tfidf_vectorizer = TfidfVectorizer()
         tfidf_matrix = tfidf_vectorizer.fit_transform(processed_sents)
@@ -77,13 +82,23 @@ def summarize_traditional(text, title, compression_ratio=0.3, stream=True):
             }
         }
 
-    if stream:
-        return _generator()
-    else:
-        # Run the generator to exhaustion and return just the summary string
-        # for backwards compatibility with non-streamed calls
-        result_text = ""
+    # Mode 1: progress_callback — run synchronously, push events via callback
+    if progress_callback is not None:
+        result = None
         for step_data in _generator():
             if step_data.get('step') == 4 and 'result' in step_data:
-                result_text = step_data['result']['summary']
-        return result_text
+                result = step_data['result']
+            else:
+                progress_callback(step_data)
+        return result
+
+    # Mode 2: stream — return the raw generator
+    if stream:
+        return _generator()
+
+    # Mode 3: non-stream — exhaust generator and return result dict
+    result = None
+    for step_data in _generator():
+        if step_data.get('step') == 4 and 'result' in step_data:
+            result = step_data['result']
+    return result

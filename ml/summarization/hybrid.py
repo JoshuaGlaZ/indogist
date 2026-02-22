@@ -57,11 +57,17 @@ def compute_hybrid_scores(sentences, title, ner_results, tfidf_mat, vectorizer):
 
     return feature_matrix
 
-def predict_and_summarize(text, title=None, compression_ratio=0.3, stream=False):
+def predict_and_summarize(text, title=None, compression_ratio=0.3, stream=False, progress_callback=None):
     """
-    If stream=True, acts as a generator yielding progress steps: {'step': N}
-    until the final {'step': 4, 'result': ...}.
-    Otherwise, returns the final result dict directly.
+    Summarize text using hybrid NER-enhanced method.
+
+    Modes:
+      - progress_callback provided: runs synchronously, calls callback with
+        {'step': N} events, returns the result dict directly.
+      - stream=True (no callback): returns a generator yielding {'step': N}
+        events until {'step': 4, 'result': {...}}.
+      - stream=False (no callback): runs to completion and returns the result
+        dict: {'summary': ..., 'entities': [...], 'effective_title': ...}.
     """
     def _generator():
         # --- Step 1: Preprocessing ---
@@ -123,12 +129,23 @@ def predict_and_summarize(text, title=None, compression_ratio=0.3, stream=False)
             }
         }
 
-    if stream:
-        return _generator()
-    else:
-        # Run the generator to exhaustion and return the final result
+    # Mode 1: progress_callback — run synchronously, push events via callback
+    if progress_callback is not None:
         result = None
         for step_data in _generator():
             if step_data.get('step') == 4 and 'result' in step_data:
                 result = step_data['result']
+            else:
+                progress_callback(step_data)
         return result
+
+    # Mode 2: stream — return the raw generator
+    if stream:
+        return _generator()
+
+    # Mode 3: non-stream — exhaust generator and return result dict
+    result = None
+    for step_data in _generator():
+        if step_data.get('step') == 4 and 'result' in step_data:
+            result = step_data['result']
+    return result

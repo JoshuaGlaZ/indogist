@@ -353,7 +353,7 @@ def summarize_view(request):
                         text=data['original_text'],
                         title=data['title'],
                         compression_ratio=data['compression_ratio'],
-                        stream=False
+                        stream=False,
                     )
                     summary_text = result['summary']
                     entities = []
@@ -585,7 +585,8 @@ def comparison_view(request):
             traditional_result = summarize_traditional(
                 text=text,
                 title=title,
-                compression_ratio=compression_ratio
+                compression_ratio=compression_ratio,
+                stream=False,
             )
             traditional_summary = traditional_result['summary']
             final_title = title if title else traditional_result.get('effective_title', 'Untitled Comparison')
