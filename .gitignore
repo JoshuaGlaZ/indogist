@@ -171,3 +171,5 @@ data/indosum/
 data/ner/
 */__pycache__/
 .agents/
+/.agents
+*.pyc
