@@ -25,5 +25,4 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          # Push the selected branch to the 'main' branch of the HF Space
-          git push --force https://YOUR_HF_USERNAME:$HF_TOKEN@huggingface.co/spaces/YOUR_HF_USERNAME/YOUR_SPACE_NAME ${{ github.event.inputs.branch || github.ref_name }}:main
+          git push --force https://glaza:$HF_TOKEN@huggingface.co/spaces/glaza/indogist ${{ github.event.inputs.branch || github.ref_name }}:main
