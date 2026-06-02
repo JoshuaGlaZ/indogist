@@ -12,6 +12,12 @@ USER user
 ENV PATH="/home/user/.local/bin:${PATH}"
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
+ENV DJANGO_DEBUG=False
+ENV DJANGO_ALLOWED_HOSTS=.hf.space,.huggingface.co
+ENV DJANGO_SSL_REDIRECT=False
+ENV DJANGO_HSTS_SECONDS=31536000
+ENV DJANGO_SESSION_COOKIE_SECURE=True
+ENV DJANGO_CSRF_COOKIE_SECURE=True
 
 WORKDIR /app
 
@@ -32,4 +38,7 @@ RUN DB_PASSWORD="dummy" \
 
 EXPOSE 7860
 
-CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:7860", "--timeout", "300", "--workers", "1", "--preload"]
+COPY --chown=user:user docker-entrypoint.sh .
+RUN chmod +x docker-entrypoint.sh
+
+CMD ["./docker-entrypoint.sh"]

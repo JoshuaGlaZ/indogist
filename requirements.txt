@@ -17,3 +17,6 @@ nltk
 joblib
 
 whitenoise
+
+django-q2
+redis
