@@ -298,7 +298,13 @@
                 </div>
 
                 <form id="summaryForm" method="post" action="{% url 'summarizer:summarize' %}"
-                    enctype="multipart/form-data" novalidate>
+                    enctype="multipart/form-data" novalidate
+                    hx-post="{% url 'summarizer:summarize' %}"
+                    hx-trigger="submit"
+                    hx-headers='{"X-Requested-With": "XMLHttpRequest"}'
+                    hx-indicator="#loadingIndicator"
+                    hx-target="#summaryOutput"
+                    hx-swap="none">
                     {% csrf_token %}
 
                     <div class="mb-4" id="titleInputGroup">
@@ -566,161 +572,6 @@
 
         let summaryIdForRedirect = null;
         const isAuthenticated = {{ user.is_authenticated|yesno:"true,false" }};
-
-        // Step helpers
-        const updateStep = (id, state) => {
-            const el = document.getElementById(id);
-            if (!el) return;
-            if (state === 'active') {
-                el.classList.add('active');
-                el.classList.remove('done');
-            } else if (state === 'done') {
-                el.classList.remove('active');
-                el.classList.add('done');
-                el.querySelector('.step-circle').innerHTML = '<i class="fas fa-check"></i>';
-            } else if (state === 'reset') {
-                el.classList.remove('active', 'done');
-            }
-        };
-
-        const resetSteps = () => ['step1', 'step2', 'step3', 'step4'].forEach(id => updateStep(id, 'reset'));
-
-        // SSE stream reader — works with POST via fetch ReadableStream
-        async function consumeSSEStream(response, onStep, onDone, onError) {
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
-            let buffer = '';
-
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-
-                buffer += decoder.decode(value, { stream: true });
-                const lines = buffer.split('\n');
-                buffer = lines.pop(); // keep any incomplete line for next chunk
-
-                for (const line of lines) {
-                    if (!line.startsWith('data: ')) continue;
-                    const raw = line.slice(6).trim();
-                    if (!raw) continue;
-
-                    try {
-                        const data = JSON.parse(raw);
-
-                        if (data.error) {
-                            onError(data.error);
-                            return;
-                        }
-                        if (data.done && data.success) {
-                            onDone(data);
-                            return;
-                        }
-                        if (data.step) {
-                            onStep(data.step);
-                        }
-                    } catch (parseErr) {
-                        console.warn('[SSE] Could not parse line:', raw);
-                    }
-                }
-            }
-        }
-
-        if (summaryForm) {
-            summaryForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-
-                const formData = new FormData(summaryForm);
-
-                Loading.buttonLoading(submitBtn, 'Processing...');
-                loadingIndicator.classList.remove('d-none');
-                summaryOutput.classList.add('d-none');
-                resetSteps();
-                updateStep('step1', 'active');
-
-                try {
-                    const response = await fetch(summaryForm.action, {
-                        method: 'POST',
-                        body: formData,
-                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
-                    });
-
-                    if (!response.ok) {
-                        const errData = await response.json().catch(() => ({ error: `Server error ${response.status}` }));
-                        throw new Error(errData.error || `Server error ${response.status}`);
-                    }
-
-                    const contentType = response.headers.get('Content-Type') || '';
-
-                    if (contentType.includes('text/event-stream')) {
-                        await consumeSSEStream(
-                            response,
-                            // onStep — advance indicators as backend yields each step
-                            (step) => {
-                                for (let i = 1; i < step; i++) updateStep(`step${i}`, 'done');
-                                updateStep(`step${step}`, 'active');
-                            },
-                            // onDone — display result
-                            (data) => {
-                                summaryIdForRedirect = data.summary_id || null;
-                                ['step1', 'step2', 'step3', 'step4'].forEach(id => updateStep(id, 'done'));
-                                setTimeout(() => {
-                                    loadingIndicator.classList.add('d-none');
-                                    displaySummary(data.summary, data.mode);
-                                    window.notify.success('Summary generated successfully!', 5000);
-                                }, 400);
-                            },
-                            // onError
-                            (msg) => {
-                                loadingIndicator.classList.add('d-none');
-                                window.notify.error(msg);
-                            }
-                        );
-                    } else {
-                        // Fallback for plain JSON (e.g. validation errors returned before streaming starts)
-                        const data = await response.json();
-                        if (data.success) {
-                            summaryIdForRedirect = data.summary_id || null;
-                            ['step1', 'step2', 'step3', 'step4'].forEach(id => updateStep(id, 'done'));
-                            setTimeout(() => {
-                                loadingIndicator.classList.add('d-none');
-                                displaySummary(data.summary, data.mode);
-                                window.notify.success('Summary generated successfully!', 5000);
-                            }, 400);
-                        } else {
-                            throw new Error(data.error || 'Summarization failed.');
-                        }
-                    }
-
-                } catch (error) {
-                    console.error('[summarize]', error);
-                    loadingIndicator.classList.add('d-none');
-                    window.notify.error(error.message || 'An unexpected error occurred. Please try again.');
-                } finally {
-                    Loading.buttonReady(submitBtn);
-                }
-            });
-        }
-
-        function displaySummary(summary, mode) {
-            const summaryTextEl = document.getElementById('summaryText');
-            const guestNotice = document.getElementById('guestNotice');
-            const viewDetailsBtn = document.getElementById('viewDetailsBtn');
-
-            summaryTextEl.textContent = summary;
-
-            if (mode === 'guest' || !isAuthenticated) {
-                guestNotice.classList.remove('d-none');
-                viewDetailsBtn.disabled = true;
-                viewDetailsBtn.innerHTML = '<i class="fas fa-lock"></i> Login to View Details';
-            } else {
-                guestNotice.classList.add('d-none');
-                viewDetailsBtn.disabled = false;
-                viewDetailsBtn.innerHTML = '<i class="fas fa-eye"></i> View Full Details';
-            }
-
-            summaryOutput.classList.remove('d-none');
-            summaryOutput.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
 
         window.handleViewDetails = function () {
             if (summaryIdForRedirect && isAuthenticated) {
