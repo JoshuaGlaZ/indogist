@@ -1,0 +1,174 @@
+{# Jinja2 macros for form rendering - replaces crispy_forms and widget_tweaks #}
+
+{# Render a single form field with label, input, and errors #}
+{% macro render_field(field, attrs={}) %}
+{% set widget_type = field.field.widget.__class__.__name__ %}
+{% set field_id = field.id_for_label if field.id_for_label else field.name %}
+{% set css_class = attrs.get('class', 'form-control') %}
+{% set placeholder = attrs.get('placeholder', field.field.widget.attrs.get('placeholder', '')) %}
+{% set value = field.value() if field.value() is not none else '' %}
+
+<div class="mb-3">
+  {% if widget_type != 'HiddenInput' %}
+    <label for="{{ field_id }}" class="form-label fw-medium">{{ field.label }}</label>
+  {% endif %}
+
+  {% if widget_type in ['TextInput', 'EmailInput', 'PasswordInput', 'URLInput', 'NumberInput', 'DateInput', 'DateTimeInput', 'TimeInput'] %}
+    <input
+      type="{{ field.field.widget.input_type if hasattr(field.field.widget, 'input_type') else 'text' }}"
+      name="{{ field.name }}"
+      id="{{ field_id }}"
+      class="form-control{% if field.errors %} is-invalid{% endif %}"
+      value="{{ value }}"
+      placeholder="{{ placeholder }}"
+      {% if field.field.required %}required{% endif %}
+      {% for attr_name, attr_value in field.field.widget.attrs.items() %}
+        {% if attr_name != 'placeholder' %}
+          {{ attr_name }}="{{ attr_value }}"
+        {% endif %}
+      {% endfor %}
+      {% for attr_name, attr_value in attrs.items() %}
+        {% if attr_name != 'class' and attr_name != 'placeholder' %}
+          {{ attr_name }}="{{ attr_value }}"
+        {% endif %}
+      {% endfor %}
+    />
+
+  {% elif widget_type == 'Textarea' %}
+    <textarea
+      name="{{ field.name }}"
+      id="{{ field_id }}"
+      class="form-control{% if field.errors %} is-invalid{% endif %}"
+      placeholder="{{ placeholder }}"
+      rows="{{ field.field.widget.attrs.get('rows', 3) }}"
+      {% if field.field.required %}required{% endif %}
+      {% for attr_name, attr_value in field.field.widget.attrs.items() %}
+        {% if attr_name != 'placeholder' and attr_name != 'rows' %}
+          {{ attr_name }}="{{ attr_value }}"
+        {% endif %}
+      {% endfor %}
+      {% for attr_name, attr_value in attrs.items() %}
+        {% if attr_name != 'class' and attr_name != 'placeholder' and attr_name != 'rows' %}
+          {{ attr_name }}="{{ attr_value }}"
+        {% endif %}
+      {% endfor %}
+    >{{ value }}</textarea>
+
+  {% elif widget_type == 'Select' %}
+    <select
+      name="{{ field.name }}"
+      id="{{ field_id }}"
+      class="form-select{% if field.errors %} is-invalid{% endif %}"
+      {% if field.field.required %}required{% endif %}
+      {% for attr_name, attr_value in field.field.widget.attrs.items() %}
+        {{ attr_name }}="{{ attr_value }}"
+      {% endfor %}
+      {% for attr_name, attr_value in attrs.items() %}
+        {% if attr_name != 'class' %}
+          {{ attr_name }}="{{ attr_value }}"
+        {% endif %}
+      {% endfor %}
+    >
+      {% if field.field.widget.attrs.get('empty_label') or field.field.widget.empty_label is defined %}
+        <option value="">{{ field.field.widget.attrs.get('empty_label', '---') }}</option>
+      {% endif %}
+      {% for option_value, option_label in field.field.widget.choices %}
+        <option value="{{ option_value }}" {% if option_value|string == value|string %}selected{% endif %}>
+          {{ option_label }}
+        </option>
+      {% endfor %}
+    </select>
+
+  {% elif widget_type == 'CheckboxInput' %}
+    <div class="form-check">
+      <input
+        type="checkbox"
+        name="{{ field.name }}"
+        id="{{ field_id }}"
+        class="form-check-input{% if field.errors %} is-invalid{% endif %}"
+        {% if value %}checked{% endif %}
+        {% if field.field.required %}required{% endif %}
+        {% for attr_name, attr_value in field.field.widget.attrs.items() %}
+          {{ attr_name }}="{{ attr_value }}"
+        {% endfor %}
+      />
+      <label for="{{ field_id }}" class="form-check-label">{{ field.label }}</label>
+    </div>
+
+  {% elif widget_type == 'RadioSelect' %}
+    <div class="{% if field.errors %} is-invalid{% endif %}">
+      {% for option_value, option_label in field.field.widget.choices %}
+        <div class="form-check">
+          <input
+            type="radio"
+            name="{{ field.name }}"
+            id="{{ field_id }}_{{ loop.index }}"
+            class="form-check-input"
+            value="{{ option_value }}"
+            {% if option_value|string == value|string %}checked{% endif %}
+            {% if field.field.required %}required{% endif %}
+          />
+          <label for="{{ field_id }}_{{ loop.index }}" class="form-check-label">{{ option_label }}</label>
+        </div>
+      {% endfor %}
+    </div>
+
+  {% elif widget_type == 'FileInput' %}
+    <input
+      type="file"
+      name="{{ field.name }}"
+      id="{{ field_id }}"
+      class="form-control{% if field.errors %} is-invalid{% endif %}"
+      {% if field.field.required %}required{% endif %}
+      {% for attr_name, attr_value in field.field.widget.attrs.items() %}
+        {{ attr_name }}="{{ attr_value }}"
+      {% endfor %}
+    />
+
+  {% elif widget_type == 'HiddenInput' %}
+    <input
+      type="hidden"
+      name="{{ field.name }}"
+      id="{{ field_id }}"
+      value="{{ value }}"
+    />
+
+  {% else %}
+    {# Fallback for unknown widget types #}
+    <input
+      type="text"
+      name="{{ field.name }}"
+      id="{{ field_id }}"
+      class="form-control{% if field.errors %} is-invalid{% endif %}"
+      value="{{ value }}"
+      placeholder="{{ placeholder }}"
+      {% if field.field.required %}required{% endif %}
+    />
+  {% endif %}
+
+  {% if field.help_text %}
+    <div class="form-text">{{ field.help_text }}</div>
+  {% endif %}
+
+  {% if field.errors %}
+    {% for error in field.errors %}
+      <div class="invalid-feedback d-block">{{ error }}</div>
+    {% endfor %}
+  {% endif %}
+</div>
+{% endmacro %}
+
+{# Render all fields in a form #}
+{% macro render_form(form, attrs={}) %}
+{% for field in form %}
+  {{ render_field(field, attrs) }}
+{% endfor %}
+{% endmacro %}
+
+{# Render a form with crispy-like Bootstrap 5 styling #}
+{% macro render_crispy_form(form, attrs={}) %}
+<form method="{{ form.method if form.method else 'post' }}" action="{{ form.action if form.action else '' }}" {% if form.is_multipart %}enctype="multipart/form-data"{% endif %} novalidate>
+  {% csrf_token() %}
+  {{ render_form(form, attrs) }}
+</form>
+{% endmacro %}
