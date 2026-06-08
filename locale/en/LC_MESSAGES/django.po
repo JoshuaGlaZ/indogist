@@ -1,0 +1,131 @@
+# English translation for indogist
+# Copyright (C) 2026
+# This file is distributed under the same license as the indogist package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: indogist 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-06-23 10:00+0700\n"
+"PO-Revision-Date: 2026-06-23 10:00+0700\n"
+"Last-Translator: \n"
+"Language-Team: English\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Please provide content to summarize. You must either:\n• Enter a title and text manually, OR\n• Upload a file using the template format"
+msgstr ""
+
+msgid "Title provided but no text content found. Please either:\n• Enter text in the 'Original Text' field, OR\n• Upload a file using the template format"
+msgstr ""
+
+msgid "Uploaded file does not follow the template format. Please:\n• Download the template file\n• Fill it with TITLE= and TEXT= markers\n• Upload the completed template"
+msgstr ""
+
+msgid "Text content is empty."
+msgstr ""
+
+msgid "Text is too short for summarization. Please provide at least %(min_words)d words (currently: %(word_count)d words)."
+msgstr ""
+
+msgid "Text contains insufficient meaningful content. Please provide more substantial text for summarization."
+msgstr ""
+
+msgid "Validation failed."
+msgstr ""
+
+msgid "✓ Summary generated successfully!"
+msgstr ""
+
+msgid "Failed to generate summary: %(error)s"
+msgstr ""
+
+msgid "Please provide text for comparison"
+msgstr ""
+
+msgid "Comparison failed: %(error)s"
+msgstr ""
+
+msgid "This summary has already been added to the dataset"
+msgstr ""
+
+msgid "Successfully added to dataset!"
+msgstr ""
+
+msgid "Upload File (Optional)"
+msgstr ""
+
+msgid "Hybrid (AI/NER)"
+msgstr ""
+
+msgid "Traditional (Statistical)"
+msgstr ""
+
+msgid "Enter document title"
+msgstr ""
+
+msgid "Paste text here..."
+msgstr ""
+
+msgid "Please provide text or upload a file."
+msgstr ""
+
+msgid "Please provide a title or upload a file."
+msgstr ""
+
+msgid "Search by title, text, or summary..."
+msgstr ""
+
+msgid "All Methods"
+msgstr ""
+
+msgid "Hybrid (with NER)"
+msgstr ""
+
+msgid "Traditional"
+msgstr ""
+
+msgid "Newest First"
+msgstr ""
+
+msgid "Oldest First"
+msgstr ""
+
+msgid "Title (A-Z)"
+msgstr ""
+
+msgid "Title (Z-A)"
+msgstr ""
+
+msgid "Original Length (Low-High)"
+msgstr ""
+
+msgid "Original Length (High-Low)"
+msgstr ""
+
+msgid "From Date"
+msgstr ""
+
+msgid "To Date"
+msgstr ""
+
+msgid "Paste your Indonesian text here..."
+msgstr ""
+
+msgid "Short (20%)"
+msgstr ""
+
+msgid "Medium (30%)"
+msgstr ""
+
+msgid "Long (40%)"
+msgstr ""
+
+msgid "Extra Long (50%)"
+msgstr ""
+
+msgid "Text is too short for comparison. Please provide at least 10 words."
+msgstr ""

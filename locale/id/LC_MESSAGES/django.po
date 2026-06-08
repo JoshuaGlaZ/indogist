@@ -1,0 +1,131 @@
+# Indonesian translation for indogist
+# Copyright (C) 2026
+# This file is distributed under the same license as the indogist package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: indogist 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-06-23 10:00+0700\n"
+"PO-Revision-Date: 2026-06-23 10:00+0700\n"
+"Last-Translator: \n"
+"Language-Team: Indonesian\n"
+"Language: id\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+msgid "Please provide content to summarize. You must either:\n• Enter a title and text manually, OR\n• Upload a file using the template format"
+msgstr "Harap berikan kontent untuk diringkas. Anda harus:\n• Memasukkan judul dan teks secara manual, ATAU\n• Mengunggah file menggunakan format template"
+
+msgid "Title provided but no text content found. Please either:\n• Enter text in the 'Original Text' field, OR\n• Upload a file using the template format"
+msgstr "Judul diberikan tetapi tidak ditemukan konten teks. Harap:\n• Memasukkan teks di kolom 'Teks Asli', ATAU\n• Mengunggah file menggunakan format template"
+
+msgid "Uploaded file does not follow the template format. Please:\n• Download the template file\n• Fill it with TITLE= and TEXT= markers\n• Upload the completed template"
+msgstr "File yang diunggah tidak mengikuti format template. Harap:\n• Unduh file template\n• Isi dengan penanda TITLE= dan TEXT=\n• Unggah template yang sudah diisi"
+
+msgid "Text content is empty."
+msgstr "Konten teks kosong."
+
+msgid "Text is too short for summarization. Please provide at least %(min_words)d words (currently: %(word_count)d words)."
+msgstr "Teks terlalu pendek untuk diringkas. Harap berikan minimal %(min_words)d kata (saat ini: %(word_count)d kata)."
+
+msgid "Text contains insufficient meaningful content. Please provide more substantial text for summarization."
+msgstr "Teks mengandung konten bermakna yang tidak mencukupi. Harap berikan teks yang lebih substansial untuk diringkas."
+
+msgid "Validation failed."
+msgstr "Validasi gagal."
+
+msgid "✓ Summary generated successfully!"
+msgstr "✓ Ringkasan berhasil dibuat!"
+
+msgid "Failed to generate summary: %(error)s"
+msgstr "Gagal membuat ringkasan: %(error)s"
+
+msgid "Please provide text for comparison"
+msgstr "Harap berikan teks untuk perbandingan"
+
+msgid "Comparison failed: %(error)s"
+msgstr "Perbandingan gagal: %(error)s"
+
+msgid "This summary has already been added to the dataset"
+msgstr "Ringkasan ini sudah ditambahkan ke dataset"
+
+msgid "Successfully added to dataset!"
+msgstr "Berhasil ditambahkan ke dataset!"
+
+msgid "Upload File (Optional)"
+msgstr "Unggah File (Opsional)"
+
+msgid "Hybrid (AI/NER)"
+msgstr "Hybrid (AI/NER)"
+
+msgid "Traditional (Statistical)"
+msgstr "Tradisional (Statistik)"
+
+msgid "Enter document title"
+msgstr "Masukkan judul dokumen"
+
+msgid "Paste text here..."
+msgstr "Tempel teks di sini..."
+
+msgid "Please provide text or upload a file."
+msgstr "Harap berikan teks atau unggah file."
+
+msgid "Please provide a title or upload a file."
+msgstr "Harap berikan judul atau unggah file."
+
+msgid "Search by title, text, or summary..."
+msgstr "Cari berdasarkan judul, teks, atau ringkasan..."
+
+msgid "All Methods"
+msgstr "Semua Metode"
+
+msgid "Hybrid (with NER)"
+msgstr "Hybrid (dengan NER)"
+
+msgid "Traditional"
+msgstr "Tradisional"
+
+msgid "Newest First"
+msgstr "Terbaru Pertama"
+
+msgid "Oldest First"
+msgstr "Terlama Pertama"
+
+msgid "Title (A-Z)"
+msgstr "Judul (A-Z)"
+
+msgid "Title (Z-A)"
+msgstr "Judul (Z-A)"
+
+msgid "Original Length (Low-High)"
+msgstr "Panjang Asli (Rendah-Tinggi)"
+
+msgid "Original Length (High-Low)"
+msgstr "Panjang Asli (Tinggi-Rendah)"
+
+msgid "From Date"
+msgstr "Dari Tanggal"
+
+msgid "To Date"
+msgstr "Sampai Tanggal"
+
+msgid "Paste your Indonesian text here..."
+msgstr "Tempel teks bahasa Indonesia Anda di sini..."
+
+msgid "Short (20%)"
+msgstr "Pendek (20%)"
+
+msgid "Medium (30%)"
+msgstr "Sedang (30%)"
+
+msgid "Long (40%)"
+msgstr "Panjang (40%)"
+
+msgid "Extra Long (50%)"
+msgstr "Sangat Panjang (50%)"
+
+msgid "Text is too short for comparison. Please provide at least 10 words."
+msgstr "Teks terlalu pendek untuk perbandingan. Harap berikan minimal 10 kata."

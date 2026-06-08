@@ -12,6 +12,7 @@ from django.views.decorators.http import require_http_methods
 from django.db.models import Q
 from django.core.paginator import Paginator
 from django.utils.safestring import mark_safe
+from django.utils.translation import gettext as _, gettext_lazy as _lazy
 from django_q.tasks import async_task, fetch
 from config import settings
 from ml.summarization.utils import add_to_indosum_dataset
@@ -115,13 +116,17 @@ def _validate_input_edge_cases(title, original_text, uploaded_file):
     if not has_title and not has_text and not has_file:
         return (
             False,
-            "Please provide content to summarize. You must either:\n• Enter a title and text manually, OR\n• Upload a file using the template format",
+            _lazy(
+                "Please provide content to summarize. You must either:\n• Enter a title and text manually, OR\n• Upload a file using the template format"
+            ),
         )
 
     if has_title and not has_text and not has_file:
         return (
             False,
-            "Title provided but no text content found. Please either:\n• Enter text in the 'Original Text' field, OR\n• Upload a file using the template format",
+            _lazy(
+                "Title provided but no text content found. Please either:\n• Enter text in the 'Original Text' field, OR\n• Upload a file using the template format"
+            ),
         )
 
     if not has_title and has_text and not has_file:
@@ -131,7 +136,9 @@ def _validate_input_edge_cases(title, original_text, uploaded_file):
         if not _is_template_file(uploaded_file):
             return (
                 False,
-                "Uploaded file does not follow the template format. Please:\n• Download the template file\n• Fill it with TITLE= and TEXT= markers\n• Upload the completed template",
+                _lazy(
+                    "Uploaded file does not follow the template format. Please:\n• Download the template file\n• Fill it with TITLE= and TEXT= markers\n• Upload the completed template"
+                ),
             )
         return True, None
 
@@ -141,19 +148,23 @@ def _validate_input_edge_cases(title, original_text, uploaded_file):
 def _validate_text_content(text, min_words=10):
     """Validate that text has sufficient content for summarization."""
     if not text or not text.strip():
-        raise ValueError("Text content is empty.")
+        raise ValueError(_lazy("Text content is empty."))
     words = text.split()
     word_count = len(words)
     if word_count < min_words:
         raise ValueError(
-            f"Text is too short for summarization. "
-            f"Please provide at least {min_words} words (currently: {word_count} words)."
+            _lazy(
+                "Text is too short for summarization. "
+                f"Please provide at least {min_words} words (currently: {word_count} words)."
+            )
         )
     meaningful_words = [w for w in words if len(w) > 2]
     if len(meaningful_words) < min_words // 2:
         raise ValueError(
-            "Text contains insufficient meaningful content. "
-            "Please provide more substantial text for summarization."
+            _lazy(
+                "Text contains insufficient meaningful content. "
+                "Please provide more substantial text for summarization."
+            )
         )
     return True
 
@@ -229,7 +240,7 @@ def summarize_view(request):
     if err:
         if is_ajax:
             return err  # already a JsonResponse
-        messages.error(request, "Validation failed.")
+        messages.error(request, _lazy("Validation failed."))
         return render(request, "summarizer/summarize.html", {"form": form})
 
     try:
@@ -280,7 +291,7 @@ def summarize_view(request):
             )
             summary_id = summary_obj.id
 
-        messages.success(request, "✓ Summary generated successfully!")
+        messages.success(request, _lazy("✓ Summary generated successfully!"))
         return render(
             request,
             "summarizer/summarize.html",
@@ -296,7 +307,7 @@ def summarize_view(request):
         )
 
     except Exception as e:
-        error_msg = f"Failed to generate summary: {str(e)}"
+        error_msg = _lazy("Failed to generate summary: {error}").format(error=str(e))
         print(f"[ERROR] summarize_view: {e}")
         messages.error(request, error_msg)
         return render(request, "summarizer/summarize.html", {"form": form})
@@ -535,7 +546,7 @@ def comparison_view(request):
             compression_ratio = 0.3
 
         if not text:
-            error_msg = "Please provide text for comparison"
+            error_msg = _lazy("Please provide text for comparison")
             if request.headers.get("X-Requested-With") == "XMLHttpRequest":
                 return JsonResponse({"success": False, "error": error_msg}, status=400)
             messages.error(request, error_msg)
@@ -575,7 +586,7 @@ def comparison_view(request):
             return render(request, "summarizer/comparison.html", response_data)
 
         except Exception as e:
-            error_msg = f"Comparison failed: {str(e)}"
+            error_msg = _lazy("Comparison failed: {error}").format(error=str(e))
             print(f"[ERROR] comparison_view: {e}")
 
             if request.headers.get("X-Requested-With") == "XMLHttpRequest":
@@ -595,7 +606,7 @@ def add_to_dataset(request, pk):
         return JsonResponse(
             {
                 "success": False,
-                "error": "This summary has already been added to the dataset",
+                "error": _lazy("This summary has already been added to the dataset"),
             },
             status=400,
         )
@@ -612,7 +623,7 @@ def add_to_dataset(request, pk):
         summary.save()
 
         return JsonResponse(
-            {"success": True, "message": "Successfully added to dataset!"}
+            {"success": True, "message": _lazy("Successfully added to dataset!")}
         )
 
     except Exception as e:
