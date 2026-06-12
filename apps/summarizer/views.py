@@ -19,6 +19,16 @@ from ml.summarization.utils import add_to_indosum_dataset
 
 from .models import Summary
 from .forms import SummaryForm
+from . import signals
+
+
+def _first_success(responses):
+    """Return the first successful dict from send_robust receiver responses."""
+    for _receiver, response in responses:
+        if isinstance(response, dict) and response.get("success"):
+            return response
+    return None
+
 
 from ml.summarization.hybrid import predict_and_summarize
 from ml.summarization.traditional import summarize_traditional
@@ -258,38 +268,45 @@ def summarize_view(request):
 
     # ── Non-AJAX legacy form path ─────────────────────────────────
     try:
-        if data["method"] == "hybrid":
-            result = predict_and_summarize(
-                text=data["original_text"],
-                title=data["title"],
-                compression_ratio=data["compression_ratio"],
-            )
-            entities = result.get("entities", [])
-        else:
-            result = summarize_traditional(
-                text=data["original_text"],
-                title=data["title"],
-                compression_ratio=data["compression_ratio"],
-                stream=False,
-            )
-            entities = []
+        signal_data = {
+            "method": data["method"],
+            "original_text": data["original_text"],
+            "title": data["title"],
+            "compression_ratio": data["compression_ratio"],
+        }
+        responses = signals.summary_requested.send_robust(
+            sender=summarize_view,
+            data=signal_data,
+            user=request.user if request.user.is_authenticated else None,
+            request=request,
+        )
 
-        summary_text = result["summary"]
-        effective_title = result.get("effective_title", data["title"])
-        final_title = data["title"] if data["title"] else effective_title
+        result_data = None
+        for _receiver, response in responses:
+            if isinstance(response, dict) and response.get("success"):
+                result_data = response
+                break
+
+        if not result_data or not result_data.get("success"):
+            error_msg = (
+                result_data.get("error", "Unknown error")
+                if result_data
+                else "Unknown error"
+            )
+            raise RuntimeError(error_msg)
+
+        entities = result_data.get("entities", [])
+        summary_text = result_data["summary"]
+        final_title = result_data.get("effective_title", data["title"])
 
         summary_id = None
         if request.user.is_authenticated:
-            summary_obj = Summary.objects.create(
-                user=request.user,
+            summary_obj = Summary.objects.filter(
                 title=final_title,
                 original_text=data["original_text"],
-                summary_text=summary_text,
-                compression_ratio=data["compression_ratio"],
-                entities=entities,
                 method=data["method"],
-            )
-            summary_id = summary_obj.id
+            ).first()
+            summary_id = summary_obj.id if summary_obj else None
 
         messages.success(request, _lazy("✓ Summary generated successfully!"))
         return render(
@@ -341,24 +358,24 @@ def _summarize_sse(request, data):
                 if isinstance(result, dict) and result.get("success"):
                     if step < 3:
                         for s in range(step + 1, 4):
-                            yield f"data: {json.dumps({'step': s})}\n\n"
-                    yield f"data: {json.dumps(result)}\n\n"
+                            yield f"id: {s}\nevent: step\ndata: {json.dumps({'step': s})}\n\n"
+                    yield f"id: done\nevent: result\ndata: {json.dumps(result)}\n\n"
                 else:
                     error_msg = (
                         result.get("error", "Unknown error")
                         if isinstance(result, dict)
                         else str(result)
                     )
-                    yield f"data: {json.dumps({'error': error_msg})}\n\n"
+                    yield f"id: error\nevent: error\ndata: {json.dumps({'error': error_msg})}\n\n"
                 break
             elif task.has_ended() and not task.success:
-                yield f"data: {json.dumps({'error': str(task.result or 'Task failed')})}\n\n"
+                yield f"id: error\nevent: error\ndata: {json.dumps({'error': str(task.result or 'Task failed')})}\n\n"
                 break
             else:
                 progress = task.progress() if hasattr(task, "progress") else {}
                 if isinstance(progress, dict) and progress.get("step", 0) > step:
                     step = progress["step"]
-                    yield f"data: {json.dumps({'step': step})}\n\n"
+                    yield f"id: {step}\nevent: step\ndata: {json.dumps({'step': step})}\n\n"
                 import time
 
                 time.sleep(1)
@@ -553,21 +570,39 @@ def comparison_view(request):
             return render(request, "summarizer/comparison.html")
 
         try:
-            traditional_result = summarize_traditional(
-                text=text,
-                title=title,
-                compression_ratio=compression_ratio,
-                stream=False,
+            traditional_signal = signals.summary_requested.send_robust(
+                sender=comparison_view,
+                data={
+                    "method": "traditional",
+                    "original_text": text,
+                    "title": title,
+                    "compression_ratio": compression_ratio,
+                },
+                user=request.user if request.user.is_authenticated else None,
+                request=request,
             )
+            hybrid_signal = signals.summary_requested.send_robust(
+                sender=comparison_view,
+                data={
+                    "method": "hybrid",
+                    "original_text": text,
+                    "title": title,
+                    "compression_ratio": compression_ratio,
+                },
+                user=request.user if request.user.is_authenticated else None,
+                request=request,
+            )
+
+            traditional_result = _first_success(traditional_signal)
+            hybrid_result = _first_success(hybrid_signal)
+            if traditional_result is None or hybrid_result is None:
+                raise RuntimeError("Comparison generation failed")
+
             traditional_summary = traditional_result["summary"]
             final_title = (
                 title
                 if title
                 else traditional_result.get("effective_title", "Untitled Comparison")
-            )
-
-            hybrid_result = predict_and_summarize(
-                text=text, title=title, compression_ratio=compression_ratio
             )
 
             response_data = {

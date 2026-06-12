@@ -1,5 +1,5 @@
 from django import forms
-from django.utils.translation import gettext_lazy as _lazy
+from django.utils.translation import gettext as _, gettext_lazy as _lazy
 from .models import Summary
 
 

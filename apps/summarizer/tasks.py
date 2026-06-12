@@ -1,15 +1,13 @@
 import logging
-from django_q.tasks import shared_task
 from ml.summarization.hybrid import predict_and_summarize
 from ml.summarization.traditional import summarize_traditional
 
 logger = logging.getLogger(__name__)
 
 
-@shared_task(bind=True)
-def run_summarization(self, data):
+def run_summarization(task, data):
     try:
-        self.set_progress({"step": 1, "message": "Starting summarization..."})
+        task.set_progress({"step": 1, "message": "Starting summarization..."})
 
         method = data["method"]
         text = data["original_text"]
@@ -17,7 +15,7 @@ def run_summarization(self, data):
         compression_ratio = data["compression_ratio"]
         user_id = data.get("user_id")
 
-        self.set_progress({"step": 2, "message": "Processing text..."})
+        task.set_progress({"step": 2, "message": "Processing text..."})
 
         if method == "hybrid":
             result = predict_and_summarize(
@@ -31,10 +29,11 @@ def run_summarization(self, data):
                 text=text,
                 title=title,
                 compression_ratio=compression_ratio,
+                stream=False,
             )
             entities = []
 
-        self.set_progress({"step": 3, "message": "Generating summary..."})
+        task.set_progress({"step": 3, "message": "Generating summary..."})
 
         summary_text = result["summary"]
         effective_title = result.get("effective_title", title)
@@ -57,7 +56,7 @@ def run_summarization(self, data):
             summary_id = summary_obj.id
             mode = "user"
 
-        self.set_progress({"step": 4, "message": "Complete"})
+        task.set_progress({"step": 4, "message": "Complete"})
 
         return {
             "success": True,

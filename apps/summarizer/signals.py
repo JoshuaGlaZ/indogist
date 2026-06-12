@@ -6,9 +6,9 @@ import django.dispatch
 from django.db import transaction
 
 
-summary_requested = django.dispatch.Signal(providing_args=["data", "user", "request"])
+summary_requested = django.dispatch.Signal()
 
-summary_completed = django.dispatch.Signal(providing_args=["summary", "result"])
+summary_completed = django.dispatch.Signal()
 
 
 def handle_summary_requested(sender, data, user, request, **kwargs):
@@ -98,36 +98,3 @@ summary_requested.connect(
 summary_completed.connect(
     handle_summary_completed, dispatch_uid="summary_completed_handler"
 )
-
-import django.dispatch
-
-
-summary_requested = django.dispatch.Signal(providing_args=["data", "user", "request"])
-"""
-Signal dispatched when a user requests text summarization.
-
-Args:
-    sender: The view function that dispatched the signal
-    data: dict containing:
-        - title: str - Document title (optional)
-        - original_text: str - Text to summarize
-        - compression_ratio: float - Target compression ratio (0.1-0.5)
-        - method: str - Summarization method ('hybrid' or 'traditional')
-    user: User instance or None for anonymous users
-    request: HttpRequest instance
-"""
-
-
-summary_completed = django.dispatch.Signal(providing_args=["summary", "result"])
-"""
-Signal dispatched after a summary is successfully created and saved.
-
-Args:
-    sender: The function that completed the summarization
-    summary: Summary model instance (or None for guest users)
-    result: dict containing:
-        - summary: str - Generated summary text
-        - entities: list - Extracted named entities (NER)
-        - effective_title: str - Title used for the summary
-        - method: str - Method used for summarization
-"""

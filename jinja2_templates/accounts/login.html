@@ -15,7 +15,7 @@
         </div>
 
         <form method="post">
-          {{ csrf_input(request) }}
+          {{ csrf_field(request) }}
           {{ render_form(form) }}
           <button type="submit" class="btn btn-primary w-100 mb-3 mt-4">
             <i class="fas fa-sign-in-alt"></i> Login
@@ -34,3 +34,4 @@
   </div>
 </div>
 {% endblock %}
+

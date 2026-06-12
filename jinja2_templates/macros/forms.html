@@ -168,7 +168,8 @@
 {# Render a form with crispy-like Bootstrap 5 styling #}
 {% macro render_crispy_form(form, attrs={}) %}
 <form method="{{ form.method if form.method else 'post' }}" action="{{ form.action if form.action else '' }}" {% if form.is_multipart %}enctype="multipart/form-data"{% endif %} novalidate>
-  {% csrf_token() %}
+  {{ csrf_field(request) }}
   {{ render_form(form, attrs) }}
 </form>
 {% endmacro %}
+

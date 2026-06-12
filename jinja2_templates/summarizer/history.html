@@ -1,0 +1,137 @@
+{% extends 'summarizer/base.html'  %}
+
+{% block title %}Summary History{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card fade-in">
+            <div class="card-body p-4">
+                <h2 class="card-title mb-4 text-white">
+                    <i class="fas fa-history text-primary"></i> Your Summary History
+                </h2>
+
+                <form method="get" class="mb-4">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <input type="text" name="q" class="form-control"
+                                       placeholder="Search summaries..."
+                                       value="{{ search_query }}">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="col-md-3">
+                            <select name="method" class="form-select" onchange="this.form.submit()">
+                                <option value="">All Methods</option>
+                                <option value="hybrid" {% if method_filter == 'hybrid' %}selected{% endif %}>Hybrid</option>
+                                <option value="traditional" {% if method_filter == 'traditional' %}selected{% endif %}>Traditional</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-3">
+                            <select name="sort" class="form-select" onchange="this.form.submit()">
+                                <option value="-created_at" {% if sort_by == '-created_at' %}selected{% endif %}>Newest First</option>
+                                <option value="created_at" {% if sort_by == 'created_at' %}selected{% endif %}>Oldest First</option>
+                                <option value="title" {% if sort_by == 'title' %}selected{% endif %}>Title A-Z</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+
+                {% if page_obj %}
+                    {% for summary in page_obj %}
+                    <a href="{{ url('summarizer:summary_detail', summary.pk) }}" class="text-decoration-none">
+                        <div class="history-item mb-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="flex-grow-1">
+                                    <h5 class="mb-1 text-white">{{ summary.title|truncatechars(100) }}</h5>
+                                    <p class="text-muted mb-2 small">
+                                        <i class="fas fa-calendar"></i> {{ summary.created_at|date("F d, Y H:i") }}
+                                        <span class="badge bg-{% if summary.method == 'hybrid' %}success{% else %}warning{% endif %} ms-2">{{ summary.get_method_display }}</span>
+                                    </p>
+                                    <p class="mb-0 text-white">{{ summary.summary_text|truncatewords(25) }}</p>
+                                </div>
+                                <div class="ms-3">
+                                    <i class="fas fa-chevron-right text-muted"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                    {% endfor %}
+
+                    {% if page_obj.has_other_pages %}
+                    <nav class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page=1&q={{ search_query }}&method={{ method_filter }}&sort={{ sort_by }}" aria-label="First">
+                                        <i class="fas fa-angle-double-left"></i>
+                                    </a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ search_query }}&method={{ method_filter }}&sort={{ sort_by }}" aria-label="Previous">
+                                        <i class="fas fa-angle-left"></i>
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link"><i class="fas fa-angle-double-left"></i></span>
+                                </li>
+                                <li class="page-item disabled">
+                                    <span class="page-link"><i class="fas fa-angle-left"></i></span>
+                                </li>
+                            {% endif %}
+
+                            {% for i in page_obj.paginator.page_range %}
+                                {% if page_obj.number == i %}
+                                    <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+                                {% elif i > page_obj.number|add(-3) and i < page_obj.number|add(3) %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ i }}&q={{ search_query }}&method={{ method_filter }}&sort={{ sort_by }}">{{ i }}</a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ search_query }}&method={{ method_filter }}&sort={{ sort_by }}" aria-label="Next">
+                                        <i class="fas fa-angle-right"></i>
+                                    </a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}&q={{ search_query }}&method={{ method_filter }}&sort={{ sort_by }}" aria-label="Last">
+                                        <i class="fas fa-angle-double-right"></i>
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link"><i class="fas fa-angle-right"></i></span>
+                                </li>
+                                <li class="page-item disabled">
+                                    <span class="page-link"><i class="fas fa-angle-double-right"></i></span>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-inbox fa-4x text-muted mb-3"></i>
+                        <h4 class="text-muted">No summaries found</h4>
+                        <p class="text-muted">Start by creating your first summary</p>
+                        <a href="{{ url('summarizer:summarize') }}" class="btn btn-primary mt-3">
+                            <i class="fas fa-plus"></i> Create Summary
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

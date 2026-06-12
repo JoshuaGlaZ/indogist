@@ -107,7 +107,7 @@
                     method="post"
                     class="d-inline"
                   >
-                    {{ csrf_input(request) }}
+                    {{ csrf_field(request) }}
                     <button type="submit" class="dropdown-item text-danger">
                       <i class="fas fa-sign-out-alt"></i> Logout
                     </button>
@@ -191,3 +191,4 @@
     {% block extra_js %}{% endblock %}
   </body>
 </html>
+

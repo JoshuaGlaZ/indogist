@@ -25,11 +25,12 @@ def environment(**options):
     env.globals.update(
         {
             "static": static,
-            "url": reverse,
-            "csrf_input": _csrf_input,
+            "url": _url,
+            "csrf_field": _csrf_input,
             "now": datetime.datetime.now,
             "mark_safe": mark_safe,
-            "messages": _get_messages,
+            "hasattr": hasattr,
+            "getattr": getattr,
         }
     )
 
@@ -56,10 +57,18 @@ def environment(**options):
         }
     )
 
-    # Set translation function
-    env.install_null_translations()
+    # Wire up real gettext translations so {% trans %} / {% blocktrans %}
+    # pick up locale catalogs at render time (see django.utils.translation).
+    from django.utils import translation
+
+    env.install_gettext_translations(translation, newstyle=False)
 
     return env
+
+
+def _url(name, *args, **kwargs):
+    """Reverse a named URL, passing extra positional args as URL args."""
+    return reverse(name, args=args, kwargs=kwargs)
 
 
 def _csrf_input(request):
@@ -70,13 +79,6 @@ def _csrf_input(request):
     return mark_safe(
         f'<input type="hidden" name="csrfmiddlewaretoken" value="{token}">'
     )
-
-
-def _get_messages(request):
-    """Get messages from the request context."""
-    if hasattr(request, "_messages"):
-        return list(request._messages)
-    return []
 
 
 def _truncatechars(value, length):
@@ -116,13 +118,13 @@ def _escapejs(value):
     return escapejs(value)
 
 
-def _yesno(value, true_val="yes", false_val="no", none_val=None):
-    """Convert boolean to yes/no or custom values."""
-    if value is True:
+def _yesno(value, true_val="yes", false_val="no", none_val="maybe"):
+    """Convert boolean/None to yes/no/maybe or custom values."""
+    if value is None:
+        return none_val
+    if value:
         return true_val
-    elif value is False:
-        return false_val if none_val is None else none_val
-    return none_val or ""
+    return false_val
 
 
 def _floatformat(value, decimal_places=-1):
