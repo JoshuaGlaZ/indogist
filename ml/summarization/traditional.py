@@ -1,3 +1,4 @@
+import time
 import numpy as np
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -18,6 +19,8 @@ def summarize_traditional(text, title, compression_ratio=0.3, stream=True, progr
       - stream=False (no callback): runs to completion and returns the result
         dict: {'summary': ..., 'entities': [], 'effective_title': ...}.
     """
+    _start_time = time.time()
+
     def _generator():
         # --- Step 1: Preprocessing ---
         yield {'step': 1}
@@ -73,12 +76,15 @@ def summarize_traditional(text, title, compression_ratio=0.3, stream=True, progr
         summary = " ".join([sentences[i] for i in sorted_indices])
 
         # --- Step 4: Done ---
+        elapsed = time.time() - _start_time
+        print(f"[TIMING] Traditional summarization completed in {elapsed:.3f}s")
         yield {
             'step': 4,
             'result': {
                 'summary': summary,
                 'entities': [],
-                'effective_title': effective_title
+                'effective_title': effective_title,
+                'elapsed_time': elapsed
             }
         }
 

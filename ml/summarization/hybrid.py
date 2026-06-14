@@ -1,3 +1,4 @@
+import time
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
@@ -69,6 +70,8 @@ def predict_and_summarize(text, title=None, compression_ratio=0.3, stream=False,
       - stream=False (no callback): runs to completion and returns the result
         dict: {'summary': ..., 'entities': [...], 'effective_title': ...}.
     """
+    _start_time = time.time()
+
     def _generator():
         # --- Step 1: Preprocessing ---
         yield {'step': 1}
@@ -120,12 +123,15 @@ def predict_and_summarize(text, title=None, compression_ratio=0.3, stream=False,
                     unique_entities[key] = clean_ent
 
         # --- Step 4: Done ---
+        elapsed = time.time() - _start_time
+        print(f"[TIMING] Hybrid summarization completed in {elapsed:.3f}s")
         yield {
             'step': 4,
             'result': {
                 'summary': summary,
                 'entities': list(unique_entities.values()),
-                'effective_title': effective_title
+                'effective_title': effective_title,
+                'elapsed_time': elapsed
             }
         }
 
