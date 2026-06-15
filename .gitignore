@@ -173,3 +173,5 @@ data/ner/
 .agents/
 /.agents
 *.pyc
+CRED
+/cache

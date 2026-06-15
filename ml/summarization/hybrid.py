@@ -15,6 +15,7 @@ WEIGHTS = np.array([
 ])
 
 def normalize_scores(scores):
+    scores = np.asarray(scores, dtype=np.float64)
     min_val, max_val = scores.min(), scores.max()
     if max_val - min_val == 0:
         return np.zeros_like(scores)
@@ -38,15 +39,13 @@ def compute_hybrid_scores(sentences, title, ner_results, tfidf_mat, vectorizer):
     title_scores = cosine_similarity(tfidf_mat, title_vec).flatten()
 
     # Semantic Features (NER based)
-    ent_counts = np.zeros(n)
-    ent_densities = np.zeros(n)
-    
-    # Extract title entities for overlap calculation
-    
     ent_counts = np.array([len(res.get('entities', [])) for res in ner_results])
-    ent_densities = np.array([len(res.get('entities', []))/len(res.get('tokens', [1])) for res in ner_results])
+    ent_densities = np.array([
+        len(res.get('entities', [])) / len(res.get('tokens', [1])) if len(res.get('tokens', [])) > 0 else 0
+        for res in ner_results
+    ])
 
-    # Matrix Construction (n_sentences x 7_features)
+    # Matrix Construction (n_sentences x 6_features)
     feature_matrix = np.column_stack((
         title_scores,
         loc_scores,
@@ -107,8 +106,26 @@ def predict_and_summarize(text, title=None, compression_ratio=0.3, stream=False,
         final_scores = feature_matrix @ WEIGHTS
 
         n_select = max(1, round(len(raw_sentences) * compression_ratio))
-        top_indices = np.argsort(final_scores)[-n_select:]
-        top_indices.sort()
+        
+        # --- Maximal Marginal Relevance (MMR) Selection ---
+        selected_indices = []
+        unselected_indices = list(range(len(raw_sentences)))
+        
+        sim_matrix = cosine_similarity(tfidf_mat, tfidf_mat)
+        lambda_param = 0.7  # 0.7 relevance vs 0.3 diversity
+
+        for _ in range(min(n_select, len(raw_sentences))):
+            if not selected_indices:
+                best_idx = max(unselected_indices, key=lambda i: final_scores[i])
+            else:
+                def mmr_score(i):
+                    max_sim = max(sim_matrix[i, j] for j in selected_indices)
+                    return lambda_param * final_scores[i] - (1 - lambda_param) * max_sim
+                best_idx = max(unselected_indices, key=mmr_score)
+            selected_indices.append(best_idx)
+            unselected_indices.remove(best_idx)
+
+        top_indices = sorted(selected_indices)
 
         summary = " ".join([raw_sentences[i] for i in top_indices])
 

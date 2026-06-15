@@ -70,8 +70,24 @@ def summarize_traditional(text, title, compression_ratio=0.3, stream=True, progr
             (normalize(frequency_scores) * normalize(aggregation_scores))
 
         num_summary_sentences = max(1, round(n_sentences * compression_ratio))
-        top_indices = np.argsort(final_scores)[-num_summary_sentences:]
-        sorted_indices = sorted(top_indices)
+        
+        # --- Maximal Marginal Relevance (MMR) Selection ---
+        selected_indices = []
+        unselected_indices = list(range(n_sentences))
+        lambda_param = 0.7  # 0.7 relevance vs 0.3 diversity
+
+        for _ in range(min(num_summary_sentences, n_sentences)):
+            if not selected_indices:
+                best_idx = max(unselected_indices, key=lambda i: final_scores[i])
+            else:
+                def mmr_score(i):
+                    max_sim = max(similarity_matrix[i, j] for j in selected_indices)
+                    return lambda_param * final_scores[i] - (1 - lambda_param) * max_sim
+                best_idx = max(unselected_indices, key=mmr_score)
+            selected_indices.append(best_idx)
+            unselected_indices.remove(best_idx)
+
+        sorted_indices = sorted(selected_indices)
 
         summary = " ".join([sentences[i] for i in sorted_indices])
 

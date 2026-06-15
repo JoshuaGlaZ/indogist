@@ -20,3 +20,4 @@ whitenoise
 
 django-q2
 redis
+jinja2

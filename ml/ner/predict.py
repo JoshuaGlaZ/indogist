@@ -111,21 +111,58 @@ def predict_entities(sentences):
         X_padded = pad_sequences(
             X_seq, maxlen=batch_max_len, padding="post", value=0)
 
-        # Inference via TFLite Interpreter
-        interpreter = nlp_service.ner_model
-        
-        # Resize input tensor to handle the dynamic batch size and sequence length
-        input_details = interpreter.get_input_details()[0]
-        output_details = interpreter.get_output_details()[0]
-        
-        interpreter.resize_tensor_input(input_details['index'], X_padded.shape)
-        interpreter.allocate_tensors()
-        
-        # Set tensor (requires float32 based on conversion)
-        interpreter.set_tensor(input_details['index'], X_padded.astype(np.float32))
-        interpreter.invoke()
-        
-        preds_probs = interpreter.get_tensor(output_details['index'])
+        # Inference via Keras model or TFLite Interpreter
+        if getattr(nlp_service, 'is_keras_model', False):
+            if nlp_service.pos_to_idx is not None:
+                if nlp_service.pos_tagger is not None:
+                    doc = nlp_service.pos_tagger(tokenized_sents)
+                    pos_sequences = []
+                    for sent in doc.sentences:
+                        pos_tags = [w.upos for w in sent.words]
+                        pos_ids = [nlp_service.pos_to_idx.get(tag, 0) for tag in pos_tags]
+                        pos_sequences.append(pos_ids)
+                    pos_padded = pad_sequences(
+                        pos_sequences, maxlen=batch_max_len, padding="post", value=0)
+                else:
+                    pos_padded = np.zeros_like(X_padded)
+                preds_probs = nlp_service.ner_model([X_padded, pos_padded]).numpy()
+            else:
+                preds_probs = nlp_service.ner_model(X_padded).numpy()
+        else:
+            interpreter = nlp_service.ner_model
+            input_details = interpreter.get_input_details()
+            output_details = interpreter.get_output_details()[0]
+            
+            if len(input_details) > 1 and nlp_service.pos_to_idx is not None and nlp_service.pos_tagger is not None:
+                # POS Tagging via Stanza (pre-tokenized)
+                doc = nlp_service.pos_tagger(tokenized_sents)
+                pos_sequences = []
+                for sent in doc.sentences:
+                    pos_tags = [w.upos for w in sent.words]
+                    pos_ids = [nlp_service.pos_to_idx.get(tag, 0) for tag in pos_tags]
+                    pos_sequences.append(pos_ids)
+                    
+                pos_padded = pad_sequences(
+                    pos_sequences, maxlen=batch_max_len, padding="post", value=0)
+                    
+                word_detail = next((d for d in input_details if 'word' in d['name']), input_details[0])
+                pos_detail = next((d for d in input_details if 'pos' in d['name']), input_details[1])
+                
+                interpreter.resize_tensor_input(word_detail['index'], X_padded.shape)
+                interpreter.resize_tensor_input(pos_detail['index'], pos_padded.shape)
+                interpreter.allocate_tensors()
+                
+                interpreter.set_tensor(word_detail['index'], X_padded.astype(word_detail['dtype']))
+                interpreter.set_tensor(pos_detail['index'], pos_padded.astype(pos_detail['dtype']))
+            else:
+                # Fallback for single-input baseline models
+                detail = input_details[0]
+                interpreter.resize_tensor_input(detail['index'], X_padded.shape)
+                interpreter.allocate_tensors()
+                interpreter.set_tensor(detail['index'], X_padded.astype(detail['dtype']))
+                
+            interpreter.invoke()
+            preds_probs = interpreter.get_tensor(output_details['index'])
         
         pred_ids = np.argmax(preds_probs, axis=-1)
         confidences = np.max(preds_probs, axis=-1)
