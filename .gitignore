@@ -175,3 +175,5 @@ data/ner/
 *.pyc
 CRED
 /cache
+kt_tuning/
+notebooks/kt_tuning/
