@@ -1,0 +1,65 @@
+{% extends 'summarizer/base.html' %}
+
+{% block title %}Profile{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-lg-4">
+    <div class="card fade-in mb-4">
+      <div class="card-body text-center p-4">
+        <div class="mb-3">
+          <i class="fas fa-user-circle fa-5x text-primary"></i>
+        </div>
+        <h4 class="mb-1">{{ request.user.username }}</h4>
+        <p class="text-muted"><label>{{ request.user.email }}</label></p>
+        <label class="mb-0">
+          <small class="text-muted">
+            Total Summaries: {{ total_summaries }}
+          </small>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-8">
+    <div class="card fade-in">
+      <div class="card-body p-4">
+        <h4 class="card-title mb-4">
+          <i class="fas fa-edit text-primary"></i> Edit Profile
+        </h4>
+        <form method="post" action="/accounts/profile">
+          <div class="mb-3">
+            <label for="id_username" class="form-label fw-medium">Username</label>
+            <input
+              type="text"
+              name="username"
+              id="id_username"
+              class="form-control"
+              value="{{ request.user.username }}"
+              required
+            />
+          </div>
+
+          <div class="mb-3">
+            <label for="id_email" class="form-label fw-medium">Email Address</label>
+            <input
+              type="email"
+              name="email"
+              id="id_email"
+              class="form-control"
+              value="{{ request.user.email }}"
+              required
+            />
+          </div>
+
+          <div class="text-end mt-4">
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-save me-2"></i> Save Changes
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

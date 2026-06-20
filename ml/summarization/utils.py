@@ -4,7 +4,8 @@ import json
 import os
 import uuid
 from datetime import datetime
-from django.conf import settings
+from pathlib import Path
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 from ml.ner.loader import stemmer, stopword_remover
 
 
@@ -41,7 +42,7 @@ def add_to_indosum_dataset(title, text, summary, user):
     - category: 'user-submission'
     """
     
-    dataset_dir = os.path.join(settings.BASE_DIR, 'data', 'indosum')
+    dataset_dir = os.path.join(str(BASE_DIR), 'data', 'indosum')
     if not os.path.exists(dataset_dir):
         os.makedirs(dataset_dir)
         

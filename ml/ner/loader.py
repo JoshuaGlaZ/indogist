@@ -2,7 +2,8 @@ import os
 import json
 import joblib
 import pickle
-from django.conf import settings
+from pathlib import Path
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 from tensorflow.keras.models import load_model
 from tensorflow.keras.layers import TextVectorization
 from Sastrawi.Stemmer.StemmerFactory import StemmerFactory
@@ -93,7 +94,7 @@ class NLPService:
             nltk.download('punkt', quiet=True)
 
         # 2. Locate Best Model Directory (POS model prioritized over baseline)
-        models_root = os.path.join(settings.BASE_DIR, 'ml', 'models')
+        models_root = os.path.join(str(BASE_DIR), 'ml', 'models')
         model_dir = None
         
         if os.path.exists(models_root):

@@ -1,7 +1,6 @@
 FROM python:3.10-slim
 
 RUN apt-get update && apt-get install -y \
-    libpq-dev \
     gcc \
     g++ \
     curl \
@@ -12,12 +11,6 @@ USER user
 ENV PATH="/home/user/.local/bin:${PATH}"
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
-ENV DJANGO_DEBUG=False
-ENV DJANGO_ALLOWED_HOSTS=.hf.space,.huggingface.co
-ENV DJANGO_SSL_REDIRECT=False
-ENV DJANGO_HSTS_SECONDS=31536000
-ENV DJANGO_SESSION_COOKIE_SECURE=True
-ENV DJANGO_CSRF_COOKIE_SECURE=True
 
 WORKDIR /app
 
@@ -28,13 +21,6 @@ RUN pip install --no-cache-dir --upgrade pip && \
 RUN python -m nltk.downloader punkt punkt_tab
 
 COPY --chown=user:user . .
-
-RUN DB_PASSWORD="dummy" \
-    DB_USER="dummy" \
-    DB_HOST="localhost" \
-    DB_PORT="5432" \
-    DB_NAME="dummy" \
-    python manage.py collectstatic --noinput
 
 EXPOSE 7860
 

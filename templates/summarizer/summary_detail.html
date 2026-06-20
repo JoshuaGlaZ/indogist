@@ -1,0 +1,289 @@
+{% extends 'summarizer/base.html'  %}
+
+{% block title %}Summary: {{ summary.title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Textarea styling to match the previous div look but allow native Ctrl+A */
+    .summary-textarea {
+        background: rgba(30, 41, 59, 0.8);
+        backdrop-filter: var(--blur-sm);
+        -webkit-backdrop-filter: var(--blur-sm);
+        border-radius: 10px;
+        padding: 1.5rem;
+        line-height: 1.8;
+        font-size: 1rem;
+        border: 1px solid var(--card-border);
+        color: var(--text-color);
+        transition: all var(--transition-base);
+        width: 100%;
+        resize: vertical;
+        font-family: inherit;
+        display: block;
+    }
+
+    .summary-textarea:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+    }
+
+    .entity-badge {
+        display: inline-block;
+        padding: 0.3rem 0.8rem;
+        border-radius: 50px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin: 0.2rem;
+        border: 1px solid transparent;
+        cursor: pointer;
+        transition: all var(--transition-fast);
+    }
+
+    .entity-badge:hover {
+        transform: scale(1.05);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
+    .entity-PER {
+        background-color: rgba(96, 165, 250, 0.2);
+        color: #93c5fd;
+        border-color: #60a5fa;
+    }
+
+    .entity-ORG {
+        background-color: rgba(52, 211, 153, 0.2);
+        color: #6ee7b7;
+        border-color: #34d399;
+    }
+
+    .entity-LOC {
+        background-color: rgba(251, 191, 36, 0.2);
+        color: #fcd34d;
+        border-color: #fbbf24;
+    }
+
+    .copy-btn-sm {
+        background: transparent;
+        border: 1px solid rgba(255,255,255,0.2);
+        color: rgba(255,255,255,0.7);
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        transition: all 0.2s;
+    }
+    .copy-btn-sm:hover {
+        background: rgba(255,255,255,0.1);
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-lg-8">
+    <div class="card fade-in mb-4">
+      <div class="card-body p-4">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+          <h2 class="card-title mb-0 text-white">{{ summary.title }}</h2>
+          <span class="badge bg-{% if summary.method == 'hybrid' %}success{% else %}warning{% endif %}">
+            {{ summary.get_method_display }}
+          </span>
+        </div>
+
+        <div class="mb-3">
+          <small class="text-muted">
+            <i class="fas fa-calendar"></i> {{ summary.created_at|date("F d, Y H:i") }}
+            <span class="ms-3">
+              <i class="fas fa-compress"></i> {{ compression_display }}
+            </span>
+          </small>
+        </div>
+
+        <hr style="border-color: var(--card-border);" />
+
+        <!-- Original Text Section -->
+        <div class="d-flex justify-content-between align-items-center mt-4 mb-3">
+            <h4 class="mb-0 text-white">
+                <i class="fas fa-file-alt text-info me-2"></i> Original Text
+            </h4>
+            <button class="copy-btn-sm" onclick="copyText('originalContent', this)" title="Copy Original Text">
+                <i class="fas fa-copy"></i>
+            </button>
+        </div>
+        <textarea id="originalContent" class="summary-textarea" rows="6" readonly>{{ summary.original_text }}</textarea>
+
+        <hr class="my-4" style="border-color: var(--card-border);"/>
+
+        <!-- Summary Section -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="mb-0 text-white">
+                <i class="fas fa-compress-alt text-success me-2"></i> Summary
+            </h4>
+            <button class="copy-btn-sm" onclick="copyText('summaryContent', this)" title="Copy Summary">
+                <i class="fas fa-copy"></i>
+            </button>
+        </div>
+        <textarea id="summaryContent" class="summary-textarea" rows="8" readonly>{{ summary.summary_text }}</textarea>
+
+        <!-- Entities Section (Only place where entities are highlighted) -->
+        {% if entities_list %}
+        <div class="mt-4">
+          <h5 class="mb-3 text-white">
+            <i class="fas fa-tags text-primary"></i> Detected Entities
+          </h5>
+          <div>
+            {% for entity in entities_list %}
+            <span class="entity-badge entity-{{ entity.label }}" title="{{ entity.label }} | Confidence: {{ entity.confidence_percent }}%">
+              {{ entity.text }} ({{ entity.label }} | {{ entity.confidence_percent }}%)
+            </span>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card fade-in mb-4">
+      <div class="card-body">
+        <h5 class="card-title mb-3 text-white">
+          <i class="fas fa-info-circle text-primary"></i> Statistics
+        </h5>
+        <ul class="list-group list-group-flush">
+            <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent border-0 px-0 text-white">
+                <span class="text-muted">Original Words</span>
+                <strong>{{ summary.word_count_original }}</strong>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent border-0 px-0 text-white">
+                <span class="text-muted">Summary Words</span>
+                <strong>{{ summary.word_count_summary }}</strong>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent border-0 px-0 text-white">
+                <span class="text-muted">Compression</span>
+                <strong>{{ summary.actual_compression|floatformat(0) if summary.actual_compression is defined else (summary.get('actual_compression', 0) if hasattr(summary, 'get') else 0)|floatformat(0) }}%</strong>
+            </li>
+            {% if summary.entities %}
+            <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent border-0 px-0 text-white">
+                <span class="text-muted">Entities Detected</span>
+                <strong>{{ summary.entities|length }}</strong>
+            </li>
+            {% endif %}
+        </ul>
+      </div>
+    </div>
+
+    <div class="card fade-in">
+        <div class="card-body">
+            <h5 class="card-title mb-3 text-white">
+              <i class="fas fa-cogs text-primary"></i> Actions
+            </h5>
+            <div class="d-grid gap-2">
+                <a href="{{ url('summarizer:export_summary', summary.pk) }}" class="btn btn-outline-info">
+                    <i class="fas fa-download"></i> Export as TXT
+                </a>
+
+                {% if not summary.added_to_dataset %}
+                <button id="addToDatasetBtn" class="btn btn-outline-primary" onclick="addToDataset(this, {{ summary.pk }})">
+                    <i class="fas fa-database"></i> Add to Dataset
+                </button>
+                {% else %}
+                <button class="btn btn-outline-secondary" disabled>
+                    <i class="fas fa-check"></i> In Dataset
+                </button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Simple copy function for the textareas
+function copyText(elementId, btnElement) {
+    const textarea = document.getElementById(elementId);
+    if (!textarea) return;
+
+    navigator.clipboard.writeText(textarea.value).then(() => {
+        const originalHtml = btnElement.innerHTML;
+        btnElement.innerHTML = '<i class="fas fa-check"></i>';
+        btnElement.classList.add('text-success');
+
+        if (window.notify) {
+            window.notify.success('Copied to clipboard!', 2000);
+        }
+
+        setTimeout(() => {
+            btnElement.innerHTML = originalHtml;
+            btnElement.classList.remove('text-success');
+        }, 2000);
+    }).catch(err => {
+        if (window.notify) {
+            window.notify.error('Failed to copy text.', 3000);
+        } else {
+            alert('Failed to copy text.');
+        }
+    });
+}
+
+// Add to Dataset functionality
+async function addToDataset(button, summaryId) {
+    if (!confirm("Add this summary to the training dataset?")) return;
+
+    const originalText = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
+
+    try {
+        const response = await fetch(`/add-to-dataset/${summaryId}/`, {
+            method: "POST",
+            headers: {
+                "X-CSRFToken": "{{ csrf_token }}",
+                "Content-Type": "application/json"
+            },
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            button.innerHTML = '<i class="fas fa-check"></i> Added!';
+
+            if (window.notify) {
+                window.notify.success('Successfully added to dataset!', 5000);
+            } else {
+                alert('Successfully added to dataset!');
+            }
+
+            setTimeout(() => {
+                button.classList.remove('btn-outline-primary');
+                button.classList.add('btn-outline-secondary');
+                button.innerHTML = '<i class="fas fa-check"></i> In Dataset';
+            }, 1500);
+        } else {
+            const errorMsg = "Error: " + data.error;
+            if (window.notify) {
+                window.notify.error(errorMsg, 7000);
+            } else {
+                alert(errorMsg);
+            }
+            button.disabled = false;
+            button.innerHTML = originalText;
+        }
+    } catch (error) {
+        console.error(error);
+        const errorMsg = "An error occurred. Please try again.";
+        if (window.notify) {
+            window.notify.error(errorMsg, 7000);
+        } else {
+            alert(errorMsg);
+        }
+        button.disabled = false;
+        button.innerHTML = originalText;
+    }
+}
+</script>
+{% endblock %}
+

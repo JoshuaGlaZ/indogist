@@ -35,7 +35,7 @@ def extract_entities_from_tags(tokens, tags, confidences):
 
 
 import hashlib
-from django.core.cache import cache
+_ner_cache = {}
 
 def get_sentence_hash(sentence):
     """Generate a consistent hash for a sentence for caching purposes."""
@@ -81,7 +81,7 @@ def predict_entities(sentences):
 
     for i, s in enumerate(sentences):
         s_hash = f"ner_sent_{get_sentence_hash(s)}"
-        cached_result = cache.get(s_hash)
+        cached_result = _ner_cache.get(s_hash)
         if cached_result:
             cached_results.append((i, cached_result))
         else:
@@ -184,9 +184,9 @@ def predict_entities(sentences):
             }
             results.append(result)
 
-            # Cache the new result (store for 24 hours)
+            # Cache the new result in memory
             s_hash = f"ner_sent_{get_sentence_hash(uncached_sentences[i])}"
-            cache.set(s_hash, result, timeout=60 * 60 * 24)
+            _ner_cache[s_hash] = result
 
         # Reconstruct final list in original order
         final_results = [None] * len(sentences)
