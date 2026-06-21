@@ -177,3 +177,6 @@ CRED
 /cache
 kt_tuning/
 notebooks/kt_tuning/
+docker-compose*.yml
+docker-compose*.yaml
+
