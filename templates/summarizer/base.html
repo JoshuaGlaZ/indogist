@@ -3,7 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{% block title %}Text Summarizer{% endblock %}</title>
+    <title>{% block title %}IndoGist — Text Summarization Engine{% endblock %}</title>
+    
+    <!-- Bootstrap 5 & FontAwesome -->
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
       rel="stylesheet"
@@ -12,27 +14,31 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
+    
+    <!-- Custom Pharaohleap Base CSS -->
     <link
       rel="stylesheet"
       href="{{ static('css/base.css') }}"
     />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
+
+    <!-- HTMX & Extensions -->
     <script src="https://unpkg.com/htmx.org@2.0.0/dist/htmx.min.js"></script>
     <script src="https://unpkg.com/htmx-ext-sse@2.0.0/sse.js"></script>
 
     {% block extra_css %}{% endblock %}
   </head>
   <body>
-    <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
+    <!-- Background Texture Layer -->
+    <div class="texture-overlay"></div>
+
+    <!-- Floating Pharaohleap Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-editorial sticky-top">
       <div class="container">
-        <a class="navbar-brand fw-bold" href="/">
-          <i class="fas fa-brain text-primary me-2"></i>INDOGIST
+        <a class="navbar-brand navbar-brand-editorial d-flex align-items-center" href="/">
+          <span class="clip-text-amber me-2">INDOGIST</span>
+          <span class="badge bg-dark border border-secondary text-muted ms-2 px-2 py-1 small fw-normal">CORE: ACTIVE</span>
         </a>
+
         <button
           class="navbar-toggler"
           type="button"
@@ -41,66 +47,72 @@
         >
           <span class="navbar-toggler-icon"></span>
         </button>
+
         <div class="collapse navbar-collapse" id="navbarNav">
-          <ul class="navbar-nav ms-auto">
-            {% if request.user.is_authenticated %}
+          <ul class="navbar-nav ms-auto align-items-center">
             <li class="nav-item">
               <a
-                class="nav-link {% if request.path == '/' %}active{% endif %}"
-                href="/"
+                class="nav-link nav-link-editorial {% if request.url.path == '/' or 'summarize' in request.url.path %}active{% endif %}"
+                href="/summarize/"
+                hx-get="/summarize/"
+                hx-target="#app-content"
+                hx-push-url="true"
               >
-                <i class="fas fa-home"></i> Home
+                Summarize
               </a>
             </li>
             <li class="nav-item">
               <a
-                class="nav-link {% if 'summarize' in request.path %}active{% endif %}"
-                href="{{ url('summarizer:summarize') }}"
+                class="nav-link nav-link-editorial {% if 'history' in request.url.path %}active{% endif %}"
+                href="/history/"
+                hx-get="/history/"
+                hx-target="#app-content"
+                hx-push-url="true"
               >
-                <i class="fas fa-magic"></i> Summarize
+                History
               </a>
             </li>
             <li class="nav-item">
               <a
-                class="nav-link {% if 'history' in request.path %}active{% endif %}"
-                href="{{ url('summarizer:history') }}"
+                class="nav-link nav-link-editorial {% if 'charts' in request.url.path %}active{% endif %}"
+                href="/charts/"
+                hx-get="/charts/"
+                hx-target="#app-content"
+                hx-push-url="true"
               >
-                <i class="fas fa-history"></i> History
+                Metrics
               </a>
             </li>
             <li class="nav-item">
               <a
-                class="nav-link {% if 'charts' in request.path %}active{% endif %}"
-                href="{{ url('summarizer:charts') }}"
+                class="nav-link nav-link-editorial {% if 'comparison' in request.url.path %}active{% endif %}"
+                href="/comparison/"
+                hx-get="/comparison/"
+                hx-target="#app-content"
+                hx-push-url="true"
               >
-                <i class="fas fa-chart-line"></i> Metrics
+                Compare
               </a>
             </li>
-            <li class="nav-item">
+
+            {% if request.user and request.user.is_authenticated %}
+            <li class="nav-item dropdown ms-2">
               <a
-                class="nav-link {% if 'comparison' in request.path %}active{% endif %}"
-                href="{{ url('summarizer:comparison') }}"
-              >
-                <i class="fas fa-balance-scale"></i> Compare
-              </a>
-            </li>
-            <li class="nav-item dropdown">
-              <a
-                class="nav-link dropdown-toggle"
+                class="nav-link nav-link-editorial dropdown-toggle"
                 href="#"
                 id="userDropdown"
                 role="button"
                 data-bs-toggle="dropdown"
               >
-                <i class="fas fa-user-circle"></i> {{ request.user.username }}
+                <i class="fas fa-user-circle me-1"></i> {{ request.user.username }}
               </a>
-              <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark">
+              <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark card-editorial border-0">
                 <li>
-                  <a class="dropdown-item" href="/accounts/profile/">
-                    <i class="fas fa-user"></i> Profile
+                  <a class="dropdown-item py-2" href="/accounts/profile/">
+                    <i class="fas fa-user me-2"></i> Profile
                   </a>
                 </li>
-
+                <li><hr class="dropdown-divider border-secondary"></li>
                 <li>
                   <form
                     action="/accounts/logout/"
@@ -108,17 +120,17 @@
                     class="d-inline"
                   >
                     {{ csrf_field(request) }}
-                    <button type="submit" class="dropdown-item text-danger">
-                      <i class="fas fa-sign-out-alt"></i> Logout
+                    <button type="submit" class="dropdown-item text-danger py-2">
+                      <i class="fas fa-sign-out-alt me-2"></i> Logout
                     </button>
                   </form>
                 </li>
               </ul>
             </li>
             {% else %}
-            <li class="nav-item">
+            <li class="nav-item ms-2">
               <a
-                class="nav-link btn btn-outline-primary px-4 ms-2 text-white"
+                class="btn btn-editorial-outline btn-sm px-3"
                 href="/accounts/login/"
                 >Login</a
               >
@@ -129,11 +141,12 @@
       </div>
     </nav>
 
-    <div class="container py-5">
+    <!-- Main SPA Target Container -->
+    <main id="app-content" class="container py-4">
       {% if messages %}
       {% for message in messages %}
       <div
-        class="alert alert-{{ message.tags }} alert-dismissible fade show mb-4"
+        class="alert alert-{{ message.tags }} alert-dismissible fade show mb-4 card-editorial"
         role="alert"
       >
         {{ message }}
@@ -147,48 +160,52 @@
       {% endif %}
 
       {% block content %}{% endblock %}
-    </div>
+    </main>
 
+    <!-- Footer -->
     <footer
       class="footer text-center text-muted py-4 mt-auto"
-      style="border-top: 1px solid var(--card-border)"
+      style="border-top: 1px solid var(--border-color)"
     >
       <div class="container">
-        <p class="mb-0 small">
-          &copy; {{ now().year }} IndoGist
+        <p class="mb-0 small text-muted">
+          &copy; {{ now().year }} INDOGIST — Text Summarization Engine
         </p>
       </div>
     </footer>
 
+    <!-- Command Palette Modal -->
+    <div class="modal fade" id="commandPaletteModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content card-editorial">
+          <div class="modal-header border-bottom border-secondary">
+            <h6 class="modal-title clip-text-amber">Quick Command Palette</h6>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body p-0">
+            <div class="list-group list-group-flush bg-transparent">
+              <a href="/summarize/" class="list-group-item list-group-item-action bg-transparent text-white border-secondary py-3" hx-get="/summarize/" hx-target="#app-content" data-bs-dismiss="modal">
+                <i class="fas fa-magic me-3 text-warning"></i> Go to Summarize Studio
+              </a>
+              <a href="/history/" class="list-group-item list-group-item-action bg-transparent text-white border-secondary py-3" hx-get="/history/" hx-target="#app-content" data-bs-dismiss="modal">
+                <i class="fas fa-history me-3 text-info"></i> Search Summary History
+              </a>
+              <a href="/charts/" class="list-group-item list-group-item-action bg-transparent text-white border-secondary py-3" hx-get="/charts/" hx-target="#app-content" data-bs-dismiss="modal">
+                <i class="fas fa-chart-line me-3 text-success"></i> View ROUGE/BLEU Metrics
+              </a>
+              <a href="/comparison/" class="list-group-item list-group-item-action bg-transparent text-white border-secondary py-3" hx-get="/comparison/" hx-target="#app-content" data-bs-dismiss="modal">
+                <i class="fas fa-balance-scale me-3 text-primary"></i> Compare Model Methods
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bootstrap & Custom Engine JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="{{ static('js/notification.js') }}"></script>
-    <script src="{{ static('js/loading.js') }}"></script>
-
-    <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      {% if messages %}
-        {% for message in messages %}
-          {% if message.tags == 'success' %}
-            window.notify.success('{{ message|escapejs }}', 5000);
-          {% elif message.tags == 'error' %}
-            window.notify.error('{{ message|escapejs }}', 7000);
-          {% elif message.tags == 'warning' %}
-            window.notify.warning('{{ message|escapejs }}', 5000);
-          {% elif message.tags == 'info' %}
-            window.notify.info('{{ message|escapejs }}', 5000);
-          {% endif %}
-        {% endfor %}
-
-        setTimeout(() => {
-          document.querySelectorAll('.alert').forEach(alert => {
-            alert.style.display = 'none';
-          });
-        }, 100);
-      {% endif %}
-    });
-    </script>
+    <script src="{{ static('js/app.js') }}"></script>
 
     {% block extra_js %}{% endblock %}
   </body>
 </html>
-
