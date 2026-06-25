@@ -1,691 +1,188 @@
 {% extends 'summarizer/base.html' %}
 {% from 'macros/forms.html' import render_field %}
 
-{% block title %}Generate Summary{% endblock %}
-
-{% block extra_css %}
-<style>
-    .summary-output {
-        background: rgba(30, 41, 59, 0.8);
-        backdrop-filter: var(--blur-sm);
-        -webkit-backdrop-filter: var(--blur-sm);
-        border-radius: 10px;
-        padding: 1.5rem;
-        line-height: 1.8;
-        font-size: 1rem;
-        border: 1px solid var(--card-border);
-        color: var(--text-color);
-        transition: all var(--transition-base);
-    }
-
-    .summary-output:hover {
-        background: rgba(30, 41, 59, 1);
-        box-shadow: var(--shadow-base);
-    }
-
-    .tutorial-card {
-        background: rgba(59, 130, 246, 0.1);
-        border: 1px solid rgba(59, 130, 246, 0.3);
-        backdrop-filter: var(--blur-sm);
-        -webkit-backdrop-filter: var(--blur-sm);
-    }
-
-    .upload-container {
-        border: 2px dashed var(--card-border);
-        border-radius: 8px;
-        transition: all var(--transition-base);
-        background: rgba(30, 41, 59, 0.5);
-        cursor: pointer;
-        position: relative;
-    }
-
-    .upload-container:hover {
-        border-color: var(--primary-color);
-        background-color: rgba(51, 65, 85, 0.8);
-        transform: translateY(-2px);
-    }
-
-    .upload-container.dragover {
-        border-color: var(--success-color);
-        background-color: rgba(34, 197, 94, 0.1);
-        transform: scale(1.02);
-    }
-
-    .upload-container.has-file {
-        border-color: var(--success-color);
-        background-color: rgba(34, 197, 94, 0.1);
-    }
-
-    .cancel-file-btn {
-        position: absolute;
-        top: 8px;
-        right: 8px;
-        width: 28px;
-        height: 28px;
-        border-radius: 50%;
-        background: rgba(239, 68, 68, 0.9);
-        border: none;
-        color: white;
-        display: none;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        transition: all var(--transition-base);
-        z-index: 10;
-    }
-
-    .cancel-file-btn:hover {
-        background: rgba(220, 38, 38, 1);
-        transform: scale(1.1);
-    }
-
-    .upload-container.has-file .cancel-file-btn {
-        display: flex;
-    }
-
-    .main-card-glass {
-        background: rgba(30, 41, 59, 0.85);
-        backdrop-filter: var(--blur-base);
-        -webkit-backdrop-filter: var(--blur-base);
-        border: 1px solid var(--card-border);
-        box-shadow: var(--shadow-lg);
-    }
-
-    .method-selector-container {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-    }
-
-    .method-option-card {
-        border: 1px solid var(--card-border);
-        background: rgba(255, 255, 255, 0.03);
-        border-radius: 8px;
-        padding: 10px 15px;
-        cursor: pointer;
-        transition: all var(--transition-base);
-        display: flex;
-        align-items: center;
-    }
-
-    .method-option-card:hover {
-        background: rgba(255, 255, 255, 0.08);
-        border-color: var(--primary-color);
-        transform: translateX(4px);
-    }
-
-    .method-option-card:has(input[type="radio"]:checked) {
-        background: rgba(56, 189, 248, 0.1);
-        border-color: var(--primary-color);
-        box-shadow: 0 0 0 1px var(--primary-color);
-    }
-
-    .method-option-card input[type="radio"] {
-        margin-right: 12px;
-        transform: scale(1.2);
-        cursor: pointer;
-    }
-
-    /* ── Step Loader ─────────────────────────────────────────────── */
-    .step-loader {
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
-        max-width: 420px;
-        margin: 0 auto;
-    }
-
-    .step-item {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-        opacity: 0.35;
-        transition: all 0.45s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .step-item.active {
-        opacity: 1;
-        transform: translateX(10px);
-    }
-
-    .step-item.done {
-        opacity: 0.75;
-    }
-
-    .step-circle {
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        border: 2px solid rgba(255, 255, 255, 0.2);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 14px;
-        background: rgba(15, 23, 42, 0.5);
-        color: rgba(255, 255, 255, 0.5);
-        transition: all 0.35s ease;
-        flex-shrink: 0;
-    }
-
-    .step-item.active .step-circle {
-        border-color: var(--primary-color);
-        box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
-        background: rgba(56, 189, 248, 0.12);
-        color: var(--primary-color);
-        animation: pulse 1.6s ease-in-out infinite;
-    }
-
-    .step-item.done .step-circle {
-        background: var(--primary-color);
-        border-color: var(--primary-color);
-        color: #0f172a;
-        animation: none;
-    }
-
-    /* live label that updates per SSE event */
-    .step-label {
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 0.9rem;
-        color: #e2e8f0;
-        transition: color 0.3s ease;
-    }
-
-    .step-item.active .step-label {
-        color: var(--primary-color);
-    }
-
-    .step-item.done .step-label {
-        color: #64748b;
-    }
-
-    .success-icon {
-        animation: successPop 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-    }
-
-    @keyframes successPop {
-        0%   { transform: scale(0); opacity: 0; }
-        50%  { transform: scale(1.2); }
-        100% { transform: scale(1); opacity: 1; }
-    }
-
-    .result-actions {
-        display: flex;
-        gap: 0.75rem;
-        flex-wrap: wrap;
-    }
-
-    .result-actions .btn {
-        flex: 1;
-        min-width: 150px;
-    }
-
-    .guest-notice {
-        background: rgba(251, 191, 36, 0.1);
-        border: 1px solid rgba(251, 191, 36, 0.3);
-        border-radius: 10px;
-        backdrop-filter: var(--blur-sm);
-        -webkit-backdrop-filter: var(--blur-sm);
-        animation: slideInUp 0.4s ease;
-    }
-
-    .input-mode-indicator {
-        display: inline-block;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        margin-left: 8px;
-        transition: all var(--transition-base);
-    }
-
-    .mode-manual {
-        background: rgba(59, 130, 246, 0.2);
-        color: #60a5fa;
-        border: 1px solid rgba(59, 130, 246, 0.4);
-    }
-
-    .mode-file {
-        background: rgba(34, 197, 94, 0.2);
-        color: #4ade80;
-        border: 1px solid rgba(34, 197, 94, 0.4);
-    }
-
-    @keyframes slideInUp {
-        from { opacity: 0; transform: translateY(20px); }
-        to   { opacity: 1; transform: translateY(0); }
-    }
-
-    @media (max-width: 768px) {
-        .result-actions { flex-direction: column; }
-        .result-actions .btn { width: 100%; min-width: 100%; }
-        .step-loader { gap: 12px; }
-        .step-label { font-size: 0.82rem; }
-    }
-</style>
-{% endblock %}
+{% block title %}Summarize Studio — IndoGist{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-lg-10">
-        <div class="card tutorial-card mb-4 fade-in">
-            <div class="card-body p-4">
-                <div class="d-flex align-items-start">
-                    <i class="fas fa-info-circle text-primary fa-2x me-3 mt-1"></i>
-                    <div>
-                        <h5 class="text-white mb-2">How to Use</h5>
-                        <ol class="text-muted ps-3 mb-2">
-                            <li>Enter a title and paste your <strong>Indonesian</strong> text below.</li>
-                            <li><strong>OR</strong>, use the "Upload File" section (requires Template).</li>
-                            <li>Adjust summary length and select your preferred method.</li>
-                            <li>Click "Generate Summary".</li>
-                        </ol>
-                        <span class="badge bg-warning">
-                            <i class="fas fa-exclamation-triangle"></i> DISCLAIMER: Works best with Indonesian language
-                            text only.
-                        </span>
-                    </div>
-                </div>
+<!-- Combined Kinetic Hero Header (Jintos Clip-Mask + Soulwire Scramble Ticker) -->
+<div class="row mb-4">
+  <div class="col-12 text-center">
+    <h1 class="clip-text-amber display-4 mb-2">INDOGIST STUDIO</h1>
+    <p class="scramble-ticker font-monospace small text-muted text-uppercase tracking-wider mb-0" style="letter-spacing: 2px; min-height: 24px;">
+      AUTOMATED TEXT SUMMARIZATION ENGINE
+    </p>
+  </div>
+</div>
+
+<!-- Asymmetric 2-Column Editorial Workspace (Pharaohleap Reference) -->
+<div class="row g-4">
+  <!-- Left Column: Input Workspace & Controls -->
+  <div class="col-lg-6">
+    <div class="card-editorial p-4 border-dotted-accent h-100">
+      <h5 class="card-title text-white mb-3 d-flex justify-content-between align-items-center">
+        <span><i class="fas fa-edit text-warning me-2"></i> Input Workspace</span>
+        <span class="badge bg-dark border border-secondary text-muted small fw-normal" id="inputWordCount">0 Words</span>
+      </h5>
+
+      <form id="summarizeForm" method="post" action="/summarize/" hx-post="/summarize/" hx-target="#summaryOutputContainer" hx-indicator="#loadingIndicator">
+        {{ csrf_field(request) }}
+
+        <!-- Input Mode Tabs -->
+        <ul class="nav nav-pills mb-3" id="inputTab" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link nav-link-editorial active py-1 px-3 small" id="raw-text-tab" data-bs-toggle="tab" data-bs-target="#raw-text-pane" type="button" role="tab">Raw Text</button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link nav-link-editorial py-1 px-3 small" id="file-upload-tab" data-bs-toggle="tab" data-bs-target="#file-upload-pane" type="button" role="tab">File Upload</button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link nav-link-editorial py-1 px-3 small" id="presets-tab" data-bs-toggle="tab" data-bs-target="#presets-pane" type="button" role="tab">Sample Presets</button>
+          </li>
+        </ul>
+
+        <div class="tab-content mb-4" id="inputTabContent">
+          <!-- Tab 1: Raw Text Area -->
+          <div class="tab-pane fade show active" id="raw-text-pane" role="tabpanel">
+            <textarea
+              name="text"
+              id="rawTextInput"
+              class="form-control form-control-editorial"
+              rows="8"
+              placeholder="Paste or type document text to summarize..."
+              oninput="updateWordCount(this.value)"
+            >{{ text or '' }}</textarea>
+          </div>
+
+          <!-- Tab 2: File Upload Dropzone -->
+          <div class="tab-pane fade" id="file-upload-pane" role="tabpanel">
+            <div class="p-4 text-center border border-dashed rounded-3 card-editorial" id="dropzone" style="border-style: dashed !important;">
+              <i class="fas fa-cloud-upload-alt fa-2x text-warning mb-2"></i>
+              <p class="small text-muted mb-2">Drag and drop .txt, .pdf, or .docx file here</p>
+              <input type="file" id="fileInput" name="file" class="d-none" accept=".txt,.pdf,.docx" onchange="handleFileSelect(this)" />
+              <button type="button" class="btn btn-editorial-outline btn-sm" onclick="document.getElementById('fileInput').click()">Browse Files</button>
+              <div id="fileInfo" class="mt-2 text-success small d-none"></div>
             </div>
+          </div>
+
+          <!-- Tab 3: Presets -->
+          <div class="tab-pane fade" id="presets-pane" role="tabpanel">
+            <div class="d-flex flex-wrap gap-2">
+              <button type="button" class="btn btn-editorial-outline btn-sm" onclick="loadPreset('news')">News Article</button>
+              <button type="button" class="btn btn-editorial-outline btn-sm" onclick="loadPreset('tech')">Tech Spec</button>
+              <button type="button" class="btn btn-editorial-outline btn-sm" onclick="loadPreset('academic')">Academic Paper</button>
+            </div>
+          </div>
         </div>
 
-        <div class="card main-card-glass fade-in">
-            <div class="card-body p-4 p-md-5">
-                <div class="text-center mb-4">
-                    <h2 class="card-title text-white">
-                        Create New Summary
-                        <span id="inputModeIndicator" class="input-mode-indicator mode-manual">Manual Input</span>
-                    </h2>
-                </div>
-
-                <form id="summaryForm" method="post" action="{{ url('summarizer:summarize') }}"
-                    enctype="multipart/form-data" novalidate
-                    hx-post="{{ url('summarizer:summarize') }}"
-                    hx-trigger="submit"
-                    hx-headers='{"X-Requested-With": "XMLHttpRequest"}'
-                    hx-ext="sse"
-                    hx-target="#summaryOutput"
-                    hx-swap="none"
-                    hx-indicator="#loadingIndicator">
-                    {{ csrf_field(request) }}
-
-                    <div class="mb-4" id="titleInputGroup">
-                        <label for="id_title" class="form-label fw-bold text-white">
-                            Document Title
-                        </label>
-                        <input
-                            type="text"
-                            name="title"
-                            id="id_title"
-                            class="form-control"
-                            placeholder="e.g., Berita Ekonomi Hari Ini"
-                            value="{{ form.get('title', '') if form is defined and hasattr(form, 'get') else '' }}"
-                        />
-                    </div>
-
-                    <div class="mb-4" id="textInputGroup">
-                        <label for="id_original_text" class="form-label fw-bold text-white">
-                            Original Text (Indonesian)
-                        </label>
-                        <textarea
-                            name="original_text"
-                            id="id_original_text"
-                            class="form-control"
-                            rows="8"
-                            placeholder="Paste your text here..."
-                        >{{ form.get('original_text', '') if form is defined and hasattr(form, 'get') else '' }}</textarea>
-                    </div>
-
-                    <div class="mb-4">
-                        <label class="form-label fw-bold text-white">Or Upload File</label>
-                        <div class="row g-3">
-                            <div class="col-md-8">
-                                <div class="upload-container h-100 p-3 d-flex align-items-center justify-content-center flex-column text-center"
-                                    id="fileDropzone">
-                                    <button type="button" class="cancel-file-btn" id="cancelFileBtn"
-                                        title="Remove file">
-                                        <i class="fas fa-times"></i>
-                                    </button>
-                                    <i class="fas fa-cloud-upload-alt fa-2x text-muted mb-2"></i>
-                                    <div>
-                                        <p class="mb-0 fw-bold text-white small">
-                                            <label class="m-0 cursor-pointer">Click or Drag .txt File Here</label>
-                                        </p>
-                                        <span id="fileName" class="text-muted small" style="font-size: 0.8rem;">
-                                            Supports template format only
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <a href="{{ url('summarizer:download_template') }}"
-                                    class="btn btn-outline-info w-100 h-100 d-flex flex-column align-items-center justify-content-center">
-                                    <i class="fas fa-file-download fa-lg mb-2"></i>
-                                    <span>Download<br>Template</span>
-                                </a>
-                            </div>
-                        </div>
-                        <input type="file" name="file" id="id_file" class="d-none" accept=".txt" />
-                    </div>
-
-                    <div class="row mb-5">
-                        <div class="col-md-6 mb-4 mb-md-0">
-                            <label class="form-label fw-bold text-white">Summary Length</label>
-                            <div class="p-3 border border-secondary rounded" style="background: rgba(30, 41, 59, 0.4);">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <span class="small text-muted">Short</span>
-                                    <span id="lengthLabel" class="badge bg-primary">30%</span>
-                                    <span class="small text-muted">Long</span>
-                                </div>
-
-                                <input type="range" class="form-range" min="0.1" max="0.5" step="0.05"
-                                    id="compressionSlider" value="0.3">
-                                <input type="hidden" name="compression_ratio" id="id_compression_ratio" value="0.3">
-                            </div>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold text-white mb-2">Method</label>
-                            <div class="method-selector-container">
-                                <label class="method-option-card" for="method_hybrid">
-                                    <input type="radio" name="method" id="method_hybrid" value="hybrid" checked />
-                                    <div>
-                                        <div class="fw-bold text-white">Hybrid (AI/NER)</div>
-                                        <div class="small text-muted" style="font-size: 0.75rem;">
-                                            Uses Deep Learning (NER) for context.
-                                        </div>
-                                    </div>
-                                </label>
-                                <label class="method-option-card" for="method_traditional">
-                                    <input type="radio" name="method" id="method_traditional" value="traditional" />
-                                    <div>
-                                        <div class="fw-bold text-white">Traditional (Statistical)</div>
-                                        <div class="small text-muted" style="font-size: 0.75rem;">
-                                            Statistical approach, fast and simple.
-                                        </div>
-                                    </div>
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
-                            <i class="fas fa-magic"></i> Generate Summary
-                        </button>
-                    </div>
-                </form>
-
-                <!-- Loading indicator with real SSE-driven steps -->
-                <div id="loadingIndicator" class="d-none mt-5">
-                    <div class="text-center mb-4">
-                        <div class="spinner-ring"></div>
-                        <h5 class="text-white animate-pulse mt-3" id="loadingTitle">Processing Document...</h5>
-                    </div>
-
-                    <div class="step-loader" id="stepLoader">
-                        <div class="step-item" id="step1">
-                            <div class="step-circle"><i class="fas fa-file-alt"></i></div>
-                            <div class="step-label" data-default="Sentence Tokenization">Sentence Tokenization</div>
-                        </div>
-                        <div class="step-item" id="step2">
-                            <div class="step-circle"><i class="fas fa-table"></i></div>
-                            <div class="step-label" data-default="Building TF-IDF Matrix">Building TF-IDF Matrix</div>
-                        </div>
-                        <div class="step-item" id="step3">
-                            <div class="step-circle"><i class="fas fa-brain"></i></div>
-                            <div class="step-label" data-default="Feature Extraction">Feature Extraction</div>
-                        </div>
-                        <div class="step-item" id="step4">
-                            <div class="step-circle"><i class="fas fa-sort-amount-down"></i></div>
-                            <div class="step-label" data-default="Scoring & Selection">Scoring & Selection</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Summary output -->
-                <div id="summaryOutput" class="mt-5 d-none">
-                    <hr class="my-4" style="border-color: var(--card-border);">
-
-                    <div class="text-center mb-4">
-                        <i class="fas fa-check-circle fa-3x text-success mb-3 success-icon"></i>
-                        <h3 class="text-white">Summary Generated!</h3>
-                    </div>
-
-                    <div class="summary-output mb-4" id="summaryText"></div>
-
-                    <div class="result-actions">
-                        <button type="button" class="btn btn-outline-light" onclick="copyToClipboard()">
-                            <i class="fas fa-copy"></i> Copy Summary
-                        </button>
-                        <button type="button" class="btn btn-outline-secondary" onclick="resetForm()">
-                            <i class="fas fa-redo"></i> Create Another
-                        </button>
-                        <button type="button" id="viewDetailsBtn" class="btn btn-primary" onclick="handleViewDetails()">
-                            <i class="fas fa-eye"></i> View Full Details
-                        </button>
-                    </div>
-
-                    <div id="guestNotice" class="mt-3 d-none p-3 rounded guest-notice">
-                        <div class="d-flex align-items-center">
-                            <i class="fas fa-lock text-warning fa-2x me-3"></i>
-                            <div>
-                                <h6 class="text-white mb-1">Want to see detailed analysis?</h6>
-                                <p class="text-muted mb-2 small">
-                                    Login to access full summary details, entity analysis, statistics, and save your
-                                    summaries for later.
-                                </p>
-                                <a href="/accounts/login/?next={{ url('summarizer:summarize') }}"
-                                    class="btn btn-sm btn-warning">
-                                    <i class="fas fa-sign-in-alt"></i> Login to Continue
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
+        <!-- Method Selection Cards (3D Tilt) -->
+        <label class="form-label text-white small fw-bold mb-2">Summarization Method</label>
+        <div class="row g-2 mb-4">
+          <div class="col-4">
+            <input type="radio" class="btn-check" name="method" id="method-hybrid" value="hybrid" checked>
+            <label class="card card-editorial tilt-card p-3 text-center h-100 cursor-pointer border-0" for="method-hybrid">
+              <span class="badge badge-hybrid mb-2">Hybrid</span>
+              <span class="small d-block text-white fw-bold">Sastrawi + TF-IDF</span>
+            </label>
+          </div>
+          <div class="col-4">
+            <input type="radio" class="btn-check" name="method" id="method-extractive" value="traditional">
+            <label class="card card-editorial tilt-card p-3 text-center h-100 cursor-pointer border-0" for="method-extractive">
+              <span class="badge badge-extractive mb-2">Extractive</span>
+              <span class="small d-block text-white fw-bold">Sentence Rank</span>
+            </label>
+          </div>
+          <div class="col-4">
+            <input type="radio" class="btn-check" name="method" id="method-abstractive" value="abstractive">
+            <label class="card card-editorial tilt-card p-3 text-center h-100 cursor-pointer border-0" for="method-abstractive">
+              <span class="badge badge-abstractive mb-2">Abstractive</span>
+              <span class="small d-block text-white fw-bold">Neural Core</span>
+            </label>
+          </div>
         </div>
+
+        <!-- Submit Button -->
+        <button type="submit" class="btn btn-editorial w-100 py-3">
+          <i class="fas fa-play me-2"></i> Generate Summary
+        </button>
+      </form>
     </div>
+  </div>
+
+  <!-- Right Column: Summary Output Pane -->
+  <div class="col-lg-6">
+    <div class="card-editorial p-4 h-100" id="summaryOutputContainer">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="card-title text-white mb-0">
+          <i class="fas fa-file-alt text-warning me-2"></i> Summary Output
+        </h5>
+        <!-- Quick Action Bar -->
+        <div class="btn-group btn-group-sm">
+          <button type="button" class="btn btn-editorial-outline" onclick="copySummaryOutput()" title="Copy to Clipboard">
+            <i class="fas fa-copy me-1"></i> Copy
+          </button>
+          <button type="button" class="btn btn-editorial-outline" onclick="downloadSummaryOutput()" title="Download Summary">
+            <i class="fas fa-download me-1"></i> Download
+          </button>
+        </div>
+      </div>
+
+      <!-- Loading Indicator -->
+      <div id="loadingIndicator" class="htmx-indicator text-center py-5">
+        <div class="spinner-border text-warning mb-3" role="status"></div>
+        <p class="font-monospace small text-muted">Processing summarization engine...</p>
+      </div>
+
+      <!-- Output Text Pane -->
+      <div id="outputContent" class="summary-text-pane p-3 rounded bg-dark border border-secondary" style="min-height: 280px;">
+        {% if summary %}
+          <div class="scramble-output" data-text="{{ summary.summary_text }}">
+            {{ summary.summary_text }}
+          </div>
+        {% else %}
+          <p class="text-muted small italic mb-0">Waiting for text input... Select a method and click Generate Summary.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
 </div>
 {% endblock %}
+
 {% block extra_js %}
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const dropzone = document.getElementById('fileDropzone');
-        const fileInput = document.querySelector('input[name="file"]');
-        const fileNameDisplay = document.getElementById('fileName');
-        const cancelBtn = document.getElementById('cancelFileBtn');
-        const titleInput = document.getElementById('id_title');
-        const textInput = document.getElementById('id_original_text');
+function updateWordCount(val) {
+  const words = val.trim() ? val.trim().split(/\s+/).length : 0;
+  document.getElementById('inputWordCount').innerText = `${words} Words`;
+}
 
-        if (titleInput) titleInput.removeAttribute('required');
-        if (textInput) textInput.removeAttribute('required');
+function loadPreset(type) {
+  const presets = {
+    news: "Jakarta - Indonesian technology startups are rapidly adopting artificial intelligence to optimize logistics and customer support across major island hubs.",
+    tech: "FastAPI is a modern, fast web framework for building APIs with Python 3.8+ based on standard Python type hints. It offers standard validation and serialization.",
+    academic: "Natural language processing models evaluated across Indonesian text benchmarks demonstrate high accuracy when pairing TF-IDF sentence ranking with morphological stemming."
+  };
+  const input = document.getElementById('rawTextInput');
+  input.value = presets[type] || '';
+  updateWordCount(input.value);
+}
 
-        if (dropzone && fileInput) {
-            dropzone.addEventListener('click', (e) => {
-                if (e.target.closest('#cancelFileBtn')) return;
-                fileInput.click();
-            });
-            dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('dragover'); });
-            dropzone.addEventListener('dragleave', () => { dropzone.classList.remove('dragover'); });
-            dropzone.addEventListener('drop', (e) => {
-                e.preventDefault();
-                dropzone.classList.remove('dragover');
-                if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
-            });
-            fileInput.addEventListener('change', (e) => {
-                if (e.target.files.length) handleFile(e.target.files[0]);
-            });
-        }
+function copySummaryOutput() {
+  const output = document.getElementById('outputContent');
+  if (output) {
+    navigator.clipboard.writeText(output.innerText);
+    alert('Summary copied to clipboard!');
+  }
+}
 
-        function handleFile(file) {
-            if (file.name.endsWith('.txt')) {
-                const dt = new DataTransfer();
-                dt.items.add(file);
-                fileInput.files = dt.files;
-                fileNameDisplay.innerHTML = `<span class="text-success"><i class="fas fa-check"></i> ${file.name}</span>`;
-                if (dropzone) dropzone.classList.add('has-file');
-                updateInputMode('file');
-                if (titleInput) { titleInput.disabled = true; titleInput.value = ''; }
-                if (textInput) { textInput.disabled = true; textInput.value = ''; }
-                window.notify.success('File uploaded successfully', 3000);
-            } else {
-                window.notify.error('Please upload a .txt file only');
-                fileInput.value = "";
-            }
-        }
-
-        if (cancelBtn) {
-            cancelBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                fileInput.value = "";
-                const dt = new DataTransfer();
-                fileInput.files = dt.files;
-                if (dropzone) dropzone.classList.remove('has-file');
-                fileNameDisplay.innerHTML = 'Supports template format only';
-                updateInputMode('manual');
-                if (titleInput) titleInput.disabled = false;
-                if (textInput) textInput.disabled = false;
-                window.notify.success('File removed successfully', 3000);
-            });
-        }
-
-        function updateInputMode(mode) {
-            const indicator = document.getElementById('inputModeIndicator');
-            if (!indicator) return;
-            if (mode === 'file') {
-                indicator.textContent = 'File Upload';
-                indicator.className = 'input-mode-indicator mode-file';
-            } else {
-                indicator.textContent = 'Manual Input';
-                indicator.className = 'input-mode-indicator mode-manual';
-            }
-        }
-
-        const slider = document.getElementById('compressionSlider');
-        const hiddenInput = document.getElementById('id_compression_ratio');
-        const label = document.getElementById('lengthLabel');
-
-        if (slider && hiddenInput && label) {
-            label.textContent = Math.round(parseFloat(slider.value) * 100) + "%";
-            slider.addEventListener('input', (e) => {
-                const val = parseFloat(e.target.value);
-                hiddenInput.value = val;
-                label.textContent = Math.round(val * 100) + "%";
-            });
-        }
-
-        const summaryForm = document.getElementById('summaryForm');
-        const submitBtn = document.getElementById('submitBtn');
-        const loadingIndicator = document.getElementById('loadingIndicator');
-        const summaryOutput = document.getElementById('summaryOutput');
-        const stepLoader = document.getElementById('stepLoader');
-
-        let summaryIdForRedirect = null;
-        const isAuthenticated = {{ 'true' if request.user.is_authenticated else 'false' }};
-
-        window.handleViewDetails = function () {
-            if (summaryIdForRedirect && isAuthenticated) {
-                window.location.href = `/summary/${summaryIdForRedirect}/`;
-            } else if (!isAuthenticated) {
-                window.location.href = '/accounts/login/?next={{ url('summarizer:summarize') }}';
-            }
-        };
-
-        window.copyToClipboard = function () {
-            const text = document.getElementById('summaryText').innerText;
-            navigator.clipboard.writeText(text)
-                .then(() => window.notify.success('Summary copied to clipboard!', 3000))
-                .catch(() => window.notify.error('Failed to copy text. Please try again.', 5000));
-        };
-
-        window.resetForm = function () {
-            summaryForm.reset();
-            if (fileInput) { fileInput.value = ""; const dt = new DataTransfer(); fileInput.files = dt.files; }
-            if (dropzone) dropzone.classList.remove('has-file');
-            if (fileNameDisplay) fileNameDisplay.innerHTML = 'Supports template format only';
-            if (titleInput) titleInput.disabled = false;
-            if (textInput) textInput.disabled = false;
-            updateInputMode('manual');
-            summaryOutput.classList.add('d-none');
-            if (slider && hiddenInput && label) { slider.value = 0.3; hiddenInput.value = 0.3; label.textContent = '30%'; }
-            summaryIdForRedirect = null;
-            summaryForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            window.notify.success('Form reset. Ready for new summary!', 3000);
-        };
-
-        // ── SSE-driven step loader ──────────────────────────────────
-        function activateStep(stepNumber) {
-            const step = document.getElementById('step' + stepNumber);
-            if (!step) return;
-            step.classList.remove('done');
-            step.classList.add('active');
-        }
-        function completeStep(stepNumber) {
-            const step = document.getElementById('step' + stepNumber);
-            if (!step) return;
-            step.classList.remove('active');
-            step.classList.add('done');
-        }
-
-        function setStepsUpTo(stepNumber) {
-            for (let i = 1; i <= 4; i++) {
-                if (i < stepNumber) { completeStep(i); }
-                else if (i === stepNumber) { activateStep(i); }
-                else { const s = document.getElementById('step' + i); if (s) { s.classList.remove('active', 'done'); } }
-            }
-        }
-
-        function finalizeSummary(payload) {
-            document.getElementById('summaryText').textContent = payload.summary;
-            if (payload.id) summaryIdForRedirect = payload.id;
-            if (!isAuthenticated) {
-                const guest = document.getElementById('guestNotice');
-                if (guest) guest.classList.remove('d-none');
-            }
-            if (stepLoader) stepLoader.classList.add('d-none');
-            summaryOutput.classList.remove('d-none');
-            summaryOutput.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
-
-        function failSummary(errorMsg) {
-            window.notify.error('Error: ' + errorMsg, 7000);
-            if (loadingIndicator) loadingIndicator.classList.add('d-none');
-            if (stepLoader) stepLoader.classList.add('d-none');
-        }
-
-        // HTMX SSE extension dispatches htmx:sse:step / htmx:sse:result / htmx:sse:error
-        document.body.addEventListener('htmx:sse:step', (e) => {
-            const payload = e.detail.data;
-            if (payload && typeof payload.step === 'number') {
-                setStepsUpTo(payload.step);
-            }
-        });
-
-        document.body.addEventListener('htmx:sse:result', (e) => {
-            const payload = e.detail.data;
-            if (payload && payload.summary) {
-                finalizeSummary(payload);
-            }
-        });
-
-        document.body.addEventListener('htmx:sse:error', (e) => {
-            const payload = e.detail.data;
-            failSummary(payload && payload.error ? payload.error : 'Unknown error');
-        });
-
-        // Fallback for the default "message" event if the extension routes unnamed events here
-        document.body.addEventListener('htmx:sse:message', (e) => {
-            const raw = e.detail.data;
-            if (!raw || typeof raw !== 'string') return;
-            let payload;
-            try { payload = JSON.parse(raw); } catch (_) { return; }
-            if (payload.summary) finalizeSummary(payload);
-            else if (payload.error) failSummary(payload.error);
-            else if (typeof payload.step === 'number') setStepsUpTo(payload.step);
-        });
-    });
+function downloadSummaryOutput() {
+  const output = document.getElementById('outputContent');
+  if (output) {
+    const blob = new Blob([output.innerText], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `indogist-summary-${Date.now()}.txt`;
+    a.click();
+  }
+}
 </script>
 {% endblock %}
-
