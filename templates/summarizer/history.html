@@ -1,138 +1,97 @@
-{% extends 'summarizer/base.html'  %}
+{% extends 'summarizer/base.html' %}
 
-{% block title %}Summary History{% endblock %}
+{% block title %}History — IndoGist Studio{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-12">
-        <div class="card fade-in">
-            <div class="card-body p-4">
-                <h2 class="card-title mb-4 text-white">
-                    <i class="fas fa-history text-primary"></i> Your Summary History
-                </h2>
+<div class="row mb-4">
+  <div class="col-12">
+    <div class="card-editorial p-4 border-dotted-accent">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="clip-text-amber mb-0">Summary History</h3>
+        <span class="badge bg-dark border border-secondary text-muted px-3 py-2">
+          <i class="fas fa-database me-1"></i> {{ items|length if items is defined else 0 }} Entries
+        </span>
+      </div>
 
-                <form method="get" class="mb-4">
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <div class="input-group">
-                                <input type="text" name="q" class="form-control"
-                                       placeholder="Search summaries..."
-                                       value="{{ search_query }}">
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="fas fa-search"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="col-md-3">
-                            <select name="method" class="form-select" onchange="this.form.submit()">
-                                <option value="">All Methods</option>
-                                <option value="hybrid" {% if method_filter == 'hybrid' %}selected{% endif %}>Hybrid</option>
-                                <option value="traditional" {% if method_filter == 'traditional' %}selected{% endif %}>Traditional</option>
-                            </select>
-                        </div>
-
-                        <div class="col-md-3">
-                            <select name="sort" class="form-select" onchange="this.form.submit()">
-                                <option value="-created_at" {% if sort_by == '-created_at' %}selected{% endif %}>Newest First</option>
-                                <option value="created_at" {% if sort_by == 'created_at' %}selected{% endif %}>Oldest First</option>
-                                <option value="title" {% if sort_by == 'title' %}selected{% endif %}>Title A-Z</option>
-                            </select>
-                        </div>
-                    </div>
-                </form>
-
-                {% set items = summaries if summaries is defined and summaries else (page_obj if page_obj is defined else []) %}
-                {% if items %}
-                    {% for summary in items %}
-                    <a href="{{ url('summarizer:summary_detail', summary.pk) }}" class="text-decoration-none">
-                        <div class="history-item mb-3">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div class="flex-grow-1">
-                                    <h5 class="mb-1 text-white">{{ summary.title|truncatechars(100) }}</h5>
-                                    <p class="text-muted mb-2 small">
-                                        <i class="fas fa-calendar"></i> {{ summary.created_at|date("F d, Y H:i") }}
-                                        <span class="badge bg-{% if summary.method == 'hybrid' %}success{% else %}warning{% endif %} ms-2">{{ summary.get_method_display }}</span>
-                                    </p>
-                                    <p class="mb-0 text-white">{{ summary.summary_text|truncatewords(25) }}</p>
-                                </div>
-                                <div class="ms-3">
-                                    <i class="fas fa-chevron-right text-muted"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </a>
-                    {% endfor %}
-
-                    {% if page_obj is defined and page_obj and hasattr(page_obj, 'has_other_pages') and page_obj.has_other_pages %}
-                    <nav class="mt-4">
-                        <ul class="pagination justify-content-center">
-                            {% if page_obj.has_previous %}
-                                <li class="page-item">
-                                    <a class="page-link" href="?page=1&q={{ search_query }}&method={{ method_filter }}&sort={{ sort_by }}" aria-label="First">
-                                        <i class="fas fa-angle-double-left"></i>
-                                    </a>
-                                </li>
-                                <li class="page-item">
-                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ search_query }}&method={{ method_filter }}&sort={{ sort_by }}" aria-label="Previous">
-                                        <i class="fas fa-angle-left"></i>
-                                    </a>
-                                </li>
-                            {% else %}
-                                <li class="page-item disabled">
-                                    <span class="page-link"><i class="fas fa-angle-double-left"></i></span>
-                                </li>
-                                <li class="page-item disabled">
-                                    <span class="page-link"><i class="fas fa-angle-left"></i></span>
-                                </li>
-                            {% endif %}
-
-                            {% for i in page_obj.paginator.page_range %}
-                                {% if page_obj.number == i %}
-                                    <li class="page-item active"><span class="page-link">{{ i }}</span></li>
-                                {% elif i > page_obj.number|add(-3) and i < page_obj.number|add(3) %}
-                                    <li class="page-item">
-                                        <a class="page-link" href="?page={{ i }}&q={{ search_query }}&method={{ method_filter }}&sort={{ sort_by }}">{{ i }}</a>
-                                    </li>
-                                {% endif %}
-                            {% endfor %}
-
-                            {% if page_obj.has_next %}
-                                <li class="page-item">
-                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ search_query }}&method={{ method_filter }}&sort={{ sort_by }}" aria-label="Next">
-                                        <i class="fas fa-angle-right"></i>
-                                    </a>
-                                </li>
-                                <li class="page-item">
-                                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}&q={{ search_query }}&method={{ method_filter }}&sort={{ sort_by }}" aria-label="Last">
-                                        <i class="fas fa-angle-double-right"></i>
-                                    </a>
-                                </li>
-                            {% else %}
-                                <li class="page-item disabled">
-                                    <span class="page-link"><i class="fas fa-angle-right"></i></span>
-                                </li>
-                                <li class="page-item disabled">
-                                    <span class="page-link"><i class="fas fa-angle-double-right"></i></span>
-                                </li>
-                            {% endif %}
-                        </ul>
-                    </nav>
-                    {% endif %}
-
-                {% else %}
-                    <div class="text-center py-5">
-                        <i class="fas fa-inbox fa-4x text-muted mb-3"></i>
-                        <h4 class="text-muted">No summaries found</h4>
-                        <p class="text-muted">Start by creating your first summary</p>
-                        <a href="{{ url('summarizer:summarize') }}" class="btn btn-primary mt-3">
-                            <i class="fas fa-plus"></i> Create Summary
-                        </a>
-                    </div>
-                {% endif %}
+      <!-- Live HTMX Search & Filter Bar -->
+      <form method="get" action="/history/" hx-get="/history/" hx-target="#historyListContainer" hx-trigger="change, keyup changed delay:300ms from:find input[name='q']" class="mb-4">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="input-group">
+              <span class="input-group-text bg-dark border-secondary text-muted">
+                <i class="fas fa-search"></i>
+              </span>
+              <input
+                type="text"
+                name="q"
+                class="form-control form-control-editorial"
+                placeholder="Search history by keyword or title..."
+                value="{{ search_query or '' }}"
+              />
             </div>
+          </div>
+
+          <div class="col-md-3">
+            <select name="method" class="form-select form-select-editorial">
+              <option value="">All Methods</option>
+              <option value="hybrid" {% if method_filter == 'hybrid' %}selected{% endif %}>Hybrid</option>
+              <option value="traditional" {% if method_filter == 'traditional' %}selected{% endif %}>Extractive</option>
+              <option value="abstractive" {% if method_filter == 'abstractive' %}selected{% endif %}>Abstractive</option>
+            </select>
+          </div>
+
+          <div class="col-md-3">
+            <select name="sort" class="form-select form-select-editorial">
+              <option value="-created_at" {% if sort_by == '-created_at' %}selected{% endif %}>Newest First</option>
+              <option value="created_at" {% if sort_by == 'created_at' %}selected{% endif %}>Oldest First</option>
+              <option value="title" {% if sort_by == 'title' %}selected{% endif %}>Title A-Z</option>
+            </select>
+          </div>
         </div>
+      </form>
+
+      <!-- History List Target Container -->
+      <div id="historyListContainer">
+        {% set items = summaries if summaries is defined and summaries else (page_obj if page_obj is defined else []) %}
+        {% if items %}
+          <div class="d-flex flex-column gap-3">
+            {% for summary in items %}
+            <div class="card-editorial p-3 border-dotted-accent">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <div>
+                  <h6 class="text-white mb-1 fw-bold">{{ summary.title|truncatechars(90) if summary.title else 'Untitled Summary' }}</h6>
+                  <p class="text-muted small mb-0 font-monospace">
+                    <i class="fas fa-calendar-alt me-1"></i> {{ summary.created_at|date("F d, Y H:i") }}
+                    <span class="badge ms-2 {% if summary.method == 'hybrid' %}badge-hybrid{% elif summary.method == 'traditional' %}badge-extractive{% else %}badge-abstractive{% endif %}">
+                      {{ summary.get_method_display() if hasattr(summary, 'get_method_display') else summary.method|title }}
+                    </span>
+                  </p>
+                </div>
+                <div class="btn-group btn-group-sm">
+                  <a href="/summary/{{ summary.id if hasattr(summary, 'id') else summary.pk }}/" class="btn btn-editorial-outline btn-sm">
+                    <i class="fas fa-external-link-alt me-1"></i> View
+                  </a>
+                </div>
+              </div>
+              <p class="text-muted small mb-0 lh-base">
+                {{ summary.summary_text|truncatewords(30) if summary.summary_text else '' }}
+              </p>
+            </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <!-- Empty State -->
+          <div class="text-center py-5 border border-dashed rounded card-editorial">
+            <i class="fas fa-search fa-3x text-muted mb-3"></i>
+            <h6 class="text-white">No summary history entries found</h6>
+            <p class="small text-muted mb-3">Try clearing search filters or generate a new summary in the studio.</p>
+            <a href="/summarize/" class="btn btn-editorial btn-sm" hx-get="/summarize/" hx-target="#app-content" hx-push-url="true">
+              <i class="fas fa-plus me-1"></i> Create New Summary
+            </a>
+          </div>
+        {% endif %}
+      </div>
     </div>
+  </div>
 </div>
 {% endblock %}
-
