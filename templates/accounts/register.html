@@ -1,82 +1,79 @@
 {% extends 'summarizer/base.html' %}
 
-{% block title %}Register{% endblock %}
+{% block title %}Register — IndoGist Studio{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
   <div class="col-md-8 col-lg-6">
-    <div class="card fade-in">
-      <div class="card-body p-5">
-        <div class="text-center mb-4">
-          <i class="fas fa-user-plus fa-3x text-primary mb-3"></i>
-          <h2>Create Account</h2>
-          <label class="text-muted">Join us to start summarizing</label>
+    <div class="card-editorial p-4 border-dotted-accent">
+      <div class="text-center mb-4">
+        <i class="fas fa-user-plus fa-2x text-warning mb-2"></i>
+        <h3 class="clip-text-amber mb-1">Create Account</h3>
+        <p class="small text-muted mb-0">Register to start managing your summarization history</p>
+      </div>
+
+      <form method="post" action="/accounts/register">
+        {{ csrf_field(request) }}
+        <div class="mb-3">
+          <label for="id_username" class="form-label text-white small fw-bold">Username</label>
+          <input
+            type="text"
+            name="username"
+            id="id_username"
+            class="form-control form-control-editorial"
+            placeholder="Choose a username"
+            value="{{ form.get('username', '') if hasattr(form, 'get') else '' }}"
+            required
+            autofocus
+          />
         </div>
 
-        <form method="post" action="/accounts/register">
-          <div class="mb-3">
-            <label for="id_username" class="form-label fw-medium">Username</label>
-            <input
-              type="text"
-              name="username"
-              id="id_username"
-              class="form-control"
-              placeholder="Choose a username"
-              value="{{ form.get('username', '') if hasattr(form, 'get') else '' }}"
-              required
-              autofocus
-            />
-          </div>
+        <div class="mb-3">
+          <label for="id_email" class="form-label text-white small fw-bold">Email Address</label>
+          <input
+            type="email"
+            name="email"
+            id="id_email"
+            class="form-control form-control-editorial"
+            placeholder="Enter your email address"
+            value="{{ form.get('email', '') if hasattr(form, 'get') else '' }}"
+            required
+          />
+        </div>
 
-          <div class="mb-3">
-            <label for="id_email" class="form-label fw-medium">Email Address</label>
-            <input
-              type="email"
-              name="email"
-              id="id_email"
-              class="form-control"
-              placeholder="Enter your email address"
-              value="{{ form.get('email', '') if hasattr(form, 'get') else '' }}"
-              required
-            />
-          </div>
+        <div class="mb-3">
+          <label for="id_password1" class="form-label text-white small fw-bold">Password</label>
+          <input
+            type="password"
+            name="password1"
+            id="id_password1"
+            class="form-control form-control-editorial"
+            placeholder="Enter password"
+            required
+          />
+        </div>
 
-          <div class="mb-3">
-            <label for="id_password1" class="form-label fw-medium">Password</label>
-            <input
-              type="password"
-              name="password1"
-              id="id_password1"
-              class="form-control"
-              placeholder="Enter password"
-              required
-            />
-          </div>
+        <div class="mb-4">
+          <label for="id_password2" class="form-label text-white small fw-bold">Confirm Password</label>
+          <input
+            type="password"
+            name="password2"
+            id="id_password2"
+            class="form-control form-control-editorial"
+            placeholder="Confirm password"
+            required
+          />
+        </div>
 
-          <div class="mb-3">
-            <label for="id_password2" class="form-label fw-medium">Confirm Password</label>
-            <input
-              type="password"
-              name="password2"
-              id="id_password2"
-              class="form-control"
-              placeholder="Confirm password"
-              required
-            />
-          </div>
+        <button type="submit" class="btn btn-editorial w-100 py-3 mb-3">
+          <i class="fas fa-user-plus me-2"></i> Register Account
+        </button>
+      </form>
 
-          <button type="submit" class="btn btn-primary w-100 mb-3 mt-4">
-            <i class="fas fa-user-plus me-2"></i> Create Account
-          </button>
-        </form>
-
-        <p class="text-center mb-0">
-          <label>Already have an account?</label>
-          <a href="/accounts/login" class="text-decoration-none fw-bold ms-1">
-            Login here
-          </a>
-        </p>
-      </div>
+      <p class="text-center small text-muted mb-0">
+        Already have an account?
+        <a href="/accounts/login/" class="text-warning text-decoration-none fw-bold ms-1">Login here</a>
+      </p>
     </div>
   </div>
 </div>
