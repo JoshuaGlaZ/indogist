@@ -70,18 +70,18 @@ def _url_for(name: str, *args, **kwargs):
     clean_name = name.replace("summarizer:", "").replace("accounts:", "")
     route_map = {
         "home": "/",
-        "summarize": "/summarize",
+        "summarize": "/summarize/",
         "summary_detail": "/summary/",
-        "history": "/history",
-        "charts": "/charts",
-        "comparison": "/comparison",
+        "history": "/history/",
+        "charts": "/charts/",
+        "comparison": "/comparison/",
         "export_summary": "/export/",
         "add_to_dataset": "/add-to-dataset/",
         "download_template": "/download-template",
-        "register": "/accounts/register",
-        "login": "/accounts/login",
-        "logout": "/accounts/logout",
-        "profile": "/accounts/profile",
+        "register": "/accounts/register/",
+        "login": "/accounts/login/",
+        "logout": "/accounts/logout/",
+        "profile": "/accounts/profile/",
     }
 
     base_url = route_map.get(clean_name, f"/{clean_name}")
