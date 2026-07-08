@@ -156,7 +156,12 @@ class NLPService:
                     self.pos_to_idx = joblib.load(pos_path)
                     try:
                         import stanza
-                        self.pos_tagger = stanza.Pipeline('id', processors='tokenize,pos', tokenize_pretokenized=True, download_method=None, verbose=False)
+                        try:
+                            self.pos_tagger = stanza.Pipeline('id', processors='tokenize,pos', tokenize_pretokenized=True, download_method=None, verbose=False)
+                        except Exception:
+                            print("NLPService: Downloading Stanza Indonesian resources...")
+                            stanza.download('id', verbose=False)
+                            self.pos_tagger = stanza.Pipeline('id', processors='tokenize,pos', tokenize_pretokenized=True, verbose=False)
                         print("NLPService: Stanza POS tagger initialized.")
                     except Exception as e:
                         print(f"NLPService Warning: Failed to load Stanza POS tagger: {e}")
