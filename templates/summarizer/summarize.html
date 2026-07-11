@@ -1,10 +1,10 @@
 {% extends 'summarizer/base.html' %}
 {% from 'macros/forms.html' import render_field %}
 
-{% block title %}Summarize Studio — IndoGist{% endblock %}
+{% block title %}{{ lang("Summarize Studio — IndoGist") }}{% endblock %}
 
 {% block content %}
-<!-- Combined Kinetic Hero Header (Jintos Clip-Mask + Soulwire Scramble Ticker) -->
+<!-- Combined Kinetic Hero Header -->
 <div class="row mb-4">
   <div class="col-12 text-center">
     <h1 class="clip-text-amber display-4 mb-2">INDOGIST STUDIO</h1>
@@ -14,15 +14,24 @@
   </div>
 </div>
 
-<!-- Asymmetric 2-Column Editorial Workspace (Pharaohleap Reference) -->
+<!-- Asymmetric 2-Column Studio Workspace -->
 <div class="row g-4">
   <!-- Left Column: Input Workspace & Controls -->
   <div class="col-lg-6">
-    <div class="card-editorial p-4 border-dotted-accent h-100">
-      <h5 class="card-title text-white mb-3 d-flex justify-content-between align-items-center">
-        <span><i class="fas fa-edit text-warning me-2"></i> Input Workspace</span>
-        <span class="badge bg-dark border border-secondary text-muted small fw-normal" id="inputWordCount">0 Words</span>
-      </h5>
+    <div class="card-studio p-4 h-100">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="card-title text-main mb-0">
+          <i class="fas fa-edit text-warning me-2"></i> {{ lang("Input Workspace") }}
+        </h5>
+        <div class="d-flex align-items-center gap-2">
+          <span class="badge bg-dark border border-secondary text-muted small fw-normal font-monospace" id="inputWordCount">0 {{ lang("Words") }}</span>
+        </div>
+      </div>
+
+      <!-- Large Document Alert Warning -->
+      <div id="largeDocWarning" class="alert alert-warning card-studio py-2 px-3 small mb-3 d-none">
+        <i class="fas fa-info-circle me-1"></i> {{ lang("Large Document Detected — Optimized for long text batch processing.") }}
+      </div>
 
       <form id="summarizeForm" method="post" action="/summarize/" hx-post="/summarize/" hx-target="#summaryOutputContainer" hx-indicator="#loadingIndicator">
         {{ csrf_field(request) }}
@@ -30,36 +39,41 @@
         <!-- Input Mode Tabs -->
         <ul class="nav nav-pills mb-3" id="inputTab" role="tablist">
           <li class="nav-item" role="presentation">
-            <button class="nav-link nav-link-editorial active py-1 px-3 small" id="raw-text-tab" data-bs-toggle="tab" data-bs-target="#raw-text-pane" type="button" role="tab">Raw Text</button>
+            <button class="nav-link nav-link-studio active py-1 px-3 small" id="raw-text-tab" data-bs-toggle="tab" data-bs-target="#raw-text-pane" type="button" role="tab">{{ lang("Raw Text") }}</button>
           </li>
           <li class="nav-item" role="presentation">
-            <button class="nav-link nav-link-editorial py-1 px-3 small" id="file-upload-tab" data-bs-toggle="tab" data-bs-target="#file-upload-pane" type="button" role="tab">File Upload</button>
+            <button class="nav-link nav-link-studio py-1 px-3 small" id="file-upload-tab" data-bs-toggle="tab" data-bs-target="#file-upload-pane" type="button" role="tab">{{ lang("File Upload") }}</button>
           </li>
           <li class="nav-item" role="presentation">
-            <button class="nav-link nav-link-editorial py-1 px-3 small" id="presets-tab" data-bs-toggle="tab" data-bs-target="#presets-pane" type="button" role="tab">Sample Presets</button>
+            <button class="nav-link nav-link-studio py-1 px-3 small" id="presets-tab" data-bs-toggle="tab" data-bs-target="#presets-pane" type="button" role="tab">{{ lang("Sample Presets") }}</button>
           </li>
         </ul>
 
         <div class="tab-content mb-4" id="inputTabContent">
           <!-- Tab 1: Raw Text Area -->
           <div class="tab-pane fade show active" id="raw-text-pane" role="tabpanel">
-            <textarea
-              name="text"
-              id="rawTextInput"
-              class="form-control form-control-editorial"
-              rows="8"
-              placeholder="Paste or type document text to summarize..."
-              oninput="updateWordCount(this.value)"
-            >{{ text or '' }}</textarea>
+            <div class="position-relative">
+              <textarea
+                name="text"
+                id="rawTextInput"
+                class="form-control form-control-studio summary-textarea"
+                rows="8"
+                placeholder="{{ lang("Paste or type document text to summarize...") }}"
+                oninput="updateTelemetry(this)"
+              >{{ text or '' }}</textarea>
+              <div class="d-flex justify-content-between align-items-center mt-2 text-muted small font-monospace">
+                <span id="readingTimeGauge"></span>
+              </div>
+            </div>
           </div>
 
           <!-- Tab 2: File Upload Dropzone -->
           <div class="tab-pane fade" id="file-upload-pane" role="tabpanel">
-            <div class="p-4 text-center border border-dashed rounded-3 card-editorial" id="dropzone" style="border-style: dashed !important;">
+            <div class="p-4 text-center border border-dashed rounded-3 card-studio" id="dropzone">
               <i class="fas fa-cloud-upload-alt fa-2x text-warning mb-2"></i>
-              <p class="small text-muted mb-2">Drag and drop .txt, .pdf, or .docx file here</p>
+              <p class="small text-muted mb-2">{{ lang("Drag and drop .txt, .pdf, or .docx file here") }}</p>
               <input type="file" id="fileInput" name="file" class="d-none" accept=".txt,.pdf,.docx" onchange="handleFileSelect(this)" />
-              <button type="button" class="btn btn-editorial-outline btn-sm" onclick="document.getElementById('fileInput').click()">Browse Files</button>
+              <button type="button" class="btn btn-outline-studio btn-sm" onclick="document.getElementById('fileInput').click()">{{ lang("Browse Files") }}</button>
               <div id="fileInfo" class="mt-2 text-success small d-none"></div>
             </div>
           </div>
@@ -67,42 +81,42 @@
           <!-- Tab 3: Presets -->
           <div class="tab-pane fade" id="presets-pane" role="tabpanel">
             <div class="d-flex flex-wrap gap-2">
-              <button type="button" class="btn btn-editorial-outline btn-sm" onclick="loadPreset('news')">News Article</button>
-              <button type="button" class="btn btn-editorial-outline btn-sm" onclick="loadPreset('tech')">Tech Spec</button>
-              <button type="button" class="btn btn-editorial-outline btn-sm" onclick="loadPreset('academic')">Academic Paper</button>
+              <button type="button" class="btn btn-outline-studio btn-sm" onclick="loadPreset('news')">{{ lang("News Article") }}</button>
+              <button type="button" class="btn btn-outline-studio btn-sm" onclick="loadPreset('tech')">{{ lang("Tech Spec") }}</button>
+              <button type="button" class="btn btn-outline-studio btn-sm" onclick="loadPreset('academic')">{{ lang("Academic Paper") }}</button>
             </div>
           </div>
         </div>
 
-        <!-- Method Selection Cards (3D Tilt) -->
-        <label class="form-label text-white small fw-bold mb-2">Summarization Method</label>
+        <!-- Method Selection Cards -->
+        <label class="form-label text-main small fw-bold mb-2">{{ lang("Summarization Method") }}</label>
         <div class="row g-2 mb-4">
           <div class="col-4">
             <input type="radio" class="btn-check" name="method" id="method-hybrid" value="hybrid" checked>
-            <label class="card card-editorial tilt-card p-3 text-center h-100 cursor-pointer border-0" for="method-hybrid">
+            <label class="method-card h-100 cursor-pointer" for="method-hybrid">
               <span class="badge badge-hybrid mb-2">Hybrid</span>
-              <span class="small d-block text-white fw-bold">Sastrawi + TF-IDF</span>
+              <span class="small d-block text-main fw-bold">Sastrawi + TF-IDF</span>
             </label>
           </div>
           <div class="col-4">
             <input type="radio" class="btn-check" name="method" id="method-extractive" value="traditional">
-            <label class="card card-editorial tilt-card p-3 text-center h-100 cursor-pointer border-0" for="method-extractive">
+            <label class="method-card h-100 cursor-pointer" for="method-extractive">
               <span class="badge badge-extractive mb-2">Extractive</span>
-              <span class="small d-block text-white fw-bold">Sentence Rank</span>
+              <span class="small d-block text-main fw-bold">Sentence Rank</span>
             </label>
           </div>
           <div class="col-4">
             <input type="radio" class="btn-check" name="method" id="method-abstractive" value="abstractive">
-            <label class="card card-editorial tilt-card p-3 text-center h-100 cursor-pointer border-0" for="method-abstractive">
+            <label class="method-card h-100 cursor-pointer" for="method-abstractive">
               <span class="badge badge-abstractive mb-2">Abstractive</span>
-              <span class="small d-block text-white fw-bold">Neural Core</span>
+              <span class="small d-block text-main fw-bold">Neural Core</span>
             </label>
           </div>
         </div>
 
         <!-- Submit Button -->
-        <button type="submit" class="btn btn-editorial w-100 py-3">
-          <i class="fas fa-play me-2"></i> Generate Summary
+        <button type="submit" class="btn btn-amber w-100 py-3">
+          <i class="fas fa-play me-2"></i> {{ lang("Generate Summary") }}
         </button>
       </form>
     </div>
@@ -110,18 +124,18 @@
 
   <!-- Right Column: Summary Output Pane -->
   <div class="col-lg-6">
-    <div class="card-editorial p-4 h-100" id="summaryOutputContainer">
+    <div class="card-studio p-4 h-100" id="summaryOutputContainer">
       <div class="d-flex justify-content-between align-items-center mb-3">
-        <h5 class="card-title text-white mb-0">
-          <i class="fas fa-file-alt text-warning me-2"></i> Summary Output
+        <h5 class="card-title text-main mb-0">
+          <i class="fas fa-file-alt text-warning me-2"></i> {{ lang("Summary Output") }}
         </h5>
         <!-- Quick Action Bar -->
         <div class="btn-group btn-group-sm">
-          <button type="button" class="btn btn-editorial-outline" onclick="copySummaryOutput()" title="Copy to Clipboard">
-            <i class="fas fa-copy me-1"></i> Copy
+          <button type="button" class="btn btn-outline-studio" onclick="copySummaryOutput('outputContent', this)" title="{{ lang("Copy to Clipboard") }}">
+            <i class="fas fa-copy me-1"></i> {{ lang("Copy") }}
           </button>
-          <button type="button" class="btn btn-editorial-outline" onclick="downloadSummaryOutput()" title="Download Summary">
-            <i class="fas fa-download me-1"></i> Download
+          <button type="button" class="btn btn-outline-studio" onclick="downloadSummaryOutput('outputContent')" title="{{ lang("Download Summary") }}">
+            <i class="fas fa-download me-1"></i> {{ lang("Download") }}
           </button>
         </div>
       </div>
@@ -129,18 +143,27 @@
       <!-- Loading Indicator -->
       <div id="loadingIndicator" class="htmx-indicator text-center py-5">
         <div class="spinner-border text-warning mb-3" role="status"></div>
-        <p class="font-monospace small text-muted">Processing summarization engine...</p>
+        <p class="font-monospace small text-muted">{{ lang("Processing summarization engine...") }}</p>
       </div>
 
       <!-- Output Text Pane -->
-      <div id="outputContent" class="summary-text-pane p-3 rounded bg-dark border border-secondary" style="min-height: 280px;">
-        {% if summary %}
-          <div class="scramble-output" data-text="{{ summary.summary_text }}">
-            {{ summary.summary_text }}
-          </div>
-        {% else %}
-          <p class="text-muted small italic mb-0">Waiting for text input... Select a method and click Generate Summary.</p>
-        {% endif %}
+      <div id="outputContentPane" class="text-expandable p-3 rounded summary-text-pane" style="background: var(--bg-canvas); border: 1px solid var(--border-color); min-height: 280px;">
+        <div id="outputContent" class="summary-text-pane">
+          {% if summary %}
+            <div class="scramble-output" data-text="{{ summary.summary_text }}">
+              {{ summary.summary_text }}
+            </div>
+          {% else %}
+            <p class="text-muted small italic mb-0">{{ lang("Waiting for text input... Select a method and click Generate Summary.") }}</p>
+          {% endif %}
+        </div>
+        <div class="text-expandable-mask"></div>
+      </div>
+      
+      <div class="text-end mt-2">
+        <button type="button" class="btn btn-link btn-sm text-muted text-decoration-none p-0" onclick="toggleSummaryExpand('outputContentPane', this)">
+          <i class="fas fa-expand-alt me-1"></i> {{ lang("Show Full Summary") }}
+        </button>
       </div>
     </div>
   </div>
@@ -149,40 +172,11 @@
 
 {% block extra_js %}
 <script>
-function updateWordCount(val) {
-  const words = val.trim() ? val.trim().split(/\s+/).length : 0;
-  document.getElementById('inputWordCount').innerText = `${words} Words`;
-}
-
-function loadPreset(type) {
-  const presets = {
-    news: "Jakarta - Indonesian technology startups are rapidly adopting artificial intelligence to optimize logistics and customer support across major island hubs.",
-    tech: "FastAPI is a modern, fast web framework for building APIs with Python 3.8+ based on standard Python type hints. It offers standard validation and serialization.",
-    academic: "Natural language processing models evaluated across Indonesian text benchmarks demonstrate high accuracy when pairing TF-IDF sentence ranking with morphological stemming."
-  };
-  const input = document.getElementById('rawTextInput');
-  input.value = presets[type] || '';
-  updateWordCount(input.value);
-}
-
-function copySummaryOutput() {
-  const output = document.getElementById('outputContent');
-  if (output) {
-    navigator.clipboard.writeText(output.innerText);
-    alert('Summary copied to clipboard!');
-  }
-}
-
-function downloadSummaryOutput() {
-  const output = document.getElementById('outputContent');
-  if (output) {
-    const blob = new Blob([output.innerText], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `indogist-summary-${Date.now()}.txt`;
-    a.click();
-  }
-}
+  document.addEventListener('DOMContentLoaded', () => {
+    const input = document.getElementById('rawTextInput');
+    if (input) {
+      updateTelemetry(input.value);
+    }
+  });
 </script>
 {% endblock %}

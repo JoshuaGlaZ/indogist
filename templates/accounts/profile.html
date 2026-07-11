@@ -1,57 +1,57 @@
 {% extends 'summarizer/base.html' %}
 
-{% block title %}Profile — IndoGist Studio{% endblock %}
+{% block title %}{{ lang("Profile — IndoGist Studio") }}{% endblock %}
 
 {% block content %}
 <div class="row g-4">
   <div class="col-lg-4">
-    <div class="card-editorial p-4 text-center border-dotted-accent h-100">
+    <div class="card-studio p-4 text-center h-100">
       <div class="mb-3">
         <i class="fas fa-user-circle fa-4x text-warning"></i>
       </div>
       <h4 class="clip-text-amber mb-1">{{ request.user.username }}</h4>
       <p class="text-muted small mb-3">{{ request.user.email }}</p>
-      <span class="badge bg-dark border border-secondary text-muted px-3 py-2">
-        <i class="fas fa-database me-1"></i> Total Summaries: {{ total_summaries }}
+      <span class="badge bg-dark border border-secondary text-muted px-3 py-2 font-monospace">
+        <i class="fas fa-database me-1"></i> {{ lang("Total Summaries") }}: {{ total_summaries }}
       </span>
     </div>
   </div>
 
   <div class="col-lg-8">
-    <div class="card-editorial p-4 border-dotted-accent h-100">
-      <h4 class="text-white mb-4">
-        <i class="fas fa-user-edit text-warning me-2"></i> Edit Account Profile
+    <div class="card-studio p-4 h-100">
+      <h4 class="text-main fw-bold mb-4">
+        <i class="fas fa-user-edit text-warning me-2"></i> {{ lang("Edit Account Profile") }}
       </h4>
 
       <form method="post" action="/accounts/profile/">
         {{ csrf_field(request) }}
         <div class="mb-3">
-          <label for="id_username" class="form-label text-white small fw-bold">Username</label>
+          <label for="id_username" class="form-label text-main small fw-bold">{{ lang("Username") }}</label>
           <input
             type="text"
             name="username"
             id="id_username"
-            class="form-control form-control-editorial"
+            class="form-control form-control-studio"
             value="{{ request.user.username }}"
             required
           />
         </div>
 
         <div class="mb-4">
-          <label for="id_email" class="form-label text-white small fw-bold">Email Address</label>
+          <label for="id_email" class="form-label text-main small fw-bold">{{ lang("Email Address") }}</label>
           <input
             type="email"
             name="email"
             id="id_email"
-            class="form-control form-control-editorial"
+            class="form-control form-control-studio"
             value="{{ request.user.email }}"
             required
           />
         </div>
 
         <div class="text-end">
-          <button type="submit" class="btn btn-editorial px-4">
-            <i class="fas fa-save me-2"></i> Save Profile Changes
+          <button type="submit" class="btn btn-amber px-4">
+            <i class="fas fa-save me-2"></i> {{ lang("Save Profile Changes") }}
           </button>
         </div>
       </form>

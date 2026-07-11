@@ -45,7 +45,12 @@ class Summary(SQLModel, table=True):
 
     @property
     def get_method_display(self) -> str:
-        return "Hybrid (AI/NER)" if self.method == "hybrid" else "Traditional (Statistical)"
+        method_labels = {
+            "hybrid": "Hybrid (AI/NER)",
+            "traditional": "Extractive (Statistical)",
+            "abstractive": "Abstractive (Neural)"
+        }
+        return method_labels.get(self.method, str(self.method).title())
 
     @property
     def entities(self) -> List[Dict[str, Any]]:

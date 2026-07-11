@@ -16,7 +16,7 @@ tensorflow-cpu
 numpy
 pandas
 scikit-learn
-PySastrawi
+PySastrawi>=1.2.0
 nltk
 joblib
 stanza

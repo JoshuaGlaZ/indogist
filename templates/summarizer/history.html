@@ -1,15 +1,15 @@
 {% extends 'summarizer/base.html' %}
 
-{% block title %}History — IndoGist Studio{% endblock %}
+{% block title %}{{ lang("History — IndoGist Studio") }}{% endblock %}
 
 {% block content %}
 <div class="row mb-4">
   <div class="col-12">
-    <div class="card-editorial p-4 border-dotted-accent">
+    <div class="card-studio p-4">
       <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3 class="clip-text-amber mb-0">Summary History</h3>
-        <span class="badge bg-dark border border-secondary text-muted px-3 py-2">
-          <i class="fas fa-database me-1"></i> {{ items|length if items is defined else 0 }} Entries
+        <h3 class="clip-text-amber mb-0">{{ lang("Summary History") }}</h3>
+        <span class="badge bg-dark border border-secondary text-muted px-3 py-2 font-monospace">
+          <i class="fas fa-database me-1"></i> {{ items|length if items is defined else (summaries|length if summaries is defined else 0) }} {{ lang("Entries") }}
         </span>
       </div>
 
@@ -24,16 +24,16 @@
               <input
                 type="text"
                 name="q"
-                class="form-control form-control-editorial"
-                placeholder="Search history by keyword or title..."
+                class="form-control form-control-studio"
+                placeholder="{{ lang("Search history by keyword or title...") }}"
                 value="{{ search_query or '' }}"
               />
             </div>
           </div>
 
           <div class="col-md-3">
-            <select name="method" class="form-select form-select-editorial">
-              <option value="">All Methods</option>
+            <select name="method" class="form-select form-select-studio">
+              <option value="">{{ lang("All Methods") }}</option>
               <option value="hybrid" {% if method_filter == 'hybrid' %}selected{% endif %}>Hybrid</option>
               <option value="traditional" {% if method_filter == 'traditional' %}selected{% endif %}>Extractive</option>
               <option value="abstractive" {% if method_filter == 'abstractive' %}selected{% endif %}>Abstractive</option>
@@ -41,10 +41,10 @@
           </div>
 
           <div class="col-md-3">
-            <select name="sort" class="form-select form-select-editorial">
-              <option value="-created_at" {% if sort_by == '-created_at' %}selected{% endif %}>Newest First</option>
-              <option value="created_at" {% if sort_by == 'created_at' %}selected{% endif %}>Oldest First</option>
-              <option value="title" {% if sort_by == 'title' %}selected{% endif %}>Title A-Z</option>
+            <select name="sort" class="form-select form-select-studio">
+              <option value="-created_at" {% if sort_by == '-created_at' %}selected{% endif %}>{{ lang("Newest First") }}</option>
+              <option value="created_at" {% if sort_by == 'created_at' %}selected{% endif %}>{{ lang("Oldest First") }}</option>
+              <option value="title" {% if sort_by == 'title' %}selected{% endif %}>{{ lang("Title A-Z") }}</option>
             </select>
           </div>
         </div>
@@ -56,10 +56,10 @@
         {% if items %}
           <div class="d-flex flex-column gap-3">
             {% for summary in items %}
-            <div class="card-editorial p-3 border-dotted-accent">
+            <div class="card-studio p-3" style="border-left: 4px solid {% if summary.method == 'hybrid' %}var(--accent-amber){% elif summary.method == 'traditional' %}var(--accent-blue){% else %}var(--badge-abstractive-text){% endif %};">
               <div class="d-flex justify-content-between align-items-start mb-2">
                 <div>
-                  <h6 class="text-white mb-1 fw-bold">{{ summary.title|truncatechars(90) if summary.title else 'Untitled Summary' }}</h6>
+                  <h6 class="text-main mb-1 fw-bold">{{ summary.title|truncatechars(90) if summary.title else 'Untitled Summary' }}</h6>
                   <p class="text-muted small mb-0 font-monospace">
                     <i class="fas fa-calendar-alt me-1"></i> {{ summary.created_at|date("F d, Y H:i") }}
                     <span class="badge ms-2 {% if summary.method == 'hybrid' %}badge-hybrid{% elif summary.method == 'traditional' %}badge-extractive{% else %}badge-abstractive{% endif %}">
@@ -68,8 +68,8 @@
                   </p>
                 </div>
                 <div class="btn-group btn-group-sm">
-                  <a href="/summary/{{ summary.id if hasattr(summary, 'id') else summary.pk }}/" class="btn btn-editorial-outline btn-sm">
-                    <i class="fas fa-external-link-alt me-1"></i> View
+                  <a href="/summary/{{ summary.id if hasattr(summary, 'id') else summary.pk }}/" class="btn btn-outline-studio btn-sm px-3">
+                    <i class="fas fa-external-link-alt me-1"></i> {{ lang("View") }}
                   </a>
                 </div>
               </div>
@@ -81,12 +81,12 @@
           </div>
         {% else %}
           <!-- Empty State -->
-          <div class="text-center py-5 border border-dashed rounded card-editorial">
-            <i class="fas fa-search fa-3x text-muted mb-3"></i>
-            <h6 class="text-white">No summary history entries found</h6>
-            <p class="small text-muted mb-3">Try clearing search filters or generate a new summary in the studio.</p>
-            <a href="/summarize/" class="btn btn-editorial btn-sm" hx-get="/summarize/" hx-target="#app-content" hx-push-url="true">
-              <i class="fas fa-plus me-1"></i> Create New Summary
+          <div class="text-center py-5 border border-dashed rounded card-studio">
+            <i class="fas fa-search fa-3x text-muted mb-3 opacity-50"></i>
+            <h6 class="text-main fw-bold">{{ lang("No summary history entries found") }}</h6>
+            <p class="small text-muted mb-3">{{ lang("Try clearing search filters or generate a new summary in the studio.") }}</p>
+            <a href="/summarize/" class="btn btn-amber btn-sm" hx-get="/summarize/" hx-target="#app-content" hx-push-url="true">
+              <i class="fas fa-plus me-1"></i> {{ lang("Create New Summary") }}
             </a>
           </div>
         {% endif %}

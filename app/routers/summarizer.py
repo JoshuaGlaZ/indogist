@@ -30,6 +30,17 @@ def render_template(request: Request, name: str, context: dict = None):
     return request.app.state.render_template(request, name, context)
 
 @router.get("/", response_class=HTMLResponse)
+def home_get(
+    request: Request,
+    user: Optional[User] = Depends(get_current_user),
+    session: Session = Depends(get_session)
+):
+    recent_summaries = []
+    if user:
+        statement = select(Summary).where(Summary.user_id == user.id).order_by(desc(Summary.created_at)).limit(5)
+        recent_summaries = session.exec(statement).all()
+    return render_template(request, "summarizer/home.html", {"recent_summaries": recent_summaries, "user": user})
+
 @router.get("/summarize/", response_class=HTMLResponse)
 def summarize_get(request: Request, user: Optional[User] = Depends(get_current_user)):
     return render_template(request, "summarizer/summarize.html", {"form": {}, "user": user})

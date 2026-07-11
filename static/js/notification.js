@@ -96,7 +96,7 @@
         width: 12px;
         height: 12px;
         border-radius: 50%;
-        background: #38bdf8;
+        background: #f59e0b;
         animation: pulseAnimation 1.4s ease-in-out infinite;
       }
 
@@ -135,17 +135,17 @@
 
       .progress-bar-fill {
         height: 100%;
-        background: linear-gradient(90deg, #38bdf8, #7dd3fc);
+        background: linear-gradient(90deg, #f59e0b, #fbbf24);
         border-radius: 4px;
         transition: width 0.3s ease;
-        box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+        box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
       }
 
       .progress-bar-indeterminate {
         position: absolute;
         height: 100%;
         width: 40%;
-        background: linear-gradient(90deg, transparent, #38bdf8, transparent);
+        background: linear-gradient(90deg, transparent, #f59e0b, transparent);
         animation: indeterminate 1.5s ease-in-out infinite;
       }
 
@@ -219,8 +219,8 @@
         width: 40px;
         height: 40px;
         margin: -20px 0 0 -20px;
-        border: 3px solid rgba(56, 189, 248, 0.2);
-        border-top-color: #38bdf8;
+        border: 3px solid rgba(245, 158, 11, 0.2);
+        border-top-color: #f59e0b;
         border-radius: 50%;
         z-index: 11;
         animation: spin 0.8s linear infinite;

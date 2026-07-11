@@ -1,12 +1,11 @@
 {% extends 'summarizer/base.html' %}
 
-{% block title %}Home{% endblock %}
+{% block title %}{{ lang("Home — IndoGist Studio") }}{% endblock %}
 
 {% block extra_css %}
 <style>
-    /* Hero Section Styling */
     .hero-section {
-        min-height: 70vh;
+        min-height: 65vh;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -14,30 +13,20 @@
         flex-direction: column;
     }
 
-    .hero-title {
-        background: -webkit-linear-gradient(45deg, #fff, #94a3b8);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        font-weight: 800;
-        letter-spacing: -1px;
-    }
-
-    /* Animation Container (Glass Style) */
     .anim-container {
-        font-family: 'Crimson Text', serif;
-        font-size: 1.1rem;
-        background: rgba(30, 41, 59, 0.7);
-        padding: 2.5rem 2rem 1.5rem;
-        border-radius: 16px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        font-family: var(--font-serif);
+        font-size: 1.05rem;
+        background: var(--bg-card);
+        padding: 2.25rem 2rem 1.5rem;
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--border-color);
         width: 100%;
         max-width: 650px;
-        margin-top: 3rem;
+        margin-top: 2.5rem;
         position: relative;
         overflow: hidden;
-        color: #e2e8f0;
-        backdrop-filter: blur(12px);
-        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+        color: var(--text-main);
+        box-shadow: var(--shadow-base);
     }
 
     .anim-label {
@@ -48,48 +37,41 @@
         text-transform: uppercase;
         letter-spacing: 2px;
         font-weight: bold;
-        font-family: 'JetBrains Mono', monospace;
+        font-family: var(--font-mono);
     }
 
-    /* Progress Bar */
     .progress-bar-container {
         position: absolute;
         bottom: 0;
         left: 0;
         width: 100%;
         height: 4px;
-        background: rgba(255, 255, 255, 0.05);
+        background: var(--border-color);
     }
-    .progress-bar {
+    .progress-bar-fill-demo {
         height: 100%;
-        background: var(--primary-color);
+        background: var(--accent-amber);
         width: 0%;
         transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-        box-shadow: 0 0 15px var(--primary-color);
+        box-shadow: 0 0 12px var(--accent-amber);
     }
 
-    /* Recent History Items - Updated to match History Page */
-    .recent-item {
-        background: rgba(30, 41, 59, 0.6);
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        border-radius: 8px;
+    .recent-item-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
         padding: 1.25rem;
         margin-bottom: 1rem;
-        transition: all 0.2s ease;
-        border-left: 3px solid transparent;
+        transition: all var(--transition-fast);
+        border-left: 4px solid var(--accent-amber);
     }
-    .recent-item:hover {
-        background: rgba(30, 41, 59, 0.9);
-        border-color: rgba(255, 255, 255, 0.1);
-        transform: translateX(5px);
-        border-left-color: var(--primary-color);
-    }
-    .recent-meta {
-        font-size: 0.85rem;
+    .recent-item-card:hover {
+        background: var(--bg-card-hover);
+        border-color: var(--border-hover);
+        transform: translateX(4px);
     }
 
-    /* Animation States */
-    .anim-text { transition: all 0.6s ease; line-height: 1.6; }
+    .anim-text { transition: all 0.6s ease; line-height: var(--reading-line-height); }
     .anim-text.compressing { transform: scale(0.98); filter: blur(4px); opacity: 0.5; }
     .word-fade-in { animation: fadeInWords 0.5s ease forwards; }
     @keyframes fadeInWords { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -116,17 +98,17 @@
 
 {% block content %}
 
-{% if request.user.is_authenticated %}
+{% if request.user and request.user.is_authenticated %}
 <div class="row">
     <!-- Welcome Header -->
-    <div class="col-12 mb-5">
+    <div class="col-12 mb-4">
         <div class="d-flex justify-content-between align-items-end border-bottom border-secondary border-opacity-25 pb-4">
             <div>
-                <h1 class="display-5 fw-bold text-white mb-2">Welcome, user</h1>
-                <p class="text-muted mb-0 lead"></p>
+                <h1 class="display-5 fw-bold clip-text-amber mb-2">{{ lang("Welcome") }}, {{ request.user.username }}</h1>
+                <p class="text-muted mb-0 lead">{{ lang("Manage your saved summaries and run real-time document analysis.") }}</p>
             </div>
-            <a href="{{ url('summarizer:summarize') }}" class="btn btn-primary btn-lg px-4 shadow-lg">
-                <i class="fas fa-plus me-2"></i> New Summary
+            <a href="/summarize/" class="btn btn-amber px-4 shadow-lg">
+                <i class="fas fa-plus me-2"></i> {{ lang("New Summary") }}
             </a>
         </div>
     </div>
@@ -134,10 +116,10 @@
     <!-- Recent History Section -->
     <div class="col-12">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h4 class="text-white m-0"><i class="fas fa-clock text-primary me-2"></i>Recent Activity</h4>
+            <h4 class="text-main m-0"><i class="fas fa-clock text-warning me-2"></i>{{ lang("Recent Activity") }}</h4>
             {% if recent_summaries %}
-                <a href="{{ url('summarizer:history') }}" class="text-decoration-none text-info small hover-underline">
-                    View All History <i class="fas fa-arrow-right ms-1"></i>
+                <a href="/history/" class="text-decoration-none text-info small hover-underline">
+                    {{ lang("View All History") }} <i class="fas fa-arrow-right ms-1"></i>
                 </a>
             {% endif %}
         </div>
@@ -145,18 +127,18 @@
         {% if recent_summaries %}
             <div class="fade-in">
                 {% for summary in recent_summaries %}
-                <a href="{{ url('summarizer:summary_detail', summary.id) }}" class="text-decoration-none">
-                    <div class="recent-item">
+                <a href="/summary/{{ summary.id }}/" class="text-decoration-none">
+                    <div class="recent-item-card">
                         <div class="d-flex justify-content-between align-items-center">
                             <div class="flex-grow-1">
-                                <h3 class="mb-1 text-white fw-bold">{{ summary.title|truncatechars(80) }}</h3>
-                                <div class="recent-meta mb-2 text-white">
+                                <h5 class="mb-1 text-main fw-bold">{{ summary.title|truncatechars(80) }}</h5>
+                                <div class="small text-muted mb-2 font-monospace">
                                     <i class="fas fa-calendar-alt me-1"></i> {{ summary.created_at|date("F d, Y H:i") }}
-                                    <span class="badge bg-{% if summary.method == 'hybrid' %}success{% else %}warning{% endif %} ms-2 small">
+                                    <span class="badge {% if summary.method == 'hybrid' %}badge-hybrid{% else %}badge-extractive{% endif %} ms-2">
                                         {{ summary.get_method_display }}
                                     </span>
                                 </div>
-                                <p class="mb-0 text-white small">{{ summary.summary_text|truncatewords(25) }}</p>
+                                <p class="mb-0 text-muted small lh-base">{{ summary.summary_text|truncatewords(25) }}</p>
                             </div>
                             <div class="text-end ps-3">
                                 <i class="fas fa-chevron-right text-muted"></i>
@@ -167,11 +149,11 @@
                 {% endfor %}
             </div>
         {% else %}
-            <div class="text-center py-5 rounded border border-dashed border-secondary" style="background: rgba(255,255,255,0.02);">
+            <div class="text-center py-5 rounded card-studio">
                 <i class="fas fa-scroll fa-3x text-muted mb-3 opacity-50"></i>
-                <h4 class="text-white-50">No summaries yet</h4>
-                <p class="text-muted small">Create your first summary to see it here.</p>
-                <a href="{{ url('summarizer:summarize') }}" class="btn btn-outline-primary btn-sm mt-2">Get Started</a>
+                <h5 class="text-main">{{ lang("No summaries yet") }}</h5>
+                <p class="text-muted small">{{ lang("Create your first summary to see it here.") }}</p>
+                <a href="/summarize/" class="btn btn-outline-studio btn-sm mt-2">{{ lang("Get Started") }}</a>
             </div>
         {% endif %}
     </div>
@@ -180,33 +162,33 @@
 {% else %}
 <!-- Guest / Hero View -->
 <div class="hero-section fade-in">
-    <div class="mb-4">
-        <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-3 py-2 rounded-pill mb-3">
-            <i class="fas fa-layer-group me-1"></i> Indonesian Summarizer</span>
+    <div class="mb-3">
+        <span class="badge badge-hybrid px-3 py-2">
+            <i class="fas fa-layer-group me-1"></i> {{ lang("Indonesian Summarization Engine") }}</span>
     </div>
 
-    <h1 class="display-3 hero-title mb-3">Summarize Text Instantly</h1>
-    <p class="text-muted mb-5 lead" style="max-width: 600px;">
-        Efficiently condense your documents while retaining context using our advanced processing model.
+    <h1 class="display-3 clip-text-amber mb-3">{{ lang("Summarize Text Instantly") }}</h1>
+    <p class="text-muted mb-4 lead" style="max-width: 620px;">
+        {{ lang("Efficiently condense your documents while retaining full context using our advanced NLP models.") }}
     </p>
 
-    <div class="d-flex gap-3 mb-5">
-        <a href="{{ url('summarizer:summarize') }}" class="btn btn-primary btn-lg px-5 py-3 shadow-lg rounded-pill">
-            Start Summarizing <i class="fas fa-arrow-right ms-2"></i>
+    <div class="d-flex gap-3 mb-4">
+        <a href="/summarize/" class="btn btn-amber btn-lg px-5 py-3 shadow-lg rounded-pill">
+            {{ lang("Start Summarizing") }} <i class="fas fa-arrow-right ms-2"></i>
         </a>
     </div>
 
-    <!-- Live Demo Animation -->
+    <!-- Live Demo Animation Card -->
     <div class="anim-container text-start">
-        <div class="anim-label" id="animLabel" style="color: #38bdf8;"><span class="blinking-dot"></span> ORIGINAL TEXT</div>
+        <div class="anim-label" id="animLabel" style="color: var(--accent-amber);"><span class="blinking-dot"></span> {{ lang("ORIGINAL TEXT") }}</div>
         <div id="animText" class="anim-text">
             Indonesia merupakan negara kepulauan terbesar di dunia yang terdiri dari 17.504 pulau. Nama alternatif yang biasa dipakai adalah Nusantara. Dengan populasi mencapai 270 juta jiwa pada tahun 2020, Indonesia adalah negara berpenduduk terbanyak keempat di dunia dan negara yang berpenduduk Muslim terbanyak di dunia, dengan penganut lebih dari 230 juta jiwa.
         </div>
         <div class="mt-4 d-flex justify-content-between align-items-center text-muted small font-monospace">
-            <span id="wordCount"><i class="fas fa-align-left me-1"></i> 45 words</span>
+            <span id="wordCount"><i class="fas fa-align-left me-1"></i> 45 {{ lang("words") }}</span>
         </div>
         <div class="progress-bar-container">
-            <div class="progress-bar" id="progressBar"></div>
+            <div class="progress-bar-fill-demo" id="progressBar"></div>
         </div>
     </div>
 </div>
@@ -244,15 +226,15 @@
                     setTimeout(() => {
                         if (isLong) {
                             textEl.innerHTML = shortText;
-                            labelEl.innerHTML = '<span class="blinking-dot"></span> SUMMARY';
-                            labelEl.style.color = "#4ade80";
-                            wordCountEl.innerHTML = '<i class="fas fa-align-left me-1"></i> 14 words';
+                            labelEl.innerHTML = '<span class="blinking-dot"></span> {{ lang("SUMMARY") }}';
+                            labelEl.style.color = "var(--badge-abstractive-text)";
+                            wordCountEl.innerHTML = '<i class="fas fa-align-left me-1"></i> 14 {{ lang("words") }}';
                             wordCountEl.classList.add('text-success');
                         } else {
                             textEl.innerHTML = longText;
-                            labelEl.innerHTML = '<span class="blinking-dot"></span> ORIGINAL TEXT';
-                            labelEl.style.color = "#38bdf8";
-                            wordCountEl.innerHTML = '<i class="fas fa-align-left me-1"></i> 45 words';
+                            labelEl.innerHTML = '<span class="blinking-dot"></span> {{ lang("ORIGINAL TEXT") }}';
+                            labelEl.style.color = "var(--accent-amber)";
+                            wordCountEl.innerHTML = '<i class="fas fa-align-left me-1"></i> 45 {{ lang("words") }}';
                             wordCountEl.classList.remove('text-success');
                         }
 
@@ -274,4 +256,3 @@
     });
 </script>
 {% endblock %}
-

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -15,7 +15,7 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
     
-    <!-- Custom Pharaohleap Base CSS -->
+    <!-- Custom IndoGist Precision Studio CSS -->
     <link
       rel="stylesheet"
       href="{{ static('css/base.css') }}"
@@ -28,22 +28,27 @@
     {% block extra_css %}{% endblock %}
   </head>
   <body>
-    <!-- Background Texture Layer -->
-    <div class="texture-overlay"></div>
-
-    <!-- Floating Pharaohleap Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark navbar-editorial sticky-top">
+    <!-- Floating Studio Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-studio sticky-top">
       <div class="container">
-        <a class="navbar-brand navbar-brand-editorial d-flex align-items-center" href="/">
+        <a class="navbar-brand navbar-brand-studio d-flex align-items-center" href="/">
           <span class="clip-text-amber me-2">INDOGIST</span>
           <span class="badge bg-dark border border-secondary text-muted ms-2 px-2 py-1 small fw-normal">CORE: ACTIVE</span>
         </a>
 
+        <div class="d-flex align-items-center d-lg-none ms-auto me-2">
+          <!-- Theme Switcher Button Mobile -->
+          <button class="theme-toggle-btn me-2" id="themeToggleBtnMobile" onclick="toggleTheme()" title="Toggle Theme">
+            <i class="fas fa-sun"></i>
+          </button>
+        </div>
+
         <button
-          class="navbar-toggler"
+          class="navbar-toggler border-0"
           type="button"
           data-bs-toggle="collapse"
           data-bs-target="#navbarNav"
+          aria-label="Toggle Navigation"
         >
           <span class="navbar-toggler-icon"></span>
         </button>
@@ -52,53 +57,60 @@
           <ul class="navbar-nav ms-auto align-items-center">
             <li class="nav-item">
               <a
-                class="nav-link nav-link-editorial {% if request.url.path == '/' or 'summarize' in request.url.path %}active{% endif %}"
+                class="nav-link nav-link-studio {% if request.url.path == '/summarize/' %}active{% endif %}"
                 href="/summarize/"
                 hx-get="/summarize/"
                 hx-target="#app-content"
                 hx-push-url="true"
               >
-                Summarize
+                {{ lang("Summarize") }}
               </a>
             </li>
             <li class="nav-item">
               <a
-                class="nav-link nav-link-editorial {% if 'history' in request.url.path %}active{% endif %}"
+                class="nav-link nav-link-studio {% if 'history' in request.url.path %}active{% endif %}"
                 href="/history/"
                 hx-get="/history/"
                 hx-target="#app-content"
                 hx-push-url="true"
               >
-                History
+                {{ lang("History") }}
               </a>
             </li>
             <li class="nav-item">
               <a
-                class="nav-link nav-link-editorial {% if 'charts' in request.url.path %}active{% endif %}"
+                class="nav-link nav-link-studio {% if 'charts' in request.url.path %}active{% endif %}"
                 href="/charts/"
                 hx-get="/charts/"
                 hx-target="#app-content"
                 hx-push-url="true"
               >
-                Metrics
+                {{ lang("Metrics") }}
               </a>
             </li>
             <li class="nav-item">
               <a
-                class="nav-link nav-link-editorial {% if 'comparison' in request.url.path %}active{% endif %}"
+                class="nav-link nav-link-studio {% if 'comparison' in request.url.path %}active{% endif %}"
                 href="/comparison/"
                 hx-get="/comparison/"
                 hx-target="#app-content"
                 hx-push-url="true"
               >
-                Compare
+                {{ lang("Compare") }}
               </a>
+            </li>
+
+            <!-- Theme Switcher Button Desktop -->
+            <li class="nav-item d-none d-lg-block ms-2 me-2">
+              <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Toggle Theme">
+                <i class="fas fa-sun"></i>
+              </button>
             </li>
 
             {% if request.user and request.user.is_authenticated %}
             <li class="nav-item dropdown ms-2">
               <a
-                class="nav-link nav-link-editorial dropdown-toggle"
+                class="nav-link nav-link-studio dropdown-toggle"
                 href="#"
                 id="userDropdown"
                 role="button"
@@ -106,10 +118,10 @@
               >
                 <i class="fas fa-user-circle me-1"></i> {{ request.user.username }}
               </a>
-              <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark card-editorial border-0">
+              <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark card-studio border-0 shadow-lg">
                 <li>
                   <a class="dropdown-item py-2" href="/accounts/profile/">
-                    <i class="fas fa-user me-2"></i> Profile
+                    <i class="fas fa-user me-2 text-warning"></i> {{ lang("Profile") }}
                   </a>
                 </li>
                 <li><hr class="dropdown-divider border-secondary"></li>
@@ -121,7 +133,7 @@
                   >
                     {{ csrf_field(request) }}
                     <button type="submit" class="dropdown-item text-danger py-2">
-                      <i class="fas fa-sign-out-alt me-2"></i> Logout
+                      <i class="fas fa-sign-out-alt me-2"></i> {{ lang("Logout") }}
                     </button>
                   </form>
                 </li>
@@ -130,9 +142,9 @@
             {% else %}
             <li class="nav-item ms-2">
               <a
-                class="btn btn-editorial-outline btn-sm px-3"
+                class="btn btn-outline-studio btn-sm px-3"
                 href="/accounts/login/"
-                >Login</a
+                >{{ lang("Login") }}</a
               >
             </li>
             {% endif %}
@@ -146,7 +158,7 @@
       {% if messages %}
       {% for message in messages %}
       <div
-        class="alert alert-{{ message.tags }} alert-dismissible fade show mb-4 card-editorial"
+        class="alert alert-{{ message.tags }} alert-dismissible fade show mb-4 card-studio"
         role="alert"
       >
         {{ message }}
@@ -169,7 +181,7 @@
     >
       <div class="container">
         <p class="mb-0 small text-muted">
-          &copy; {{ now().year }} INDOGIST — Text Summarization Engine
+          &copy; {{ now().year }} INDOGIST — {{ lang("Text Summarization Engine") }}
         </p>
       </div>
     </footer>
@@ -177,24 +189,24 @@
     <!-- Command Palette Modal -->
     <div class="modal fade" id="commandPaletteModal" tabindex="-1" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content card-editorial">
+        <div class="modal-content card-studio">
           <div class="modal-header border-bottom border-secondary">
-            <h6 class="modal-title clip-text-amber">Quick Command Palette</h6>
+            <h6 class="modal-title clip-text-amber">{{ lang("Quick Command Palette") }}</h6>
             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body p-0">
             <div class="list-group list-group-flush bg-transparent">
-              <a href="/summarize/" class="list-group-item list-group-item-action bg-transparent text-white border-secondary py-3" hx-get="/summarize/" hx-target="#app-content" data-bs-dismiss="modal">
-                <i class="fas fa-magic me-3 text-warning"></i> Go to Summarize Studio
+              <a href="/summarize/" class="list-group-item list-group-item-action bg-transparent text-main border-secondary py-3" hx-get="/summarize/" hx-target="#app-content" data-bs-dismiss="modal">
+                <i class="fas fa-magic me-3 text-warning"></i> {{ lang("Go to Summarize Studio") }}
               </a>
-              <a href="/history/" class="list-group-item list-group-item-action bg-transparent text-white border-secondary py-3" hx-get="/history/" hx-target="#app-content" data-bs-dismiss="modal">
-                <i class="fas fa-history me-3 text-info"></i> Search Summary History
+              <a href="/history/" class="list-group-item list-group-item-action bg-transparent text-main border-secondary py-3" hx-get="/history/" hx-target="#app-content" data-bs-dismiss="modal">
+                <i class="fas fa-history me-3 text-info"></i> {{ lang("Search Summary History") }}
               </a>
-              <a href="/charts/" class="list-group-item list-group-item-action bg-transparent text-white border-secondary py-3" hx-get="/charts/" hx-target="#app-content" data-bs-dismiss="modal">
-                <i class="fas fa-chart-line me-3 text-success"></i> View ROUGE/BLEU Metrics
+              <a href="/charts/" class="list-group-item list-group-item-action bg-transparent text-main border-secondary py-3" hx-get="/charts/" hx-target="#app-content" data-bs-dismiss="modal">
+                <i class="fas fa-chart-line me-3 text-success"></i> {{ lang("View ROUGE/BLEU Metrics") }}
               </a>
-              <a href="/comparison/" class="list-group-item list-group-item-action bg-transparent text-white border-secondary py-3" hx-get="/comparison/" hx-target="#app-content" data-bs-dismiss="modal">
-                <i class="fas fa-balance-scale me-3 text-primary"></i> Compare Model Methods
+              <a href="/comparison/" class="list-group-item list-group-item-action bg-transparent text-main border-secondary py-3" hx-get="/comparison/" hx-target="#app-content" data-bs-dismiss="modal">
+                <i class="fas fa-balance-scale me-3 text-primary"></i> {{ lang("Compare Model Methods") }}
               </a>
             </div>
           </div>
@@ -202,8 +214,9 @@
       </div>
     </div>
 
-    <!-- Bootstrap & Custom Engine JS -->
+    <!-- Bootstrap & Engine JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ static('js/notification.js') }}"></script>
     <script src="{{ static('js/app.js') }}"></script>
 
     {% block extra_js %}{% endblock %}

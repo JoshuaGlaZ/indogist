@@ -1,48 +1,26 @@
 {% extends 'summarizer/base.html' %}
 
-{% block title %}Compare Methods — IndoGist Studio{% endblock %}
-
-{% block extra_css %}
-<style>
-  .snap-carousel {
-    display: flex;
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    scroll-behavior: smooth;
-    gap: 1.5rem;
-    padding-bottom: 1rem;
-  }
-  .snap-slide {
-    flex: 0 0 100%;
-    scroll-snap-align: center;
-  }
-  @media (min-width: 992px) {
-    .snap-slide {
-      flex: 0 0 48%;
-    }
-  }
-</style>
-{% endblock %}
+{% block title %}{{ lang("Compare Methods — IndoGist Studio") }}{% endblock %}
 
 {% block content %}
 <div class="row mb-4">
   <div class="col-12">
-    <div class="card-editorial p-4 border-dotted-accent">
+    <div class="card-studio p-4">
       <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3 class="clip-text-amber mb-0">Summarization Method Comparison</h3>
-        <span class="badge bg-dark border border-secondary text-muted px-3 py-2">
-          <i class="fas fa-balance-scale me-1"></i> Side-by-Side Analysis
+        <h3 class="clip-text-amber mb-0">{{ lang("Summarization Method Comparison") }}</h3>
+        <span class="badge bg-dark border border-secondary text-muted px-3 py-2 font-monospace">
+          <i class="fas fa-balance-scale me-1"></i> {{ lang("Side-by-Side Analysis") }}
         </span>
       </div>
 
       <form id="comparisonForm" method="post" action="/comparison/" hx-post="/comparison/" hx-target="#comparisonResults" hx-indicator="#loadingIndicator">
         {{ csrf_field(request) }}
         <div class="mb-4">
-          <label class="form-label text-white small fw-bold">Input Text for Comparison</label>
-          <textarea name="text" class="form-control form-control-editorial" rows="5" placeholder="Paste document text to compare Extractive vs Hybrid methods...">{{ source_text or '' }}</textarea>
+          <label class="form-label text-main small fw-bold">{{ lang("Input Text for Comparison") }}</label>
+          <textarea name="text" class="form-control form-control-studio summary-textarea" rows="5" placeholder="{{ lang("Paste document text to compare Extractive vs Hybrid methods...") }}">{{ source_text or '' }}</textarea>
         </div>
-        <button type="submit" class="btn btn-editorial px-4">
-          <i class="fas fa-play me-2"></i> Run Side-by-Side Comparison
+        <button type="submit" class="btn btn-amber px-4">
+          <i class="fas fa-play me-2"></i> {{ lang("Run Side-by-Side Comparison") }}
         </button>
       </form>
     </div>
@@ -52,35 +30,35 @@
 <!-- Loading Indicator -->
 <div id="loadingIndicator" class="htmx-indicator text-center py-5">
   <div class="spinner-border text-warning mb-3" role="status"></div>
-  <p class="font-monospace small text-muted">Running parallel models for comparison...</p>
+  <p class="font-monospace small text-muted">{{ lang("Running parallel models for comparison...") }}</p>
 </div>
 
-<!-- Results Area with Scroll Snapping Carousel (Giana Reference) -->
+<!-- Results Area with Scroll Snapping Carousel for Mobile -->
 <div id="comparisonResults">
   {% if traditional_summary or hybrid_summary %}
   <div class="snap-carousel">
     <!-- Slide 1: Extractive Result -->
     <div class="snap-slide">
-      <div class="card-editorial p-4 border-dotted-accent h-100">
+      <div class="card-studio p-4 h-100">
         <div class="d-flex justify-content-between align-items-center mb-3">
-          <h5 class="text-white mb-0">Extractive Method</h5>
+          <h5 class="text-main mb-0 fw-bold">{{ lang("Extractive Method") }}</h5>
           <span class="badge badge-extractive">Sentence Rank</span>
         </div>
-        <div class="p-3 bg-dark border border-secondary rounded font-monospace small text-white" style="min-height: 220px; white-space: pre-wrap;">
-          {{ traditional_summary or 'No extractive summary generated.' }}
+        <div class="p-3 rounded font-monospace small text-main summary-text-pane" style="background: var(--bg-canvas); border: 1px solid var(--border-color); min-height: 220px; white-space: pre-wrap;">
+          {{ traditional_summary or lang("No extractive summary generated.") }}
         </div>
       </div>
     </div>
 
     <!-- Slide 2: Hybrid Result -->
     <div class="snap-slide">
-      <div class="card-editorial p-4 border-dotted-accent h-100">
+      <div class="card-studio p-4 h-100">
         <div class="d-flex justify-content-between align-items-center mb-3">
-          <h5 class="text-white mb-0">Hybrid Method</h5>
+          <h5 class="text-main mb-0 fw-bold">{{ lang("Hybrid Method") }}</h5>
           <span class="badge badge-hybrid">Sastrawi + TF-IDF</span>
         </div>
-        <div class="p-3 bg-dark border border-secondary rounded font-monospace small text-white" style="min-height: 220px; white-space: pre-wrap;">
-          {{ hybrid_summary or 'No hybrid summary generated.' }}
+        <div class="p-3 rounded font-monospace small text-main summary-text-pane" style="background: var(--bg-canvas); border: 1px solid var(--border-color); min-height: 220px; white-space: pre-wrap;">
+          {{ hybrid_summary or lang("No hybrid summary generated.") }}
         </div>
       </div>
     </div>

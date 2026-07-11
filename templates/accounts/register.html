@@ -1,27 +1,27 @@
 {% extends 'summarizer/base.html' %}
 
-{% block title %}Register — IndoGist Studio{% endblock %}
+{% block title %}{{ lang("Register — IndoGist Studio") }}{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
   <div class="col-md-8 col-lg-6">
-    <div class="card-editorial p-4 border-dotted-accent">
+    <div class="card-studio p-4">
       <div class="text-center mb-4">
         <i class="fas fa-user-plus fa-2x text-warning mb-2"></i>
-        <h3 class="clip-text-amber mb-1">Create Account</h3>
-        <p class="small text-muted mb-0">Register to start managing your summarization history</p>
+        <h3 class="clip-text-amber mb-1">{{ lang("Create Account") }}</h3>
+        <p class="small text-muted mb-0">{{ lang("Register to start managing your summarization history") }}</p>
       </div>
 
       <form method="post" action="/accounts/register">
         {{ csrf_field(request) }}
         <div class="mb-3">
-          <label for="id_username" class="form-label text-white small fw-bold">Username</label>
+          <label for="id_username" class="form-label text-main small fw-bold">{{ lang("Username") }}</label>
           <input
             type="text"
             name="username"
             id="id_username"
-            class="form-control form-control-editorial"
-            placeholder="Choose a username"
+            class="form-control form-control-studio"
+            placeholder="{{ lang("Choose a username") }}"
             value="{{ form.get('username', '') if hasattr(form, 'get') else '' }}"
             required
             autofocus
@@ -29,50 +29,50 @@
         </div>
 
         <div class="mb-3">
-          <label for="id_email" class="form-label text-white small fw-bold">Email Address</label>
+          <label for="id_email" class="form-label text-main small fw-bold">{{ lang("Email Address") }}</label>
           <input
             type="email"
             name="email"
             id="id_email"
-            class="form-control form-control-editorial"
-            placeholder="Enter your email address"
+            class="form-control form-control-studio"
+            placeholder="{{ lang("Enter your email address") }}"
             value="{{ form.get('email', '') if hasattr(form, 'get') else '' }}"
             required
           />
         </div>
 
         <div class="mb-3">
-          <label for="id_password1" class="form-label text-white small fw-bold">Password</label>
+          <label for="id_password1" class="form-label text-main small fw-bold">{{ lang("Password") }}</label>
           <input
             type="password"
             name="password1"
             id="id_password1"
-            class="form-control form-control-editorial"
-            placeholder="Enter password"
+            class="form-control form-control-studio"
+            placeholder="{{ lang("Enter password") }}"
             required
           />
         </div>
 
         <div class="mb-4">
-          <label for="id_password2" class="form-label text-white small fw-bold">Confirm Password</label>
+          <label for="id_password2" class="form-label text-main small fw-bold">{{ lang("Confirm Password") }}</label>
           <input
             type="password"
             name="password2"
             id="id_password2"
-            class="form-control form-control-editorial"
-            placeholder="Confirm password"
+            class="form-control form-control-studio"
+            placeholder="{{ lang("Confirm password") }}"
             required
           />
         </div>
 
-        <button type="submit" class="btn btn-editorial w-100 py-3 mb-3">
-          <i class="fas fa-user-plus me-2"></i> Register Account
+        <button type="submit" class="btn btn-amber w-100 py-3 mb-3">
+          <i class="fas fa-user-plus me-2"></i> {{ lang("Register Account") }}
         </button>
       </form>
 
       <p class="text-center small text-muted mb-0">
-        Already have an account?
-        <a href="/accounts/login/" class="text-warning text-decoration-none fw-bold ms-1">Login here</a>
+        {{ lang("Already have an account?") }}
+        <a href="/accounts/login/" class="text-warning text-decoration-none fw-bold ms-1">{{ lang("Login here") }}</a>
       </p>
     </div>
   </div>
