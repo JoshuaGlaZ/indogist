@@ -1,182 +1,109 @@
 {% extends 'summarizer/base.html' %}
-{% from 'macros/forms.html' import render_field %}
 
-{% block title %}{{ lang("Summarize Studio — IndoGist") }}{% endblock %}
+{% block title %}{{ lang("IndoGist studio — text summarizer") }}{% endblock %}
 
 {% block content %}
-<!-- Combined Kinetic Hero Header -->
-<div class="row mb-4">
-  <div class="col-12 text-center">
-    <h1 class="clip-text-amber display-4 mb-2">INDOGIST STUDIO</h1>
-    <p class="scramble-ticker font-monospace small text-muted text-uppercase tracking-wider mb-0" style="letter-spacing: 2px; min-height: 24px;">
-      AUTOMATED TEXT SUMMARIZATION ENGINE
-    </p>
+<section class="view active" id="view-summarize">
+  <div class="page-head">
+    <h1>{{ lang("IndoGist studio — text summarizer") }}</h1>
+    <p>{{ lang("Hybrid, extractive, or abstractive — pick a method and run it on Indonesian text.") }}</p>
   </div>
-</div>
 
-<!-- Asymmetric 2-Column Studio Workspace -->
-<div class="row g-4">
-  <!-- Left Column: Input Workspace & Controls -->
-  <div class="col-lg-6">
-    <div class="card-studio p-4 h-100">
-      <div class="d-flex justify-content-between align-items-center mb-3">
-        <h5 class="card-title text-main mb-0">
-          <i class="fas fa-edit text-warning me-2"></i> {{ lang("Input Workspace") }}
-        </h5>
-        <div class="d-flex align-items-center gap-2">
-          <span class="badge bg-dark border border-secondary text-muted small fw-normal font-monospace" id="inputWordCount">0 {{ lang("Words") }}</span>
+  <form id="summarizeForm" method="post" action="/summarize/" hx-post="/summarize/" hx-target="#app-content">
+    {{ csrf_field(request) }}
+    <div class="grid-2">
+      <!-- Card 1: Input Workspace -->
+      <div class="card-precision">
+        <div class="card-head">
+          <p class="card-title">{{ lang("Input workspace") }}</p>
+          <span class="count-badge"><span id="wordCount">0</span> {{ lang("words") }}</span>
         </div>
-      </div>
-
-      <!-- Large Document Alert Warning -->
-      <div id="largeDocWarning" class="alert alert-warning card-studio py-2 px-3 small mb-3 d-none">
-        <i class="fas fa-info-circle me-1"></i> {{ lang("Large Document Detected — Optimized for long text batch processing.") }}
-      </div>
-
-      <form id="summarizeForm" method="post" action="/summarize/" hx-post="/summarize/" hx-target="#summaryOutputContainer" hx-indicator="#loadingIndicator">
-        {{ csrf_field(request) }}
-
-        <!-- Input Mode Tabs -->
-        <ul class="nav nav-pills mb-3" id="inputTab" role="tablist">
-          <li class="nav-item" role="presentation">
-            <button class="nav-link nav-link-studio active py-1 px-3 small" id="raw-text-tab" data-bs-toggle="tab" data-bs-target="#raw-text-pane" type="button" role="tab">{{ lang("Raw Text") }}</button>
-          </li>
-          <li class="nav-item" role="presentation">
-            <button class="nav-link nav-link-studio py-1 px-3 small" id="file-upload-tab" data-bs-toggle="tab" data-bs-target="#file-upload-pane" type="button" role="tab">{{ lang("File Upload") }}</button>
-          </li>
-          <li class="nav-item" role="presentation">
-            <button class="nav-link nav-link-studio py-1 px-3 small" id="presets-tab" data-bs-toggle="tab" data-bs-target="#presets-pane" type="button" role="tab">{{ lang("Sample Presets") }}</button>
-          </li>
-        </ul>
-
-        <div class="tab-content mb-4" id="inputTabContent">
-          <!-- Tab 1: Raw Text Area -->
-          <div class="tab-pane fade show active" id="raw-text-pane" role="tabpanel">
-            <div class="position-relative">
-              <textarea
-                name="text"
-                id="rawTextInput"
-                class="form-control form-control-studio summary-textarea"
-                rows="8"
-                placeholder="{{ lang("Paste or type document text to summarize...") }}"
-                oninput="updateTelemetry(this)"
-              >{{ text or '' }}</textarea>
-              <div class="d-flex justify-content-between align-items-center mt-2 text-muted small font-monospace">
-                <span id="readingTimeGauge"></span>
-              </div>
-            </div>
+        <div class="card-body">
+          <div class="tabs" role="tablist">
+            <button type="button" class="tab active" data-tab="raw">{{ lang("Raw text") }}</button>
+            <button type="button" class="tab" data-tab="upload">{{ lang("File upload") }}</button>
+            <button type="button" class="tab" data-tab="presets">{{ lang("Presets") }}</button>
           </div>
 
-          <!-- Tab 2: File Upload Dropzone -->
-          <div class="tab-pane fade" id="file-upload-pane" role="tabpanel">
-            <div class="p-4 text-center border border-dashed rounded-3 card-studio" id="dropzone">
-              <i class="fas fa-cloud-upload-alt fa-2x text-warning mb-2"></i>
-              <p class="small text-muted mb-2">{{ lang("Drag and drop .txt, .pdf, or .docx file here") }}</p>
+          <div class="tab-pane active" data-pane="raw">
+            <label class="field-label" for="rawText">{{ lang("Document text") }}</label>
+            <textarea class="field" id="rawText" name="text" lang="id" placeholder="{{ lang("Paste your text here...") }}">{{ text or 'Indonesia merupakan negara kepulauan terbesar di dunia yang terdiri dari 17.504 pulau. Nama alternatif yang biasa dipakai adalah Nusantara. Dengan populasi mencapai 270 juta jiwa pada tahun 2020, Indonesia adalah negara berpenduduk terbanyak keempat di dunia dan negara yang berpenduduk Muslim terbanyak di dunia, dengan penganut lebih dari 230 juta jiwa.' }}</textarea>
+          </div>
+
+          <div class="tab-pane" data-pane="upload">
+            <div class="dropzone">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2M7 9l5-5 5 5M12 4v13"/></svg>
+              <div>{{ lang("Drag a .txt, .pdf, or .docx file here") }}</div>
               <input type="file" id="fileInput" name="file" class="d-none" accept=".txt,.pdf,.docx" onchange="handleFileSelect(this)" />
-              <button type="button" class="btn btn-outline-studio btn-sm" onclick="document.getElementById('fileInput').click()">{{ lang("Browse Files") }}</button>
-              <div id="fileInfo" class="mt-2 text-success small d-none"></div>
+              <button class="btn" type="button" onclick="document.getElementById('fileInput').click()">{{ lang("Browse files") }}</button>
+              <div id="fileInfo" class="mt-2 small text-success d-none"></div>
             </div>
           </div>
 
-          <!-- Tab 3: Presets -->
-          <div class="tab-pane fade" id="presets-pane" role="tabpanel">
-            <div class="d-flex flex-wrap gap-2">
-              <button type="button" class="btn btn-outline-studio btn-sm" onclick="loadPreset('news')">{{ lang("News Article") }}</button>
-              <button type="button" class="btn btn-outline-studio btn-sm" onclick="loadPreset('tech')">{{ lang("Tech Spec") }}</button>
-              <button type="button" class="btn btn-outline-studio btn-sm" onclick="loadPreset('academic')">{{ lang("Academic Paper") }}</button>
+          <div class="tab-pane" data-pane="presets">
+            <div class="preset-row">
+              <button class="btn" type="button" onclick="loadPreset('news')">{{ lang("News article") }}</button>
+              <button class="btn" type="button" onclick="loadPreset('tech')">{{ lang("Tech spec") }}</button>
+              <button class="btn" type="button" onclick="loadPreset('academic')">{{ lang("Academic paper") }}</button>
             </div>
           </div>
-        </div>
 
-        <!-- Method Selection Cards -->
-        <label class="form-label text-main small fw-bold mb-2">{{ lang("Summarization Method") }}</label>
-        <div class="row g-2 mb-4">
-          <div class="col-4">
-            <input type="radio" class="btn-check" name="method" id="method-hybrid" value="hybrid" checked>
-            <label class="method-card h-100 cursor-pointer" for="method-hybrid">
-              <span class="badge badge-hybrid mb-2">Hybrid</span>
-              <span class="small d-block text-main fw-bold">Sastrawi + TF-IDF</span>
-            </label>
+          <div>
+            <p class="field-label">{{ lang("Summarization method") }}</p>
+            <div class="method-grid">
+              <label class="method-opt">
+                <input type="radio" name="method" value="hybrid" {% if not method or method == 'hybrid' %}checked{% endif %}>
+                <span class="method-card hybrid"><span class="m-name">Hybrid</span><span class="m-sub">Sastrawi + TF-IDF</span></span>
+              </label>
+              <label class="method-opt">
+                <input type="radio" name="method" value="traditional" {% if method == 'traditional' %}checked{% endif %}>
+                <span class="method-card extractive"><span class="m-name">Extractive</span><span class="m-sub">Sentence rank</span></span>
+              </label>
+              <label class="method-opt">
+                <input type="radio" name="method" value="abstractive" {% if method == 'abstractive' %}checked{% endif %}>
+                <span class="method-card abstractive"><span class="m-name">Abstractive</span><span class="m-sub">Neural core</span></span>
+              </label>
+            </div>
           </div>
-          <div class="col-4">
-            <input type="radio" class="btn-check" name="method" id="method-extractive" value="traditional">
-            <label class="method-card h-100 cursor-pointer" for="method-extractive">
-              <span class="badge badge-extractive mb-2">Extractive</span>
-              <span class="small d-block text-main fw-bold">Sentence Rank</span>
-            </label>
-          </div>
-          <div class="col-4">
-            <input type="radio" class="btn-check" name="method" id="method-abstractive" value="abstractive">
-            <label class="method-card h-100 cursor-pointer" for="method-abstractive">
-              <span class="badge badge-abstractive mb-2">Abstractive</span>
-              <span class="small d-block text-main fw-bold">Neural Core</span>
-            </label>
-          </div>
-        </div>
 
-        <!-- Submit Button -->
-        <button type="submit" class="btn btn-amber w-100 py-3">
-          <i class="fas fa-play me-2"></i> {{ lang("Generate Summary") }}
-        </button>
-      </form>
-    </div>
-  </div>
-
-  <!-- Right Column: Summary Output Pane -->
-  <div class="col-lg-6">
-    <div class="card-studio p-4 h-100" id="summaryOutputContainer">
-      <div class="d-flex justify-content-between align-items-center mb-3">
-        <h5 class="card-title text-main mb-0">
-          <i class="fas fa-file-alt text-warning me-2"></i> {{ lang("Summary Output") }}
-        </h5>
-        <!-- Quick Action Bar -->
-        <div class="btn-group btn-group-sm">
-          <button type="button" class="btn btn-outline-studio" onclick="copySummaryOutput('outputContent', this)" title="{{ lang("Copy to Clipboard") }}">
-            <i class="fas fa-copy me-1"></i> {{ lang("Copy") }}
-          </button>
-          <button type="button" class="btn btn-outline-studio" onclick="downloadSummaryOutput('outputContent')" title="{{ lang("Download Summary") }}">
-            <i class="fas fa-download me-1"></i> {{ lang("Download") }}
-          </button>
+          <button class="btn btn-amber btn-block" id="generateBtn" type="submit">{{ lang("Generate summary") }}</button>
         </div>
       </div>
 
-      <!-- Loading Indicator -->
-      <div id="loadingIndicator" class="htmx-indicator text-center py-5">
-        <div class="spinner-border text-warning mb-3" role="status"></div>
-        <p class="font-monospace small text-muted">{{ lang("Processing summarization engine...") }}</p>
-      </div>
-
-      <!-- Output Text Pane -->
-      <div id="outputContentPane" class="text-expandable p-3 rounded summary-text-pane" style="background: var(--bg-canvas); border: 1px solid var(--border-color); min-height: 280px;">
-        <div id="outputContent" class="summary-text-pane">
-          {% if summary %}
-            <div class="scramble-output" data-text="{{ summary.summary_text }}">
+      <!-- Card 2: Summary Output -->
+      <div class="card-precision">
+        <div class="card-head">
+          <p class="card-title">{{ lang("Summary output") }}</p>
+          <div class="card-actions">
+            <button class="btn" id="copyBtn" type="button" onclick="copySummaryOutput('outputArea', this)">{{ lang("Copy") }}</button>
+            <button class="btn" id="saveBtn" type="button" onclick="downloadSummaryOutput('outputArea')">{{ lang("Save") }}</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="output-area" id="outputArea">
+            {% if summary %}
               {{ summary.summary_text }}
+            {% else %}
+              <span class="output-placeholder">{{ lang("Waiting for input — select a method and generate a summary.") }}</span>
+            {% endif %}
+          </div>
+          <div class="entity-section">
+            <p class="field-label" style="margin-bottom:0;">{{ lang("Detected entities") }}</p>
+            <div class="entity-wrap" id="entityWrap">
+              {% if summary and summary.entities %}
+                {% for ent in summary.entities %}
+                  <span class="entity-chip show">
+                    <span>{{ ent.get('text', '') }}</span>
+                    <span class="e-type">{{ ent.get('label', 'LOC') }}</span>
+                    <span class="e-score">{{ ent.get('confidence_percent', 95) }}%</span>
+                  </span>
+                {% endfor %}
+              {% endif %}
             </div>
-          {% else %}
-            <p class="text-muted small italic mb-0">{{ lang("Waiting for text input... Select a method and click Generate Summary.") }}</p>
-          {% endif %}
+          </div>
         </div>
-        <div class="text-expandable-mask"></div>
-      </div>
-      
-      <div class="text-end mt-2">
-        <button type="button" class="btn btn-link btn-sm text-muted text-decoration-none p-0" onclick="toggleSummaryExpand('outputContentPane', this)">
-          <i class="fas fa-expand-alt me-1"></i> {{ lang("Show Full Summary") }}
-        </button>
       </div>
     </div>
-  </div>
-</div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const input = document.getElementById('rawTextInput');
-    if (input) {
-      updateTelemetry(input.value);
-    }
-  });
-</script>
+  </form>
+</section>
 {% endblock %}

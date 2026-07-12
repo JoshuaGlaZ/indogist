@@ -1,68 +1,47 @@
 {% extends 'summarizer/base.html' %}
 
-{% block title %}{{ lang("Compare Methods — IndoGist Studio") }}{% endblock %}
+{% block title %}{{ lang("Model comparison studio — IndoGist") }}{% endblock %}
 
 {% block content %}
-<div class="row mb-4">
-  <div class="col-12">
-    <div class="card-studio p-4">
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3 class="clip-text-amber mb-0">{{ lang("Summarization Method Comparison") }}</h3>
-        <span class="badge bg-dark border border-secondary text-muted px-3 py-2 font-monospace">
-          <i class="fas fa-balance-scale me-1"></i> {{ lang("Side-by-Side Analysis") }}
-        </span>
-      </div>
-
-      <form id="comparisonForm" method="post" action="/comparison/" hx-post="/comparison/" hx-target="#comparisonResults" hx-indicator="#loadingIndicator">
-        {{ csrf_field(request) }}
-        <div class="mb-4">
-          <label class="form-label text-main small fw-bold">{{ lang("Input Text for Comparison") }}</label>
-          <textarea name="text" class="form-control form-control-studio summary-textarea" rows="5" placeholder="{{ lang("Paste document text to compare Extractive vs Hybrid methods...") }}">{{ source_text or '' }}</textarea>
-        </div>
-        <button type="submit" class="btn btn-amber px-4">
-          <i class="fas fa-play me-2"></i> {{ lang("Run Side-by-Side Comparison") }}
-        </button>
-      </form>
-    </div>
+<section class="view active" id="view-comparison">
+  <div class="page-head">
+    <h1>{{ lang("Model comparison studio") }}</h1>
+    <p>{{ lang("Run the same text through two methods and compare results side by side.") }}</p>
   </div>
-</div>
 
-<!-- Loading Indicator -->
-<div id="loadingIndicator" class="htmx-indicator text-center py-5">
-  <div class="spinner-border text-warning mb-3" role="status"></div>
-  <p class="font-monospace small text-muted">{{ lang("Running parallel models for comparison...") }}</p>
-</div>
+  <form method="post" action="/comparison/" hx-post="/comparison/" hx-target="#app-content">
+    {{ csrf_field(request) }}
+    <div class="card-precision">
+      <div class="card-body">
+        <label class="field-label" for="compareText">{{ lang("Input text for side-by-side evaluation") }}</label>
+        <textarea class="field" id="compareText" name="text" lang="id" style="min-height:120px;">{{ source_text or 'Indonesia merupakan negara kepulauan terbesar di dunia yang terdiri dari 17.504 pulau. Nama alternatif yang biasa dipakai adalah Nusantara. Dengan populasi mencapai 270 juta jiwa pada tahun 2020, Indonesia adalah negara berpenduduk terbanyak keempat di dunia.' }}</textarea>
+        <button class="btn btn-amber" id="runCompareBtn" type="submit" style="align-self:flex-start;">{{ lang("Run side-by-side comparison") }}</button>
+      </div>
+    </div>
+  </form>
 
-<!-- Results Area with Scroll Snapping Carousel for Mobile -->
-<div id="comparisonResults">
-  {% if traditional_summary or hybrid_summary %}
-  <div class="snap-carousel">
-    <!-- Slide 1: Extractive Result -->
-    <div class="snap-slide">
-      <div class="card-studio p-4 h-100">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <h5 class="text-main mb-0 fw-bold">{{ lang("Extractive Method") }}</h5>
-          <span class="badge badge-extractive">Sentence Rank</span>
-        </div>
-        <div class="p-3 rounded font-monospace small text-main summary-text-pane" style="background: var(--bg-canvas); border: 1px solid var(--border-color); min-height: 220px; white-space: pre-wrap;">
-          {{ traditional_summary or lang("No extractive summary generated.") }}
-        </div>
+  <div class="compare-grid" id="compareGrid" style="{% if traditional_summary or hybrid_summary %}display:grid;{% else %}display:none;{% endif %}">
+    <div class="card-precision">
+      <div class="card-head">
+        <p class="card-title">{{ lang("Extractive model") }}</p>
+        <span class="badge extractive">Sentence rank</span>
+      </div>
+      <div class="card-body">
+        <div class="output-area">{{ traditional_summary or lang("No extractive summary generated.") }}</div>
+        <p class="compare-stat">{{ lang("Sentence rank analysis completed") }}</p>
       </div>
     </div>
 
-    <!-- Slide 2: Hybrid Result -->
-    <div class="snap-slide">
-      <div class="card-studio p-4 h-100">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <h5 class="text-main mb-0 fw-bold">{{ lang("Hybrid Method") }}</h5>
-          <span class="badge badge-hybrid">Sastrawi + TF-IDF</span>
-        </div>
-        <div class="p-3 rounded font-monospace small text-main summary-text-pane" style="background: var(--bg-canvas); border: 1px solid var(--border-color); min-height: 220px; white-space: pre-wrap;">
-          {{ hybrid_summary or lang("No hybrid summary generated.") }}
-        </div>
+    <div class="card-precision">
+      <div class="card-head">
+        <p class="card-title">{{ lang("Hybrid model") }}</p>
+        <span class="badge hybrid">Sastrawi + TF-IDF</span>
+      </div>
+      <div class="card-body">
+        <div class="output-area">{{ hybrid_summary or lang("No hybrid summary generated.") }}</div>
+        <p class="compare-stat">{{ lang("Sastrawi & TF-IDF extraction completed") }}</p>
       </div>
     </div>
   </div>
-  {% endif %}
-</div>
+</section>
 {% endblock %}

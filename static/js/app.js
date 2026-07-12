@@ -1,7 +1,7 @@
 /**
- * INDOGIST — Interactive Studio Engine
- * Theme Switcher, Live Telemetry Counter, Clipboard & Export Utilities,
- * HTMX Event Hooks, Expandable Text Controls, and Scramble Decoder
+ * INDOGIST — Interactive Client Engine (Precision Studio)
+ * Includes Theme Switcher, Tab Controls, Telemetry Counters, Entity Chip Renderer,
+ * HTMX Event Hooks, and Copy/Download Utilities
  */
 
 // ——————————————————————————————————————————————————
@@ -17,19 +17,11 @@ function initTheme() {
 
 function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
+  document.body.setAttribute('data-theme', theme);
+  const appEl = document.getElementById('app');
+  if (appEl) appEl.setAttribute('data-theme', theme);
+
   localStorage.setItem('indogist_theme', theme);
-  
-  // Update toggle button icon & label if present
-  const toggleBtn = document.getElementById('themeToggleBtn');
-  if (toggleBtn) {
-    if (theme === 'light') {
-      toggleBtn.innerHTML = '<i class="fas fa-moon"></i>';
-      toggleBtn.setAttribute('title', 'Switch to Dark Theme');
-    } else {
-      toggleBtn.innerHTML = '<i class="fas fa-sun"></i>';
-      toggleBtn.setAttribute('title', 'Switch to Light Theme');
-    }
-  }
 }
 
 function toggleTheme() {
@@ -39,67 +31,88 @@ function toggleTheme() {
 }
 
 // ——————————————————————————————————————————————————
-// 2. Real-Time Telemetry & Reading Time Engine
+// 2. Real-Time Telemetry & Word Count
 // ——————————————————————————————————————————————————
+function countWords(str) {
+  return str.trim() ? str.trim().split(/\s+/).length : 0;
+}
+
 function updateTelemetry(val) {
   const text = typeof val === 'string' ? val : (val && val.value ? val.value : '');
-  const trimmed = text.trim();
+  const words = countWords(text);
   
-  const words = trimmed ? trimmed.split(/\s+/).length : 0;
-  const chars = text.length;
-  const paragraphs = trimmed ? trimmed.split(/\n\s*\n/).length : 0;
-  const estReadingMinutes = Math.ceil(words / 200);
-  
-  const wordCountEl = document.getElementById('inputWordCount');
+  const wordCountEl = document.getElementById('wordCount');
   if (wordCountEl) {
-    wordCountEl.innerText = `${words} Words`;
-  }
-  
-  const readingGaugeEl = document.getElementById('readingTimeGauge');
-  if (readingGaugeEl) {
-    readingGaugeEl.innerText = words > 0 ? `~${estReadingMinutes} min read (${words} words, ${chars} chars)` : '';
-  }
-
-  const warningEl = document.getElementById('largeDocWarning');
-  if (warningEl) {
-    if (words > 10000) {
-      warningEl.classList.remove('d-none');
-    } else {
-      warningEl.classList.add('d-none');
-    }
+    wordCountEl.textContent = words;
   }
 }
 
-// Backward compatibility alias
 function updateWordCount(val) {
   updateTelemetry(val);
 }
 
 // ——————————————————————————————————————————————————
-// 3. Clipboard & File Export Utilities
+// 3. Tab Group Controller
+// ——————————————————————————————————————————————————
+function initTabs() {
+  document.querySelectorAll('.tabs').forEach(function (tabGroup) {
+    var tabs = tabGroup.querySelectorAll('.tab');
+    tabs.forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        tabs.forEach(function (t) { t.classList.remove('active'); });
+        tab.classList.add('active');
+        var container = tabGroup.parentElement;
+        if (container) {
+          container.querySelectorAll('.tab-pane').forEach(function (p) { p.classList.remove('active'); });
+          var targetPane = container.querySelector('.tab-pane[data-pane="' + tab.dataset.tab + '"]');
+          if (targetPane) targetPane.classList.add('active');
+        }
+      });
+    });
+  });
+}
+
+// ——————————————————————————————————————————————————
+// 4. Entity Chip Renderer
+// ——————————————————————————————————————————————————
+function renderEntities(target, list) {
+  if (!target) return;
+  target.innerHTML = '';
+  if (!list || !list.length) {
+    var none = document.createElement('span');
+    none.className = 'output-placeholder';
+    none.textContent = 'No named entities detected in this text.';
+    target.appendChild(none);
+    return;
+  }
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  list.forEach(function (ent, i) {
+    var chip = document.createElement('span');
+    chip.className = 'entity-chip';
+    chip.innerHTML = '<span>' + (ent.text || ent.name) + '</span><span class="e-type">' + (ent.type || ent.label) + '</span><span class="e-score">' + (ent.score || ent.confidence_percent || 95) + '%</span>';
+    target.appendChild(chip);
+    setTimeout(function () { chip.classList.add('show'); }, reduceMotion ? 0 : i * 70);
+  });
+}
+
+// ——————————————————————————————————————————————————
+// 5. Clipboard & Download Utilities
 // ——————————————————————————————————————————————————
 function copySummaryOutput(elementId = 'outputContent', btnElement = null) {
   const output = document.getElementById(elementId);
   if (!output) return;
-  
   const textToCopy = output.value || output.innerText;
   if (!textToCopy.trim()) return;
 
-  navigator.clipboard.writeText(textToCopy).then(() => {
-    if (btnElement) {
-      const originalHtml = btnElement.innerHTML;
-      btnElement.innerHTML = '<i class="fas fa-check me-1"></i> Copied!';
-      btnElement.classList.add('text-success');
-      setTimeout(() => {
-        btnElement.innerHTML = originalHtml;
-        btnElement.classList.remove('text-success');
-      }, 2000);
-    } else {
-      alert('Summary copied to clipboard!');
-    }
-  }).catch(err => {
-    console.error('Failed to copy: ', err);
-  });
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(textToCopy).then(() => {
+      if (btnElement) {
+        const originalText = btnElement.textContent;
+        btnElement.textContent = 'Copied!';
+        setTimeout(() => { btnElement.textContent = originalText; }, 2000);
+      }
+    });
+  }
 }
 
 function downloadSummaryOutput(elementId = 'outputContent', filenamePrefix = 'indogist-summary') {
@@ -120,163 +133,58 @@ function downloadSummaryOutput(elementId = 'outputContent', filenamePrefix = 'in
   URL.revokeObjectURL(url);
 }
 
-// ——————————————————————————————————————————————————
-// 4. Sample Preset & File Upload Handlers
-// ——————————————————————————————————————————————————
-function loadPreset(type) {
-  const presets = {
-    news: "Jakarta - Perkembangan teknologi kecerdasan buatan (AI) di Indonesia tumbuh pesat dalam tiga tahun terakhir. Berbagai sektor mulai dari logistik, keuangan, hingga pelayanan publik telah mengadopsi otomasi berbasis pemrosesan bahasa alami (NLP) untuk meningkatkan efisiensi operasional.",
-    tech: "FastAPI adalah kerangka kerja web modern berkinerja tinggi untuk membangun API berbasis Python 3.8+ dengan tipe data standar. Kerangka kerja ini mendukung validasi otomatis berbasis Pydantic dan dokumentasi Swagger UI interaktif.",
-    academic: "Penelitian ini mengevaluasi performa penggabungan ekstraksi kata kunci berbasis TF-IDF dengan pemotongan kata berimbuhan Sastrawi pada korpus berita berbahasa Indonesia. Hasil pengujian menunjukkan peningkatan skor ROUGE-1 sebesar 12% dibandingkan metode tradisional."
-  };
-  const input = document.getElementById('rawTextInput');
-  if (input) {
-    input.value = presets[type] || '';
-    updateTelemetry(input.value);
+function animateNumber(el, to, suffix) {
+  if (!el) return;
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduceMotion) { el.textContent = to + (suffix || ''); return; }
+  var from = 0, duration = 550, start = null;
+  function step(ts) {
+    if (!start) start = ts;
+    var progress = Math.min((ts - start) / duration, 1);
+    var val = Math.round(from + (to - from) * progress);
+    el.textContent = val + (suffix || '');
+    if (progress < 1) requestAnimationFrame(step);
   }
-}
-
-function handleFileSelect(input) {
-  const fileInfo = document.getElementById('fileInfo');
-  if (input.files && input.files[0]) {
-    const file = input.files[0];
-    if (fileInfo) {
-      fileInfo.classList.remove('d-none');
-      fileInfo.innerText = `Selected File: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
-    }
-  }
+  requestAnimationFrame(step);
 }
 
 // ——————————————————————————————————————————————————
-// 5. Expandable Long Text Controls
-// ——————————————————————————————————————————————————
-function toggleSummaryExpand(containerId = 'outputContentPane', btnElement = null) {
-  const container = document.getElementById(containerId);
-  if (!container) return;
-
-  const isExpanded = container.classList.toggle('expanded');
-  if (btnElement) {
-    btnElement.innerHTML = isExpanded 
-      ? '<i class="fas fa-compress-alt me-1"></i> Collapse Summary' 
-      : '<i class="fas fa-expand-alt me-1"></i> Show Full Summary';
-  }
-}
-
-// ——————————————————————————————————————————————————
-// 6. Soulwire TextScramble Decoder Engine
-// ——————————————————————————————————————————————————
-class TextScramble {
-  constructor(el) {
-    this.el = el;
-    this.chars = '!<>-_\\/[]{}—=+*^?#________';
-    this.update = this.update.bind(this);
-  }
-  setText(newText) {
-    const oldText = this.el.innerText || '';
-    const length = Math.max(oldText.length, newText.length);
-    const promise = new Promise((resolve) => (this.resolve = resolve));
-    this.queue = [];
-    for (let i = 0; i < length; i++) {
-      const from = oldText[i] || '';
-      const to = newText[i] || '';
-      const start = Math.floor(Math.random() * 40);
-      const end = start + Math.floor(Math.random() * 40);
-      this.queue.push({ from, to, start, end });
-    }
-    cancelAnimationFrame(this.frameRequest);
-    this.frame = 0;
-    this.update();
-    return promise;
-  }
-  update() {
-    let output = '';
-    let complete = 0;
-    for (let i = 0, n = this.queue.length; i < n; i++) {
-      let { from, to, start, end, char } = this.queue[i];
-      if (this.frame >= end) {
-        complete++;
-        output += to;
-      } else if (this.frame >= start) {
-        if (!char || Math.random() < 0.28) {
-          char = this.randomChar();
-          this.queue[i].char = char;
-        }
-        output += `<span class="text-muted opacity-50">${char}</span>`;
-      } else {
-        output += from;
-      }
-    }
-    this.el.innerHTML = output;
-    if (complete === this.queue.length) {
-      this.resolve();
-    } else {
-      this.frameRequest = requestAnimationFrame(this.update);
-      this.frame++;
-    }
-  }
-  randomChar() {
-    return this.chars[Math.floor(Math.random() * this.chars.length)];
-  }
-}
-
-function initScrambleTicker() {
-  const tickerEl = document.querySelector('.scramble-ticker');
-  if (!tickerEl) return;
-  const phrases = [
-    'AUTOMATED TEXT SUMMARIZATION ENGINE',
-    'HYBRID EXTRACTIVE & ABSTRACTIVE CORE',
-    'TRANSFORMING DOCUMENTS INTO CRISP INSIGHTS',
-    'SASTRAWI & TF-IDF POWERED COMPRESSION'
-  ];
-  const fx = new TextScramble(tickerEl);
-  let counter = 0;
-  const next = () => {
-    fx.setText(phrases[counter]).then(() => {
-      setTimeout(next, 3000);
-    });
-    counter = (counter + 1) % phrases.length;
-  };
-  next();
-}
-
-function initCommandPalette() {
-  const modal = document.getElementById('commandPaletteModal');
-  if (!modal) return;
-  
-  document.addEventListener('keydown', (e) => {
-    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
-      e.preventDefault();
-      const bsModal = new bootstrap.Modal(modal);
-      bsModal.toggle();
-    }
-  });
-}
-
-// ——————————————————————————————————————————————————
-// 7. Event Initialization & HTMX Hooks
+// 6. DOM Content Loaded Initialization & HTMX Hooks
 // ——————————————————————————————————————————————————
 document.addEventListener('DOMContentLoaded', () => {
   initTheme();
-  initScrambleTicker();
-  initCommandPalette();
-  
-  const textInput = document.getElementById('rawTextInput');
-  if (textInput) {
-    updateTelemetry(textInput.value);
+  initTabs();
+
+  const themeToggle = document.getElementById('themeToggle');
+  if (themeToggle) {
+    themeToggle.addEventListener('click', toggleTheme);
+  }
+
+  const rawText = document.getElementById('rawText');
+  if (rawText) {
+    rawText.addEventListener('input', () => updateTelemetry(rawText.value));
+    updateTelemetry(rawText.value);
+  }
+
+  const copyBtn = document.getElementById('copyBtn');
+  if (copyBtn) {
+    copyBtn.addEventListener('click', function () {
+      copySummaryOutput('outputArea', copyBtn);
+    });
+  }
+
+  const saveBtn = document.getElementById('saveBtn');
+  if (saveBtn) {
+    saveBtn.addEventListener('click', function () {
+      downloadSummaryOutput('outputArea');
+    });
   }
 });
 
 document.addEventListener('htmx:afterSwap', (e) => {
-  // Smooth scroll to output container on mobile viewports
-  if (window.innerWidth < 992 && e.detail.target.id === 'summaryOutputContainer') {
-    e.detail.target.scrollIntoView({ behavior: 'smooth' });
-  }
-
-  // Re-run scramble decode on new summary output elements
-  const newOutput = e.detail.target.querySelector('.scramble-output');
-  if (newOutput) {
-    const text = newOutput.getAttribute('data-text') || newOutput.innerText;
-    const fx = new TextScramble(newOutput);
-    fx.setText(text);
+  initTabs();
+  const rawText = document.getElementById('rawText');
+  if (rawText) {
+    updateTelemetry(rawText.value);
   }
 });

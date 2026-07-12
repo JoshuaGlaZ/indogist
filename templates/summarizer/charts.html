@@ -1,101 +1,41 @@
 {% extends 'summarizer/base.html' %}
 
-{% block title %}{{ lang("Metrics Dashboard — IndoGist Studio") }}{% endblock %}
+{% block title %}{{ lang("Model performance metrics — IndoGist") }}{% endblock %}
 
 {% block content %}
-<div class="row mb-4">
-  <div class="col-12">
-    <div class="card-studio p-4">
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3 class="clip-text-amber mb-0">{{ lang("Model Performance Metrics") }}</h3>
-        <span class="badge bg-dark border border-secondary text-muted px-3 py-2 font-monospace">
-          <i class="fas fa-chart-bar me-1"></i> {{ lang("Evaluation Suite") }}
-        </span>
-      </div>
+<section class="view active" id="view-metrics">
+  <div class="page-head">
+    <h1>{{ lang("Model performance metrics") }}</h1>
+    <p>{{ lang("Evaluation suite metrics, ROUGE scores, and convergence curves.") }}</p>
+  </div>
 
-      {% if file_error %}
-      <div class="alert alert-warning card-studio mb-4">
-        <i class="fas fa-exclamation-triangle me-2"></i> {{ lang("Metrics dataset notice:") }} {{ file_error }}
-      </div>
-      {% endif %}
-
-      <!-- Stat Cards Grid with Monospace Values & Accent Rings -->
-      <div class="row g-3 mb-5">
-        <div class="col-md-3">
-          <div class="card-studio p-3 text-center">
-            <span class="text-muted small uppercase d-block mb-1 font-monospace">{{ lang("ROUGE-1 Score") }}</span>
-            <div class="metric-mono clip-text-amber display-6">0.428</div>
-            <span class="badge badge-hybrid mt-2">{{ lang("Unigram Overlap") }}</span>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="card-studio p-3 text-center">
-            <span class="text-muted small uppercase d-block mb-1 font-monospace">{{ lang("ROUGE-2 Score") }}</span>
-            <div class="metric-mono clip-text-amber display-6">0.215</div>
-            <span class="badge badge-extractive mt-2">{{ lang("Bigram Overlap") }}</span>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="card-studio p-3 text-center">
-            <span class="text-muted small uppercase d-block mb-1 font-monospace">{{ lang("ROUGE-L Score") }}</span>
-            <div class="metric-mono clip-text-amber display-6">0.389</div>
-            <span class="badge badge-abstractive mt-2">{{ lang("Longest Common Subsequence") }}</span>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="card-studio p-3 text-center">
-            <span class="text-muted small uppercase d-block mb-1 font-monospace">{{ lang("BLEU Score") }}</span>
-            <div class="metric-mono clip-text-amber display-6">0.342</div>
-            <span class="badge bg-dark border border-secondary text-warning mt-2">{{ lang("N-Gram Precision") }}</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Training History Visualizer -->
-      <h5 class="text-main fw-bold mb-3">{{ lang("Model Training Convergence") }}</h5>
-      <div class="row mb-4">
-        <div class="col-12">
-          {% if chart_image %}
-            <div class="card-studio p-3 text-center">
-              <img src="data:image/png;base64,{{ chart_image }}" class="img-fluid rounded border border-secondary" alt="Training History" />
-            </div>
-          {% else %}
-            <div class="text-center py-4 border border-secondary rounded card-studio">
-              <p class="text-muted small mb-0">{{ lang("Training history curve chart generated directly from evaluation logs.") }}</p>
-            </div>
-          {% endif %}
-        </div>
-      </div>
-
-      <!-- Detailed Classification Table -->
-      {% if report_table %}
-      <h5 class="text-main fw-bold mb-3">{{ lang("Detailed Performance Classification") }}</h5>
-      <div class="table-responsive">
-        <table class="table table-hover border-secondary rounded align-middle">
-          <thead>
-            <tr class="table-dark text-warning font-monospace">
-              <th>{{ lang("Metric Class") }}</th>
-              <th>{{ lang("Precision") }}</th>
-              <th>{{ lang("Recall") }}</th>
-              <th>{{ lang("F1-Score") }}</th>
-              <th>{{ lang("Support") }}</th>
-            </tr>
-          </thead>
-          <tbody class="metric-mono">
-            {% for row in report_table %}
-            <tr class="{% if row.class == 'accuracy' or 'avg' in row.class %}table-active text-warning{% endif %}">
-              <td>{{ row.class }}</td>
-              <td>{{ row.precision }}</td>
-              <td>{{ row.recall }}</td>
-              <td>{{ row['f1-score'] }}</td>
-              <td>{{ row.support }}</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-      {% endif %}
+  <div class="grid-2 mb-4">
+    <div class="card-precision p-3">
+      <span class="field-label">{{ lang("ROUGE-1 Score") }}</span>
+      <div style="font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 28px; color: var(--accent-amber);">0.428</div>
+      <span class="badge hybrid mt-2">{{ lang("Unigram Overlap") }}</span>
+    </div>
+    <div class="card-precision p-3">
+      <span class="field-label">{{ lang("ROUGE-2 Score") }}</span>
+      <div style="font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 28px; color: var(--accent-blue);">0.215</div>
+      <span class="badge extractive mt-2">{{ lang("Bigram Overlap") }}</span>
+    </div>
+    <div class="card-precision p-3">
+      <span class="field-label">{{ lang("ROUGE-L Score") }}</span>
+      <div style="font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 28px; color: var(--badge-abstractive-fg);">0.389</div>
+      <span class="badge abstractive mt-2">{{ lang("Longest Common Subsequence") }}</span>
+    </div>
+    <div class="card-precision p-3">
+      <span class="field-label">{{ lang("BLEU Score") }}</span>
+      <div style="font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 28px; color: var(--text-main);">0.342</div>
+      <span class="badge hybrid mt-2">{{ lang("N-Gram Precision") }}</span>
     </div>
   </div>
-</div>
+
+  {% if chart_image %}
+    <div class="card-precision p-3 text-center mb-4">
+      <img src="data:image/png;base64,{{ chart_image }}" class="img-fluid rounded" alt="Training History" />
+    </div>
+  {% endif %}
+</section>
 {% endblock %}

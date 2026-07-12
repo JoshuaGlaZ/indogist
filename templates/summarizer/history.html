@@ -1,97 +1,59 @@
 {% extends 'summarizer/base.html' %}
 
-{% block title %}{{ lang("History — IndoGist Studio") }}{% endblock %}
+{% block title %}{{ lang("Summary history archive — IndoGist") }}{% endblock %}
 
 {% block content %}
-<div class="row mb-4">
-  <div class="col-12">
-    <div class="card-studio p-4">
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3 class="clip-text-amber mb-0">{{ lang("Summary History") }}</h3>
-        <span class="badge bg-dark border border-secondary text-muted px-3 py-2 font-monospace">
-          <i class="fas fa-database me-1"></i> {{ items|length if items is defined else (summaries|length if summaries is defined else 0) }} {{ lang("Entries") }}
-        </span>
+<section class="view active" id="view-history">
+  <div class="page-head left" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+    <div>
+      <h1 style="margin-bottom:2px;">{{ lang("Summary history archive") }}</h1>
+      <p>{{ lang("Every document you've summarized, searchable and filterable.") }}</p>
+    </div>
+    <span class="count-badge">{{ summaries|length if summaries else 0 }} {{ lang("entries") }}</span>
+  </div>
+
+  <form method="get" action="/history/" hx-get="/history/" hx-target="#app-content" hx-trigger="keyup changed delay:300ms from:find input[name='q'], change from:find select">
+    <div class="toolbar">
+      <div class="search-field">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input type="text" name="q" placeholder="{{ lang("Search by title or keyword") }}" value="{{ search_query or '' }}" aria-label="{{ lang("Search history") }}">
       </div>
+      <select name="method" class="field-select" aria-label="{{ lang("Filter by method") }}">
+        <option value="">{{ lang("All methods") }}</option>
+        <option value="hybrid" {% if method_filter == 'hybrid' %}selected{% endif %}>Hybrid</option>
+        <option value="traditional" {% if method_filter == 'traditional' %}selected{% endif %}>Extractive</option>
+        <option value="abstractive" {% if method_filter == 'abstractive' %}selected{% endif %}>Abstractive</option>
+      </select>
+      <select name="sort" class="field-select" aria-label="{{ lang("Sort order") }}">
+        <option value="-created_at" {% if sort_by == '-created_at' %}selected{% endif %}>{{ lang("Newest first") }}</option>
+        <option value="created_at" {% if sort_by == 'created_at' %}selected{% endif %}>{{ lang("Oldest first") }}</option>
+        <option value="title" {% if sort_by == 'title' %}selected{% endif %}>{{ lang("Title A–Z") }}</option>
+      </select>
+    </div>
+  </form>
 
-      <!-- Live HTMX Search & Filter Bar -->
-      <form method="get" action="/history/" hx-get="/history/" hx-target="#historyListContainer" hx-trigger="change, keyup changed delay:300ms from:find input[name='q']" class="mb-4">
-        <div class="row g-3">
-          <div class="col-md-6">
-            <div class="input-group">
-              <span class="input-group-text bg-dark border-secondary text-muted">
-                <i class="fas fa-search"></i>
-              </span>
-              <input
-                type="text"
-                name="q"
-                class="form-control form-control-studio"
-                placeholder="{{ lang("Search history by keyword or title...") }}"
-                value="{{ search_query or '' }}"
-              />
-            </div>
+  <div class="history-list" id="historyList">
+    {% if summaries %}
+      {% for item in summaries %}
+        <div class="history-item">
+          <div class="history-top">
+            <h3 class="history-title">{{ item.title }}</h3>
+            <span class="badge {{ item.method }}">{{ item.get_method_display }}</span>
+            <span class="history-date">{{ item.created_at|date("M d, Y") }}</span>
           </div>
-
-          <div class="col-md-3">
-            <select name="method" class="form-select form-select-studio">
-              <option value="">{{ lang("All Methods") }}</option>
-              <option value="hybrid" {% if method_filter == 'hybrid' %}selected{% endif %}>Hybrid</option>
-              <option value="traditional" {% if method_filter == 'traditional' %}selected{% endif %}>Extractive</option>
-              <option value="abstractive" {% if method_filter == 'abstractive' %}selected{% endif %}>Abstractive</option>
-            </select>
-          </div>
-
-          <div class="col-md-3">
-            <select name="sort" class="form-select form-select-studio">
-              <option value="-created_at" {% if sort_by == '-created_at' %}selected{% endif %}>{{ lang("Newest First") }}</option>
-              <option value="created_at" {% if sort_by == 'created_at' %}selected{% endif %}>{{ lang("Oldest First") }}</option>
-              <option value="title" {% if sort_by == 'title' %}selected{% endif %}>{{ lang("Title A-Z") }}</option>
-            </select>
-          </div>
-        </div>
-      </form>
-
-      <!-- History List Target Container -->
-      <div id="historyListContainer">
-        {% set items = summaries if summaries is defined and summaries else (page_obj if page_obj is defined else []) %}
-        {% if items %}
-          <div class="d-flex flex-column gap-3">
-            {% for summary in items %}
-            <div class="card-studio p-3" style="border-left: 4px solid {% if summary.method == 'hybrid' %}var(--accent-amber){% elif summary.method == 'traditional' %}var(--accent-blue){% else %}var(--badge-abstractive-text){% endif %};">
-              <div class="d-flex justify-content-between align-items-start mb-2">
-                <div>
-                  <h6 class="text-main mb-1 fw-bold">{{ summary.title|truncatechars(90) if summary.title else 'Untitled Summary' }}</h6>
-                  <p class="text-muted small mb-0 font-monospace">
-                    <i class="fas fa-calendar-alt me-1"></i> {{ summary.created_at|date("F d, Y H:i") }}
-                    <span class="badge ms-2 {% if summary.method == 'hybrid' %}badge-hybrid{% elif summary.method == 'traditional' %}badge-extractive{% else %}badge-abstractive{% endif %}">
-                      {{ summary.get_method_display() if hasattr(summary, 'get_method_display') else summary.method|title }}
-                    </span>
-                  </p>
-                </div>
-                <div class="btn-group btn-group-sm">
-                  <a href="/summary/{{ summary.id if hasattr(summary, 'id') else summary.pk }}/" class="btn btn-outline-studio btn-sm px-3">
-                    <i class="fas fa-external-link-alt me-1"></i> {{ lang("View") }}
-                  </a>
-                </div>
-              </div>
-              <p class="text-muted small mb-0 lh-base">
-                {{ summary.summary_text|truncatewords(30) if summary.summary_text else '' }}
-              </p>
-            </div>
-            {% endfor %}
-          </div>
-        {% else %}
-          <!-- Empty State -->
-          <div class="text-center py-5 border border-dashed rounded card-studio">
-            <i class="fas fa-search fa-3x text-muted mb-3 opacity-50"></i>
-            <h6 class="text-main fw-bold">{{ lang("No summary history entries found") }}</h6>
-            <p class="small text-muted mb-3">{{ lang("Try clearing search filters or generate a new summary in the studio.") }}</p>
-            <a href="/summarize/" class="btn btn-amber btn-sm" hx-get="/summarize/" hx-target="#app-content" hx-push-url="true">
-              <i class="fas fa-plus me-1"></i> {{ lang("Create New Summary") }}
+          <p class="history-snippet">{{ item.summary_text|truncatewords(25) }}</p>
+          <div class="history-bottom">
+            <a href="/summary/{{ item.id }}/" class="btn" hx-get="/summary/{{ item.id }}/" hx-target="#app-content" hx-push-url="true">
+              {{ lang("View detail") }}
             </a>
           </div>
-        {% endif %}
+        </div>
+      {% endfor %}
+    {% else %}
+      <div class="placeholder-view card-precision p-5">
+        <p>{{ lang("No summaries found matching your search.") }}</p>
       </div>
-    </div>
+    {% endif %}
   </div>
-</div>
+</section>
 {% endblock %}

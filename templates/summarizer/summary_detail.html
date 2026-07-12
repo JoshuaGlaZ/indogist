@@ -1,202 +1,140 @@
 {% extends 'summarizer/base.html' %}
 
-{% block title %}{{ lang("Summary Detail") }}: {{ summary.title }}{% endblock %}
-
-{% block extra_css %}
-<style>
-    .summary-textarea-view {
-        background: var(--bg-canvas);
-        border-radius: var(--radius-md);
-        padding: 1.25rem;
-        line-height: var(--reading-line-height);
-        font-size: 1.025rem;
-        border: 1px solid var(--border-color);
-        color: var(--text-main);
-        width: 100%;
-        resize: vertical;
-        font-family: inherit;
-        display: block;
-        max-width: var(--reading-measure);
-    }
-</style>
-{% endblock %}
+{% block title %}{{ summary.title }} — IndoGist{% endblock %}
 
 {% block content %}
-<div class="row mb-3">
-  <div class="col-12">
-    <a href="/history/" class="btn btn-outline-studio btn-sm px-3">
-      <i class="fas fa-arrow-left me-1"></i> {{ lang("Back to History") }}
-    </a>
+<section class="view active" id="view-detail">
+  <a href="/history/" class="back-link" hx-get="/history/" hx-target="#app-content" hx-push-url="true">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    {{ lang("Back to history") }}
+  </a>
+
+  <div class="detail-head">
+    <h1 id="detailTitle">{{ summary.title }}</h1>
+    <span class="badge {{ summary.method }}" id="detailBadge">{{ summary.get_method_display }}</span>
+    <span class="detail-date" id="detailDate">{{ summary.created_at|date("M d, Y") }}</span>
   </div>
-</div>
 
-<div class="row g-4">
-  <div class="col-lg-8">
-    <div class="card-studio p-4 mb-4">
-      <div class="d-flex justify-content-between align-items-start mb-3">
-        <h3 class="card-title mb-0 text-main fw-bold">{{ summary.title }}</h3>
-        <span class="badge {% if summary.method == 'hybrid' %}badge-hybrid{% elif summary.method == 'traditional' %}badge-extractive{% else %}badge-abstractive{% endif %}">
-          {{ summary.get_method_display }}
-        </span>
-      </div>
-
-      <div class="mb-3 font-monospace small text-muted">
-        <i class="fas fa-calendar-alt me-1"></i> {{ summary.created_at|date("F d, Y H:i") }}
-        <span class="ms-3">
-          <i class="fas fa-compress-alt me-1"></i> {{ compression_display }}
-        </span>
-      </div>
-
-      <hr class="border-secondary opacity-25" />
-
-      <!-- Summary Section -->
-      <div class="d-flex justify-content-between align-items-center mt-3 mb-2">
-        <h5 class="mb-0 text-main fw-bold">
-          <i class="fas fa-compress-alt text-success me-2"></i> {{ lang("Summary Output") }}
-        </h5>
-        <button class="btn btn-outline-studio btn-sm" onclick="copyText('summaryContent', this)" title="{{ lang("Copy Summary") }}">
-          <i class="fas fa-copy me-1"></i> {{ lang("Copy") }}
-        </button>
-      </div>
-      <textarea id="summaryContent" class="summary-textarea-view mb-4" rows="8" readonly>{{ summary.summary_text }}</textarea>
-
-      <!-- Original Text Section -->
-      <div class="d-flex justify-content-between align-items-center mb-2">
-        <h5 class="mb-0 text-main fw-bold">
-          <i class="fas fa-file-alt text-info me-2"></i> {{ lang("Original Text") }}
-        </h5>
-        <button class="btn btn-outline-studio btn-sm" onclick="copyText('originalContent', this)" title="{{ lang("Copy Original Text") }}">
-          <i class="fas fa-copy me-1"></i> {{ lang("Copy") }}
-        </button>
-      </div>
-      <textarea id="originalContent" class="summary-textarea-view" rows="6" readonly>{{ summary.original_text }}</textarea>
-
-      <!-- Entities Section -->
-      {% if entities_list %}
-      <div class="mt-4">
-        <h6 class="mb-3 text-main fw-bold">
-          <i class="fas fa-tags text-warning me-2"></i> {{ lang("Detected Named Entities") }}
-        </h6>
-        <div class="d-flex flex-wrap gap-1">
-          {% for entity in entities_list %}
-          <span class="entity-chip entity-{{ entity.label }}" title="{{ entity.label }} | Confidence: {{ entity.confidence_percent }}%">
-            {{ entity.text }} ({{ entity.label }} | {{ entity.confidence_percent }}%)
-          </span>
-          {% endfor %}
+  <div class="detail-grid">
+    <div class="detail-main">
+      <div class="card-precision">
+        <div class="card-head">
+          <p class="card-title">{{ lang("Original text") }}</p>
+          <div class="card-actions">
+            <button class="btn" type="button" onclick="copySummaryOutput('detailOriginalText', this)">{{ lang("Copy") }}</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <p class="prose" id="detailOriginalText">{{ summary.original_text }}</p>
         </div>
       </div>
-      {% endif %}
+
+      <div class="card-precision">
+        <div class="card-head">
+          <p class="card-title">{{ lang("Summary output") }}</p>
+          <div class="card-actions">
+            <button class="btn" type="button" onclick="copySummaryOutput('detailSummaryText', this)">{{ lang("Copy") }}</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <p class="prose" id="detailSummaryText">{{ summary.summary_text }}</p>
+        </div>
+      </div>
+
+      <div class="card-precision">
+        <div class="card-head"><p class="card-title">{{ lang("Detected named entities") }}</p></div>
+        <div class="card-body">
+          <div class="entity-wrap" id="detailEntities">
+            {% if entities_list %}
+              {% for ent in entities_list %}
+                <span class="entity-chip show">
+                  <span>{{ ent.text }}</span>
+                  <span class="e-type">{{ ent.label }}</span>
+                  <span class="e-score">{{ ent.confidence_percent }}%</span>
+                </span>
+              {% endfor %}
+            {% else %}
+              <span class="output-placeholder">{{ lang("No named entities detected in this text.") }}</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
     </div>
-  </div>
 
-  <div class="col-lg-4">
-    <!-- Statistics Card -->
-    <div class="card-studio p-4 mb-4">
-      <h5 class="card-title mb-3 text-main fw-bold">
-        <i class="fas fa-chart-pie text-warning me-2"></i> {{ lang("Statistics") }}
-      </h5>
-      <ul class="list-group list-group-flush bg-transparent">
-        <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent border-secondary border-opacity-25 px-0 text-main">
-          <span class="text-muted">{{ lang("Original Words") }}</span>
-          <strong class="font-monospace">{{ summary.word_count_original }}</strong>
-        </li>
-        <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent border-secondary border-opacity-25 px-0 text-main">
-          <span class="text-muted">{{ lang("Summary Words") }}</span>
-          <strong class="font-monospace">{{ summary.word_count_summary }}</strong>
-        </li>
-        <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent border-secondary border-opacity-25 px-0 text-main">
-          <span class="text-muted">{{ lang("Compression") }}</span>
-          <strong class="font-monospace">{{ summary.actual_compression|floatformat(0) if summary.actual_compression is defined else (summary.get('actual_compression', 0) if hasattr(summary, 'get') else 0)|floatformat(0) }}%</strong>
-        </li>
-        {% if summary.entities %}
-        <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent border-0 px-0 text-main">
-          <span class="text-muted">{{ lang("Entities Detected") }}</span>
-          <strong class="font-monospace">{{ summary.entities|length }}</strong>
-        </li>
-        {% endif %}
-      </ul>
-    </div>
+    <div class="detail-main">
+      <div class="card-precision">
+        <div class="card-head"><p class="card-title">{{ lang("Summary statistics") }}</p></div>
+        <div class="card-body">
+          <div class="stats-grid">
+            <div class="stat-card">
+              <span class="s-label">{{ lang("Original words") }}</span>
+              <span class="s-value" id="statOriginal">{{ summary.word_count_original }}</span>
+            </div>
+            <div class="stat-card">
+              <span class="s-label">{{ lang("Summary words") }}</span>
+              <span class="s-value" id="statSummary">{{ summary.word_count_summary }}</span>
+            </div>
+            <div class="stat-card accent">
+              <span class="s-label">{{ lang("Compression") }}</span>
+              <span class="s-value" id="statCompression">{{ (summary.actual_compression * 100)|round|int }}%</span>
+            </div>
+            <div class="stat-card">
+              <span class="s-label">{{ lang("Entities found") }}</span>
+              <span class="s-value" id="statEntities">{{ entities_list|length }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
 
-    <!-- Quick Actions Card -->
-    <div class="card-studio p-4">
-      <h5 class="card-title mb-3 text-main fw-bold">
-        <i class="fas fa-cogs text-warning me-2"></i> {{ lang("Actions") }}
-      </h5>
-      <div class="d-grid gap-2">
-        <a href="/export/{{ summary.pk }}/" class="btn btn-outline-studio">
-          <i class="fas fa-download me-2"></i> {{ lang("Export as TXT") }}
-        </a>
-
-        {% if not summary.added_to_dataset %}
-        <button id="addToDatasetBtn" class="btn btn-blue" onclick="addToDataset(this, {{ summary.pk }})">
-          <i class="fas fa-database me-2"></i> {{ lang("Add to Dataset") }}
-        </button>
-        {% else %}
-        <button class="btn btn-outline-studio" disabled>
-          <i class="fas fa-check me-2"></i> {{ lang("In Dataset") }}
-        </button>
-        {% endif %}
+      <div class="card-precision">
+        <div class="card-head"><p class="card-title">{{ lang("Quick actions") }}</p></div>
+        <div class="card-body">
+          <div class="quick-actions">
+            <a href="/export/{{ summary.id }}/" class="btn" download>{{ lang("Export as TXT") }}</a>
+            {% if not summary.added_to_dataset %}
+              <button class="btn" type="button" onclick="addToDataset(this, {{ summary.id }})">{{ lang("Add to dataset") }}</button>
+            {% else %}
+              <button class="btn" type="button" disabled>{{ lang("In dataset") }}</button>
+            {% endif %}
+          </div>
+        </div>
       </div>
     </div>
   </div>
-</div>
+</section>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-function copyText(elementId, btnElement) {
-  const textarea = document.getElementById(elementId);
-  if (!textarea) return;
-
-  navigator.clipboard.writeText(textarea.value).then(() => {
-    const originalHtml = btnElement.innerHTML;
-    btnElement.innerHTML = '<i class="fas fa-check me-1"></i> {{ lang("Copied!") }}';
-    btnElement.classList.add('text-success');
-
-    setTimeout(() => {
-      btnElement.innerHTML = originalHtml;
-      btnElement.classList.remove('text-success');
-    }, 2000);
-  }).catch(err => {
-    alert('Failed to copy text.');
-  });
-}
+document.addEventListener('DOMContentLoaded', () => {
+  animateNumber(document.getElementById('statOriginal'), {{ summary.word_count_original }});
+  animateNumber(document.getElementById('statSummary'), {{ summary.word_count_summary }});
+  animateNumber(document.getElementById('statCompression'), {{ (summary.actual_compression * 100)|round|int }}, '%');
+  animateNumber(document.getElementById('statEntities'), {{ entities_list|length }});
+});
 
 async function addToDataset(button, summaryId) {
   if (!confirm("Add this summary to the training dataset?")) return;
-
-  const originalText = button.innerHTML;
   button.disabled = true;
-  button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Adding...';
+  button.textContent = 'Adding...';
 
   try {
     const response = await fetch(`/add-to-dataset/${summaryId}/`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
+      headers: { "Content-Type": "application/json" }
     });
-
     const data = await response.json();
-
     if (data.success) {
-      button.innerHTML = '<i class="fas fa-check me-2"></i> Added!';
-      setTimeout(() => {
-        button.classList.remove('btn-blue');
-        button.classList.add('btn-outline-studio');
-        button.disabled = true;
-        button.innerHTML = '<i class="fas fa-check me-2"></i> In Dataset';
-      }, 1500);
+      button.textContent = 'In dataset';
     } else {
       alert("Error: " + data.error);
       button.disabled = false;
-      button.innerHTML = originalText;
+      button.textContent = 'Add to dataset';
     }
   } catch (error) {
     console.error(error);
-    alert("An error occurred. Please try again.");
     button.disabled = false;
-    button.innerHTML = originalText;
+    button.textContent = 'Add to dataset';
   }
 }
 </script>

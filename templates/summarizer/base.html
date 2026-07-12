@@ -1,224 +1,100 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{% block title %}IndoGist — Text Summarization Engine{% endblock %}</title>
-    
-    <!-- Bootstrap 5 & FontAwesome -->
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-    />
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-    />
-    
-    <!-- Custom IndoGist Precision Studio CSS -->
-    <link
-      rel="stylesheet"
-      href="{{ static('css/base.css') }}"
-    />
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}IndoGist — precision studio{% endblock %}</title>
 
-    <!-- HTMX & Extensions -->
-    <script src="https://unpkg.com/htmx.org@2.0.0/dist/htmx.min.js"></script>
-    <script src="https://unpkg.com/htmx-ext-sse@2.0.0/sse.js"></script>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-    {% block extra_css %}{% endblock %}
-  </head>
-  <body>
-    <!-- Floating Studio Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark navbar-studio sticky-top">
-      <div class="container">
-        <a class="navbar-brand navbar-brand-studio d-flex align-items-center" href="/">
-          <span class="clip-text-amber me-2">INDOGIST</span>
-          <span class="badge bg-dark border border-secondary text-muted ms-2 px-2 py-1 small fw-normal">CORE: ACTIVE</span>
-        </a>
+  <!-- Precision Studio CSS -->
+  <link rel="stylesheet" href="{{ static('css/base.css') }}">
 
-        <div class="d-flex align-items-center d-lg-none ms-auto me-2">
-          <!-- Theme Switcher Button Mobile -->
-          <button class="theme-toggle-btn me-2" id="themeToggleBtnMobile" onclick="toggleTheme()" title="Toggle Theme">
-            <i class="fas fa-sun"></i>
+  <!-- HTMX -->
+  <script src="https://unpkg.com/htmx.org@2.0.0/dist/htmx.min.js"></script>
+
+  {% block extra_css %}{% endblock %}
+</head>
+<body data-theme="dark">
+  <div class="app" data-theme="dark" id="app">
+    <div class="shell">
+      <!-- Topbar Header -->
+      <header class="topbar">
+        <a href="/" class="brand" hx-get="/" hx-target="#app-content" hx-push-url="true">INDOGIST</a>
+        <nav class="nav" aria-label="Primary">
+          <a
+            class="nav-link-precision {% if request.url.path in ['/', '/summarize/'] %}active{% endif %}"
+            href="/summarize/"
+            hx-get="/summarize/"
+            hx-target="#app-content"
+            hx-push-url="true"
+          >
+            {{ lang("Summarize studio") }}
+          </a>
+          <a
+            class="nav-link-precision {% if 'history' in request.url.path %}active{% endif %}"
+            href="/history/"
+            hx-get="/history/"
+            hx-target="#app-content"
+            hx-push-url="true"
+          >
+            {{ lang("History") }}
+          </a>
+          <a
+            class="nav-link-precision {% if 'charts' in request.url.path %}active{% endif %}"
+            href="/charts/"
+            hx-get="/charts/"
+            hx-target="#app-content"
+            hx-push-url="true"
+          >
+            {{ lang("Metrics") }}
+          </a>
+          <a
+            class="nav-link-precision {% if 'comparison' in request.url.path %}active{% endif %}"
+            href="/comparison/"
+            hx-get="/comparison/"
+            hx-target="#app-content"
+            hx-push-url="true"
+          >
+            {{ lang("Compare") }}
+          </a>
+        </nav>
+        <div class="nav-actions">
+          <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" aria-label="Toggle light and dark theme">
+            <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+            <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z"/></svg>
           </button>
+          {% if request.user and request.user.is_authenticated %}
+            <a class="btn btn-ghost" href="/accounts/profile/">
+              {{ request.user.username }}
+            </a>
+          {% else %}
+            <a class="btn btn-ghost" href="/accounts/login/">{{ lang("Login") }}</a>
+          {% endif %}
         </div>
+      </header>
 
-        <button
-          class="navbar-toggler border-0"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#navbarNav"
-          aria-label="Toggle Navigation"
-        >
-          <span class="navbar-toggler-icon"></span>
-        </button>
-
-        <div class="collapse navbar-collapse" id="navbarNav">
-          <ul class="navbar-nav ms-auto align-items-center">
-            <li class="nav-item">
-              <a
-                class="nav-link nav-link-studio {% if request.url.path == '/summarize/' %}active{% endif %}"
-                href="/summarize/"
-                hx-get="/summarize/"
-                hx-target="#app-content"
-                hx-push-url="true"
-              >
-                {{ lang("Summarize") }}
-              </a>
-            </li>
-            <li class="nav-item">
-              <a
-                class="nav-link nav-link-studio {% if 'history' in request.url.path %}active{% endif %}"
-                href="/history/"
-                hx-get="/history/"
-                hx-target="#app-content"
-                hx-push-url="true"
-              >
-                {{ lang("History") }}
-              </a>
-            </li>
-            <li class="nav-item">
-              <a
-                class="nav-link nav-link-studio {% if 'charts' in request.url.path %}active{% endif %}"
-                href="/charts/"
-                hx-get="/charts/"
-                hx-target="#app-content"
-                hx-push-url="true"
-              >
-                {{ lang("Metrics") }}
-              </a>
-            </li>
-            <li class="nav-item">
-              <a
-                class="nav-link nav-link-studio {% if 'comparison' in request.url.path %}active{% endif %}"
-                href="/comparison/"
-                hx-get="/comparison/"
-                hx-target="#app-content"
-                hx-push-url="true"
-              >
-                {{ lang("Compare") }}
-              </a>
-            </li>
-
-            <!-- Theme Switcher Button Desktop -->
-            <li class="nav-item d-none d-lg-block ms-2 me-2">
-              <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Toggle Theme">
-                <i class="fas fa-sun"></i>
-              </button>
-            </li>
-
-            {% if request.user and request.user.is_authenticated %}
-            <li class="nav-item dropdown ms-2">
-              <a
-                class="nav-link nav-link-studio dropdown-toggle"
-                href="#"
-                id="userDropdown"
-                role="button"
-                data-bs-toggle="dropdown"
-              >
-                <i class="fas fa-user-circle me-1"></i> {{ request.user.username }}
-              </a>
-              <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark card-studio border-0 shadow-lg">
-                <li>
-                  <a class="dropdown-item py-2" href="/accounts/profile/">
-                    <i class="fas fa-user me-2 text-warning"></i> {{ lang("Profile") }}
-                  </a>
-                </li>
-                <li><hr class="dropdown-divider border-secondary"></li>
-                <li>
-                  <form
-                    action="/accounts/logout/"
-                    method="post"
-                    class="d-inline"
-                  >
-                    {{ csrf_field(request) }}
-                    <button type="submit" class="dropdown-item text-danger py-2">
-                      <i class="fas fa-sign-out-alt me-2"></i> {{ lang("Logout") }}
-                    </button>
-                  </form>
-                </li>
-              </ul>
-            </li>
-            {% else %}
-            <li class="nav-item ms-2">
-              <a
-                class="btn btn-outline-studio btn-sm px-3"
-                href="/accounts/login/"
-                >{{ lang("Login") }}</a
-              >
-            </li>
-            {% endif %}
-          </ul>
-        </div>
-      </div>
-    </nav>
-
-    <!-- Main SPA Target Container -->
-    <main id="app-content" class="container py-4">
-      {% if messages %}
-      {% for message in messages %}
-      <div
-        class="alert alert-{{ message.tags }} alert-dismissible fade show mb-4 card-studio"
-        role="alert"
-      >
-        {{ message }}
-        <button
-          type="button"
-          class="btn-close"
-          data-bs-dismiss="alert"
-        ></button>
-      </div>
-      {% endfor %}
-      {% endif %}
-
-      {% block content %}{% endblock %}
-    </main>
-
-    <!-- Footer -->
-    <footer
-      class="footer text-center text-muted py-4 mt-auto"
-      style="border-top: 1px solid var(--border-color)"
-    >
-      <div class="container">
-        <p class="mb-0 small text-muted">
-          &copy; {{ now().year }} INDOGIST — {{ lang("Text Summarization Engine") }}
-        </p>
-      </div>
-    </footer>
-
-    <!-- Command Palette Modal -->
-    <div class="modal fade" id="commandPaletteModal" tabindex="-1" aria-hidden="true">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content card-studio">
-          <div class="modal-header border-bottom border-secondary">
-            <h6 class="modal-title clip-text-amber">{{ lang("Quick Command Palette") }}</h6>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body p-0">
-            <div class="list-group list-group-flush bg-transparent">
-              <a href="/summarize/" class="list-group-item list-group-item-action bg-transparent text-main border-secondary py-3" hx-get="/summarize/" hx-target="#app-content" data-bs-dismiss="modal">
-                <i class="fas fa-magic me-3 text-warning"></i> {{ lang("Go to Summarize Studio") }}
-              </a>
-              <a href="/history/" class="list-group-item list-group-item-action bg-transparent text-main border-secondary py-3" hx-get="/history/" hx-target="#app-content" data-bs-dismiss="modal">
-                <i class="fas fa-history me-3 text-info"></i> {{ lang("Search Summary History") }}
-              </a>
-              <a href="/charts/" class="list-group-item list-group-item-action bg-transparent text-main border-secondary py-3" hx-get="/charts/" hx-target="#app-content" data-bs-dismiss="modal">
-                <i class="fas fa-chart-line me-3 text-success"></i> {{ lang("View ROUGE/BLEU Metrics") }}
-              </a>
-              <a href="/comparison/" class="list-group-item list-group-item-action bg-transparent text-main border-secondary py-3" hx-get="/comparison/" hx-target="#app-content" data-bs-dismiss="modal">
-                <i class="fas fa-balance-scale me-3 text-primary"></i> {{ lang("Compare Model Methods") }}
-              </a>
+      <!-- Main SPA Target Container -->
+      <main id="app-content">
+        {% if messages %}
+          {% for message in messages %}
+            <div class="card-precision p-3 mb-4" style="border-color: var(--accent-amber);">
+              <span class="small" style="color: var(--text-main);">{{ message }}</span>
             </div>
-          </div>
-        </div>
-      </div>
+          {% endfor %}
+        {% endif %}
+
+        {% block content %}{% endblock %}
+      </main>
     </div>
+  </div>
 
-    <!-- Bootstrap & Engine JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="{{ static('js/notification.js') }}"></script>
-    <script src="{{ static('js/app.js') }}"></script>
-
-    {% block extra_js %}{% endblock %}
-  </body>
+  <!-- Scripts -->
+  <script src="{{ static('js/notification.js') }}"></script>
+  <script src="{{ static('js/app.js') }}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
 </html>
