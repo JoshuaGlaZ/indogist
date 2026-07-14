@@ -1,6 +1,6 @@
 {% extends 'summarizer/base.html' %}
 
-{% block title %}{{ lang("Model comparison studio — IndoGist") }}{% endblock %}
+{% block title %}{{ lang("Compare Methods — IndoGist Studio") }}{% endblock %}
 
 {% block content %}
 <section class="view active" id="view-comparison">
@@ -9,39 +9,85 @@
     <p>{{ lang("Run the same text through two methods and compare results side by side.") }}</p>
   </div>
 
-  <form method="post" action="/comparison/" hx-post="/comparison/" hx-target="#app-content">
-    {{ csrf_field(request) }}
-    <div class="card-precision">
-      <div class="card-body">
+  <div class="card mb-4">
+    <div class="card-body">
+      <form id="comparisonForm" method="post" action="/comparison/" hx-post="/comparison/" hx-target="#compareGrid" hx-indicator="#loadingIndicator">
+        {{ csrf_field(request) }}
         <label class="field-label" for="compareText">{{ lang("Input text for side-by-side evaluation") }}</label>
-        <textarea class="field" id="compareText" name="text" lang="id" style="min-height:120px;">{{ source_text or 'Indonesia merupakan negara kepulauan terbesar di dunia yang terdiri dari 17.504 pulau. Nama alternatif yang biasa dipakai adalah Nusantara. Dengan populasi mencapai 270 juta jiwa pada tahun 2020, Indonesia adalah negara berpenduduk terbanyak keempat di dunia.' }}</textarea>
-        <button class="btn btn-amber" id="runCompareBtn" type="submit" style="align-self:flex-start;">{{ lang("Run side-by-side comparison") }}</button>
-      </div>
-    </div>
-  </form>
+        <textarea class="field" name="text" id="compareText" lang="id" style="min-height:120px;" placeholder="{{ lang("Paste text to compare...") }}">{{ source_text or '' }}</textarea>
+        
+        <div style="display: flex; gap: 16px; margin-top: 14px; flex-wrap: wrap;">
+          <div style="flex: 1; min-width: 180px;">
+            <label class="field-label">{{ lang("Model A") }}</label>
+            <select name="model_a" class="field-select" style="width: 100%;">
+              <option value="traditional" selected>Extractive (Sentence Rank)</option>
+              <option value="hybrid">Hybrid (POS/NER + TF-IDF)</option>
+              <option value="abstractive" disabled>Abstractive (Coming Soon)</option>
+            </select>
+          </div>
+          <div style="flex: 1; min-width: 180px;">
+            <label class="field-label">{{ lang("Model B") }}</label>
+            <select name="model_b" class="field-select" style="width: 100%;">
+              <option value="hybrid" selected>Hybrid (POS/NER + TF-IDF)</option>
+              <option value="traditional">Extractive (Sentence Rank)</option>
+              <option value="abstractive" disabled>Abstractive (Coming Soon)</option>
+            </select>
+          </div>
+        </div>
 
-  <div class="compare-grid" id="compareGrid" style="{% if traditional_summary or hybrid_summary %}display:grid;{% else %}display:none;{% endif %}">
-    <div class="card-precision">
-      <div class="card-head">
-        <p class="card-title">{{ lang("Extractive model") }}</p>
-        <span class="badge extractive">Sentence rank</span>
-      </div>
-      <div class="card-body">
-        <div class="output-area">{{ traditional_summary or lang("No extractive summary generated.") }}</div>
-        <p class="compare-stat">{{ lang("Sentence rank analysis completed") }}</p>
-      </div>
+        <button class="btn btn-amber" type="submit" style="margin-top: 16px;">{{ lang("Run side-by-side comparison") }}</button>
+      </form>
     </div>
+  </div>
 
-    <div class="card-precision">
-      <div class="card-head">
-        <p class="card-title">{{ lang("Hybrid model") }}</p>
-        <span class="badge hybrid">Sastrawi + TF-IDF</span>
+  <!-- Loading Indicator -->
+  <div id="loadingIndicator" class="htmx-indicator loading-row mb-4">
+    <span class="spinner"></span> {{ lang("Running parallel models for comparison...") }}
+  </div>
+
+  <!-- Compare Grid Target Container -->
+  <div class="compare-grid" id="compareGrid">
+    {% if traditional_summary or hybrid_summary %}
+      <div class="card">
+        <div class="card-head">
+          <p class="card-title">{{ lang("Model A: Extractive") }}</p>
+          <span class="badge extractive">Sentence rank</span>
+        </div>
+        <div class="card-body">
+          <div class="output-area">{{ traditional_summary or lang("No extractive summary generated.") }}</div>
+          <div class="stats-grid" style="margin-top: 12px;">
+            <div class="stat-card">
+              <span class="s-label">{{ lang("Words") }}</span>
+              <span class="s-value">{{ traditional_summary.split()|length if traditional_summary else 0 }}</span>
+            </div>
+            <div class="stat-card accent">
+              <span class="s-label">{{ lang("Sentences") }}</span>
+              <span class="s-value">{{ traditional_summary.split('.')|length if traditional_summary else 0 }}</span>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="card-body">
-        <div class="output-area">{{ hybrid_summary or lang("No hybrid summary generated.") }}</div>
-        <p class="compare-stat">{{ lang("Sastrawi & TF-IDF extraction completed") }}</p>
+
+      <div class="card">
+        <div class="card-head">
+          <p class="card-title">{{ lang("Model B: Hybrid") }}</p>
+          <span class="badge hybrid">POS/NER + TF-IDF</span>
+        </div>
+        <div class="card-body">
+          <div class="output-area">{{ hybrid_summary or lang("No hybrid summary generated.") }}</div>
+          <div class="stats-grid" style="margin-top: 12px;">
+            <div class="stat-card">
+              <span class="s-label">{{ lang("Words") }}</span>
+              <span class="s-value">{{ hybrid_summary.split()|length if hybrid_summary else 0 }}</span>
+            </div>
+            <div class="stat-card accent">
+              <span class="s-label">{{ lang("Sentences") }}</span>
+              <span class="s-value">{{ hybrid_summary.split('.')|length if hybrid_summary else 0 }}</span>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
+    {% endif %}
   </div>
 </section>
 {% endblock %}

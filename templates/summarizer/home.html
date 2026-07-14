@@ -1,1 +1,87 @@
-{% extends 'summarizer/summarize.html' %}
+{% extends 'summarizer/base.html' %}
+
+{% block title %}{{ lang("Home — IndoGist Studio") }}{% endblock %}
+
+{% block content %}
+<section class="view active">
+  <div class="page-head">
+    <h1>INDOGIST STUDIO — {{ lang("TEXT SUMMARIZER") }}</h1>
+    <p>{{ lang("Hybrid, extractive, or abstractive — pick a method and run it on Indonesian text.") }}</p>
+  </div>
+
+  {% if request.user and request.user.is_authenticated %}
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+      <div>
+        <h2 style="font-family: 'Space Grotesk', sans-serif; margin: 0;">{{ lang("Welcome") }}, {{ request.user.username }}</h2>
+        <p style="color: var(--text-muted); margin: 4px 0 0;">{{ lang("Manage your saved summaries and run real-time document analysis.") }}</p>
+      </div>
+      <a href="/summarize/" class="btn btn-amber">{{ lang("New Summary") }} &rarr;</a>
+    </div>
+
+    <div class="card mb-4">
+      <div class="card-head">
+        <p class="card-title">{{ lang("Recent Activity") }}</p>
+        <span class="count-badge">{{ recent_summaries|length if recent_summaries else 0 }} {{ lang("entries") }}</span>
+      </div>
+      <div class="card-body">
+        {% if recent_summaries %}
+          <div class="history-list">
+            {% for summary in recent_summaries %}
+              <div class="history-item">
+                <div class="history-top">
+                  <h3 class="history-title"><a href="/summary/{{ summary.id }}/" style="color: inherit; text-decoration: none;">{{ summary.title }}</a></h3>
+                  <span class="badge {{ summary.method }}">{{ summary.get_method_display }}</span>
+                  <span class="history-date">{{ summary.created_at|date("M d, Y") }}</span>
+                </div>
+                <p class="history-snippet">{{ summary.summary_text|truncatewords(24) }}</p>
+                <div class="history-bottom">
+                  <a href="/summary/{{ summary.id }}/" class="btn">{{ lang("View detail") }}</a>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="output-placeholder">{{ lang("No summaries yet. Create your first summary in the studio.") }}</p>
+        {% endif %}
+      </div>
+    </div>
+  {% else %}
+    <!-- Guest Hero View -->
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-head">
+          <p class="card-title">{{ lang("Getting Started") }}</p>
+        </div>
+        <div class="card-body">
+          <h2 style="font-family: 'Space Grotesk', sans-serif; margin-top: 0;">{{ lang("Summarize Text Instantly") }}</h2>
+          <p style="color: var(--text-muted); line-height: 1.7;">
+            {{ lang("Efficiently condense your documents while retaining full context using our advanced NLP models.") }}
+          </p>
+          <a href="/summarize/" class="btn btn-amber btn-block" style="text-align: center; text-decoration: none;">
+            {{ lang("Start Summarizing") }} &rarr;
+          </a>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <p class="card-title">{{ lang("Sample Summary Output") }}</p>
+          <span class="badge hybrid">Hybrid</span>
+        </div>
+        <div class="card-body">
+          <div class="output-area">
+            Indonesia adalah negara kepulauan terbesar dan berpenduduk terbanyak keempat di dunia dengan mayoritas Muslim.
+          </div>
+          <div class="entity-section">
+            <p class="field-label" style="margin-bottom:0;">{{ lang("Detected entities") }}</p>
+            <div class="entity-wrap">
+              <span class="entity-chip show"><span>Indonesia</span><span class="e-type">LOC</span><span class="e-score">98%</span></span>
+              <span class="entity-chip show"><span>Nusantara</span><span class="e-type">LOC</span><span class="e-score">95%</span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}

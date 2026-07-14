@@ -1,56 +1,62 @@
 {% extends 'summarizer/base.html' %}
 
-{% block title %}{{ summary.title }} — IndoGist{% endblock %}
+{% block title %}{{ summary.title }} — IndoGist Detail{% endblock %}
 
 {% block content %}
 <section class="view active" id="view-detail">
-  <a href="/history/" class="back-link" hx-get="/history/" hx-target="#app-content" hx-push-url="true">
+  <a href="/history/" class="back-link">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
     {{ lang("Back to history") }}
   </a>
 
   <div class="detail-head">
-    <h1 id="detailTitle">{{ summary.title }}</h1>
-    <span class="badge {{ summary.method }}" id="detailBadge">{{ summary.get_method_display }}</span>
-    <span class="detail-date" id="detailDate">{{ summary.created_at|date("M d, Y") }}</span>
+    <h1>{{ summary.title }}</h1>
+    <span class="badge {{ summary.method }}">{{ summary.get_method_display }}</span>
+    <span class="detail-date">{{ summary.created_at|date("M d, Y H:i") }}</span>
   </div>
 
   <div class="detail-grid">
     <div class="detail-main">
-      <div class="card-precision">
+      <!-- Original Text Card -->
+      <div class="card">
         <div class="card-head">
           <p class="card-title">{{ lang("Original text") }}</p>
           <div class="card-actions">
-            <button class="btn" type="button" onclick="copySummaryOutput('detailOriginalText', this)">{{ lang("Copy") }}</button>
+            <button class="btn" type="button" onclick="copySummaryOutput('detailOriginal', this)">{{ lang("Copy") }}</button>
           </div>
         </div>
         <div class="card-body">
-          <p class="prose" id="detailOriginalText">{{ summary.original_text }}</p>
+          <p class="prose" id="detailOriginal">{{ summary.original_text }}</p>
         </div>
       </div>
 
-      <div class="card-precision">
+      <!-- Summary Output Card -->
+      <div class="card">
         <div class="card-head">
           <p class="card-title">{{ lang("Summary output") }}</p>
           <div class="card-actions">
-            <button class="btn" type="button" onclick="copySummaryOutput('detailSummaryText', this)">{{ lang("Copy") }}</button>
+            <button class="btn" type="button" onclick="copySummaryOutput('detailSummary', this)">{{ lang("Copy") }}</button>
+            <button class="btn" type="button" onclick="saveSummaryOutput('detailSummary')">{{ lang("Save") }}</button>
           </div>
         </div>
         <div class="card-body">
-          <p class="prose" id="detailSummaryText">{{ summary.summary_text }}</p>
+          <p class="prose" id="detailSummary">{{ summary.summary_text }}</p>
         </div>
       </div>
 
-      <div class="card-precision">
-        <div class="card-head"><p class="card-title">{{ lang("Detected named entities") }}</p></div>
+      <!-- Detected Named Entities Card -->
+      <div class="card">
+        <div class="card-head">
+          <p class="card-title">{{ lang("Detected named entities") }}</p>
+        </div>
         <div class="card-body">
           <div class="entity-wrap" id="detailEntities">
             {% if entities_list %}
-              {% for ent in entities_list %}
+              {% for entity in entities_list %}
                 <span class="entity-chip show">
-                  <span>{{ ent.text }}</span>
-                  <span class="e-type">{{ ent.label }}</span>
-                  <span class="e-score">{{ ent.confidence_percent }}%</span>
+                  <span>{{ entity.text }}</span>
+                  <span class="e-type">{{ entity.label }}</span>
+                  <span class="e-score">{{ entity.confidence_percent }}%</span>
                 </span>
               {% endfor %}
             {% else %}
@@ -62,37 +68,47 @@
     </div>
 
     <div class="detail-main">
-      <div class="card-precision">
-        <div class="card-head"><p class="card-title">{{ lang("Summary statistics") }}</p></div>
+      <!-- Statistics & Visual Compression Gauge Card -->
+      <div class="card">
+        <div class="card-head">
+          <p class="card-title">{{ lang("Summary statistics") }}</p>
+        </div>
         <div class="card-body">
           <div class="stats-grid">
             <div class="stat-card">
               <span class="s-label">{{ lang("Original words") }}</span>
-              <span class="s-value" id="statOriginal">{{ summary.word_count_original }}</span>
+              <span class="s-value">{{ summary.word_count_original }}</span>
             </div>
             <div class="stat-card">
               <span class="s-label">{{ lang("Summary words") }}</span>
-              <span class="s-value" id="statSummary">{{ summary.word_count_summary }}</span>
+              <span class="s-value">{{ summary.word_count_summary }}</span>
             </div>
-            <div class="stat-card accent">
-              <span class="s-label">{{ lang("Compression") }}</span>
-              <span class="s-value" id="statCompression">{{ (summary.actual_compression * 100)|round|int }}%</span>
-            </div>
-            <div class="stat-card">
-              <span class="s-label">{{ lang("Entities found") }}</span>
-              <span class="s-value" id="statEntities">{{ entities_list|length }}</span>
+            <div class="stat-card accent" style="grid-column: span 2;">
+              <span class="s-label">{{ lang("Compression Ratio") }}</span>
+              <span class="s-value">{{ (summary.actual_compression * 100)|floatformat(0) if summary.actual_compression is defined else 0 }}% {{ lang("shorter") }}</span>
+              <div class="compression-bar-wrap">
+                <div class="compression-bar">
+                  <div class="compression-fill" style="width: {{ (summary.actual_compression * 100)|floatformat(0) if summary.actual_compression is defined else 0 }}%;"></div>
+                </div>
+                <div class="compression-stat-text">
+                  <span>{{ summary.word_count_original }} words &rarr; {{ summary.word_count_summary }} words</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="card-precision">
-        <div class="card-head"><p class="card-title">{{ lang("Quick actions") }}</p></div>
+      <!-- Quick Actions Card -->
+      <div class="card">
+        <div class="card-head">
+          <p class="card-title">{{ lang("Quick actions") }}</p>
+        </div>
         <div class="card-body">
           <div class="quick-actions">
-            <a href="/export/{{ summary.id }}/" class="btn" download>{{ lang("Export as TXT") }}</a>
+            <a href="/export/{{ summary.pk }}/" class="btn" style="text-decoration: none;">{{ lang("Export as TXT") }}</a>
             {% if not summary.added_to_dataset %}
-              <button class="btn" type="button" onclick="addToDataset(this, {{ summary.id }})">{{ lang("Add to dataset") }}</button>
+              <button class="btn btn-amber" type="button" onclick="addToDataset(this, {{ summary.pk }})">{{ lang("Add to dataset") }}</button>
             {% else %}
               <button class="btn" type="button" disabled>{{ lang("In dataset") }}</button>
             {% endif %}
@@ -106,17 +122,10 @@
 
 {% block extra_js %}
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-  animateNumber(document.getElementById('statOriginal'), {{ summary.word_count_original }});
-  animateNumber(document.getElementById('statSummary'), {{ summary.word_count_summary }});
-  animateNumber(document.getElementById('statCompression'), {{ (summary.actual_compression * 100)|round|int }}, '%');
-  animateNumber(document.getElementById('statEntities'), {{ entities_list|length }});
-});
-
 async function addToDataset(button, summaryId) {
   if (!confirm("Add this summary to the training dataset?")) return;
   button.disabled = true;
-  button.textContent = 'Adding...';
+  button.innerText = 'Adding...';
 
   try {
     const response = await fetch(`/add-to-dataset/${summaryId}/`, {
@@ -125,16 +134,23 @@ async function addToDataset(button, summaryId) {
     });
     const data = await response.json();
     if (data.success) {
-      button.textContent = 'In dataset';
+      showToast("Added to training dataset!", "success");
+      button.innerText = 'Added!';
+      setTimeout(() => {
+        button.disabled = true;
+        button.innerText = 'In dataset';
+        button.classList.remove('btn-amber');
+      }, 1200);
     } else {
-      alert("Error: " + data.error);
+      showToast("Error: " + data.error, "error");
       button.disabled = false;
-      button.textContent = 'Add to dataset';
+      button.innerText = 'Add to dataset';
     }
   } catch (error) {
     console.error(error);
+    showToast("An error occurred.", "error");
     button.disabled = false;
-    button.textContent = 'Add to dataset';
+    button.innerText = 'Add to dataset';
   }
 }
 </script>

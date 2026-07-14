@@ -53,6 +53,7 @@ async def summarize_post(
     text: Optional[str] = Form(""),
     compression_ratio: float = Form(0.3),
     method: str = Form("hybrid"),
+    hybrid_variant: str = Form("pos_ner"),
     file: Optional[UploadFile] = File(None),
     user: Optional[User] = Depends(get_current_user),
     session: Session = Depends(get_session)
@@ -80,7 +81,7 @@ async def summarize_post(
     )
     if not is_valid:
         if is_ajax:
-            return HTMLResponse(f'<div class="alert alert-danger card-editorial mb-0">{err_msg}</div>', status_code=400)
+            return HTMLResponse(f'<div class="alert alert-danger mb-0">{err_msg}</div>', status_code=400)
         add_flash_message(request, err_msg, "danger")
         return render_template(request, "summarizer/summarize.html", {"user": user})
 
@@ -94,7 +95,7 @@ async def summarize_post(
             final_text = parsed_text
         except ValueError as e:
             if is_ajax:
-                return HTMLResponse(f'<div class="alert alert-danger card-editorial mb-0">{str(e)}</div>', status_code=400)
+                return HTMLResponse(f'<div class="alert alert-danger mb-0">{str(e)}</div>', status_code=400)
             add_flash_message(request, str(e), "danger")
             return render_template(request, "summarizer/summarize.html", {"form": {"title": title or "", "original_text": raw_input}, "user": user})
 
@@ -102,20 +103,29 @@ async def summarize_post(
         validate_text_content(final_text)
     except ValueError as e:
         if is_ajax:
-            return HTMLResponse(f'<div class="alert alert-danger card-editorial mb-0">{str(e)}</div>', status_code=400)
+            return HTMLResponse(f'<div class="alert alert-danger mb-0">{str(e)}</div>', status_code=400)
 
     # Check SHA-256 Cache
-    cache_key = hashlib.sha256(f"{final_text}:{method}:{compression_ratio}".encode()).hexdigest()
+    cache_key = hashlib.sha256(f"{final_text}:{method}:{hybrid_variant}:{compression_ratio}".encode()).hexdigest()
+    entities_list = []
     if cache_key in SUMMARY_CACHE:
-        summary_result = SUMMARY_CACHE[cache_key]
+        cached = SUMMARY_CACHE[cache_key]
+        summary_result = cached["summary"]
+        entities_list = cached.get("entities", [])
     else:
         if method == "traditional":
             summary_result = summarize_traditional(final_text, ratio=compression_ratio)
         else:
-            summary_result = predict_and_summarize(final_title, final_text)
-        SUMMARY_CACHE[cache_key] = summary_result
+            # Run POS/NER Hybrid model
+            res = predict_and_summarize(final_text, title=final_title, compression_ratio=compression_ratio)
+            if isinstance(res, dict):
+                summary_result = res.get("summary", "")
+                entities_list = res.get("entities", [])
+            else:
+                summary_result = res
+        
+        SUMMARY_CACHE[cache_key] = {"summary": summary_result, "entities": entities_list}
 
-    summary_obj = None
     if user:
         summary_obj = Summary(
             user_id=user.id,
@@ -130,15 +140,30 @@ async def summarize_post(
         session.commit()
         session.refresh(summary_obj)
 
-    context = {"summary": {"summary_text": summary_result}, "user": user}
-
     if is_ajax:
+        # Build Out-Of-Band entity chip HTML for HTMX
+        entity_chips_html = ""
+        if entities_list:
+            for ent in entities_list:
+                score = ent.get("confidence_percent", round(ent.get("score", 0.9) * 100))
+                entity_chips_html += f'''
+                <span class="entity-chip show">
+                  <span>{ent.get("text", "")}</span>
+                  <span class="e-type">{ent.get("label", "ENTITY")}</span>
+                  <span class="e-score">{score}%</span>
+                </span>
+                '''
+        else:
+            entity_chips_html = f'<span class="output-placeholder">{lang(request, "No named entities detected in this text.")}</span>'
+
         return HTMLResponse(f'''
-        <div class="scramble-output" data-text="{summary_result}">
-            {summary_result}
+        <div class="summary-output-text">{summary_result}</div>
+        <div id="entityWrap" hx-swap-oob="true">
+            {entity_chips_html}
         </div>
         ''')
 
+    context = {"summary": {"summary_text": summary_result}, "entities_list": entities_list, "user": user}
     return render_template(request, "summarizer/summarize.html", context)
 
 @router.get("/history/", response_class=HTMLResponse)
@@ -150,6 +175,7 @@ def history_get(
     user: Optional[User] = Depends(get_current_user),
     session: Session = Depends(get_session)
 ):
+    is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest" or request.headers.get("HX-Request") == "true"
     summaries = []
     if user:
         statement = select(Summary).where(Summary.user_id == user.id)
@@ -165,13 +191,18 @@ def history_get(
             statement = statement.order_by(desc(Summary.created_at))
         summaries = session.exec(statement).all()
 
-    return render_template(request, "summarizer/history.html", {
+    context = {
         "summaries": summaries,
         "search_query": q,
         "method_filter": method,
         "sort_by": sort,
         "user": user
-    })
+    }
+
+    if is_ajax:
+        return render_template(request, "summarizer/history_list.html", context)
+
+    return render_template(request, "summarizer/history.html", context)
 
 @router.get("/charts/", response_class=HTMLResponse)
 def charts_get(request: Request, user: Optional[User] = Depends(get_current_user)):
@@ -182,17 +213,64 @@ def charts_get(request: Request, user: Optional[User] = Depends(get_current_user
 def comparison(
     request: Request,
     text: Optional[str] = Form(""),
+    model_a: Optional[str] = Form("traditional"),
+    model_b: Optional[str] = Form("hybrid"),
     user: Optional[User] = Depends(get_current_user)
 ):
-    traditional_summary = ""
-    hybrid_summary = ""
+    is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest" or request.headers.get("HX-Request") == "true"
+    summary_a = ""
+    summary_b = ""
     if text:
-        traditional_summary = summarize_traditional(text, ratio=0.3)
-        hybrid_summary = predict_and_summarize("", text)
+        if model_a == "traditional":
+            summary_a = summarize_traditional(text, ratio=0.3)
+        else:
+            res_a = predict_and_summarize(text, title="")
+            summary_a = res_a.get("summary", "") if isinstance(res_a, dict) else res_a
 
-    return render_template(request, "summarizer/comparison.html", {
+        if model_b == "traditional":
+            summary_b = summarize_traditional(text, ratio=0.3)
+        else:
+            res_b = predict_and_summarize(text, title="")
+            summary_b = res_b.get("summary", "") if isinstance(res_b, dict) else res_b
+
+    context = {
         "source_text": text,
-        "traditional_summary": traditional_summary,
-        "hybrid_summary": hybrid_summary,
+        "traditional_summary": summary_a,
+        "hybrid_summary": summary_b,
+        "model_a": model_a,
+        "model_b": model_b,
         "user": user
-    })
+    }
+
+    if is_ajax and text:
+        return HTMLResponse(f'''
+        <div class="card">
+          <div class="card-head">
+            <p class="card-title">Model A ({model_a|upper})</p>
+            <span class="badge {model_a}">{model_a}</span>
+          </div>
+          <div class="card-body">
+            <div class="output-area">{summary_a}</div>
+            <div class="stats-grid" style="margin-top: 12px;">
+              <div class="stat-card"><span class="s-label">Words</span><span class="s-value">{len(summary_a.split()) if summary_a else 0}</span></div>
+              <div class="stat-card accent"><span class="s-label">Sentences</span><span class="s-value">{len(summary_a.split('.')) if summary_a else 0}</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <p class="card-title">Model B ({model_b|upper})</p>
+            <span class="badge {model_b}">{model_b}</span>
+          </div>
+          <div class="card-body">
+            <div class="output-area">{summary_b}</div>
+            <div class="stats-grid" style="margin-top: 12px;">
+              <div class="stat-card"><span class="s-label">Words</span><span class="s-value">{len(summary_b.split()) if summary_b else 0}</span></div>
+              <div class="stat-card accent"><span class="s-label">Sentences</span><span class="s-value">{len(summary_b.split('.')) if summary_b else 0}</span></div>
+            </div>
+          </div>
+        </div>
+        ''')
+
+    return render_template(request, "summarizer/comparison.html", context)

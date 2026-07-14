@@ -1,87 +1,24 @@
-{# Jinja2 macros for form rendering - handles dicts, objects, and form fields #}
+{# Jinja2 macros for form rendering - Precision Studio #}
 
 {% macro render_field(field, attrs={}) %}
-{% if hasattr(field, 'field') and hasattr(field.field, 'widget') %}
-  {% set widget_type = field.field.widget.__class__.__name__ %}
-  {% set field_id = field.id_for_label if field.id_for_label else field.name %}
-  {% set field_name = field.name %}
-  {% set field_label = field.label %}
-  {% set value = field.value() if field.value() is not none else '' %}
-  {% set field_errors = field.errors %}
-  {% set is_required = field.field.required %}
-  {% set placeholder = attrs.get('placeholder', field.field.widget.attrs.get('placeholder', '')) %}
-{% else %}
-  {% set widget_type = attrs.get('widget', field.widget if hasattr(field, 'widget') else 'TextInput') %}
-  {% set field_id = attrs.get('id', field.id if hasattr(field, 'id') else (field.name if hasattr(field, 'name') else 'id_field')) %}
-  {% set field_name = field.name if hasattr(field, 'name') else (attrs.get('name', 'field')) %}
-  {% set field_label = field.label if hasattr(field, 'label') else attrs.get('label', field_name|title) %}
-  {% set value = field.value if hasattr(field, 'value') else attrs.get('value', '') %}
-  {% set field_errors = field.errors if hasattr(field, 'errors') else [] %}
-  {% set is_required = field.required if hasattr(field, 'required') else attrs.get('required', False) %}
-  {% set placeholder = attrs.get('placeholder', '') %}
-{% endif %}
+{% set field_id = attrs.get('id', field.name if hasattr(field, 'name') else 'id_field') %}
+{% set field_name = field.name if hasattr(field, 'name') else attrs.get('name', 'field') %}
+{% set field_label = field.label if hasattr(field, 'label') else attrs.get('label', field_name|title) %}
+{% set value = field.value if hasattr(field, 'value') else attrs.get('value', '') %}
 
-<div class="mb-3">
-  {% if widget_type != 'HiddenInput' and field_label %}
-    <label for="{{ field_id }}" class="form-label fw-medium text-main">{{ field_label }}</label>
+<div style="margin-bottom: 1rem;">
+  {% if field_label %}
+    <label for="{{ field_id }}" class="field-label">{{ field_label }}</label>
   {% endif %}
-
-  {% if widget_type in ['TextInput', 'EmailInput', 'PasswordInput', 'URLInput', 'NumberInput', 'DateInput'] %}
-    {% set input_type = 'email' if widget_type == 'EmailInput' else ('password' if widget_type == 'PasswordInput' else 'text') %}
-    <input
-      type="{{ input_type }}"
-      name="{{ field_name }}"
-      id="{{ field_id }}"
-      class="form-control form-control-studio{% if field_errors %} is-invalid{% endif %}"
-      value="{{ value if value is not none else '' }}"
-      placeholder="{{ placeholder }}"
-      {% if is_required %}required{% endif %}
-    />
-
-  {% elif widget_type == 'Textarea' %}
-    <textarea
-      name="{{ field_name }}"
-      id="{{ field_id }}"
-      class="form-control form-control-studio{% if field_errors %} is-invalid{% endif %}"
-      placeholder="{{ placeholder }}"
-      rows="{{ attrs.get('rows', 8) }}"
-      {% if is_required %}required{% endif %}
-    >{{ value if value is not none else '' }}</textarea>
-
-  {% elif widget_type == 'FileInput' %}
-    <input
-      type="file"
-      name="{{ field_name }}"
-      id="{{ field_id }}"
-      class="form-control form-control-studio{% if field_errors %} is-invalid{% endif %}"
-      {% if is_required %}required{% endif %}
-    />
-
-  {% elif widget_type == 'HiddenInput' %}
-    <input
-      type="hidden"
-      name="{{ field_name }}"
-      id="{{ field_id }}"
-      value="{{ value if value is not none else '' }}"
-    />
-
-  {% else %}
-    <input
-      type="text"
-      name="{{ field_name }}"
-      id="{{ field_id }}"
-      class="form-control form-control-studio{% if field_errors %} is-invalid{% endif %}"
-      value="{{ value if value is not none else '' }}"
-      placeholder="{{ placeholder }}"
-      {% if is_required %}required{% endif %}
-    />
-  {% endif %}
-
-  {% if field_errors %}
-    {% for error in field_errors %}
-      <div class="invalid-feedback d-block">{{ error }}</div>
-    {% endfor %}
-  {% endif %}
+  <input
+    type="text"
+    name="{{ field_name }}"
+    id="{{ field_id }}"
+    class="field"
+    style="min-height: 42px;"
+    value="{{ value if value is not none else '' }}"
+    placeholder="{{ attrs.get('placeholder', '') }}"
+  />
 </div>
 {% endmacro %}
 

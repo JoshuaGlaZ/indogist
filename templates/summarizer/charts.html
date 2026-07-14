@@ -1,40 +1,82 @@
 {% extends 'summarizer/base.html' %}
 
-{% block title %}{{ lang("Model performance metrics — IndoGist") }}{% endblock %}
+{% block title %}{{ lang("Metrics Dashboard — IndoGist Studio") }}{% endblock %}
 
 {% block content %}
 <section class="view active" id="view-metrics">
   <div class="page-head">
-    <h1>{{ lang("Model performance metrics") }}</h1>
-    <p>{{ lang("Evaluation suite metrics, ROUGE scores, and convergence curves.") }}</p>
+    <h1>{{ lang("Model Performance Metrics") }}</h1>
+    <p>{{ lang("ROUGE and BLEU evaluation suite results for Indonesian text summarization.") }}</p>
   </div>
 
-  <div class="grid-2 mb-4">
-    <div class="card-precision p-3">
-      <span class="field-label">{{ lang("ROUGE-1 Score") }}</span>
-      <div style="font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 28px; color: var(--accent-amber);">0.428</div>
-      <span class="badge hybrid mt-2">{{ lang("Unigram Overlap") }}</span>
+  <div class="card mb-4">
+    <div class="card-head">
+      <p class="card-title">{{ lang("Evaluation Suite Summary") }}</p>
     </div>
-    <div class="card-precision p-3">
-      <span class="field-label">{{ lang("ROUGE-2 Score") }}</span>
-      <div style="font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 28px; color: var(--accent-blue);">0.215</div>
-      <span class="badge extractive mt-2">{{ lang("Bigram Overlap") }}</span>
-    </div>
-    <div class="card-precision p-3">
-      <span class="field-label">{{ lang("ROUGE-L Score") }}</span>
-      <div style="font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 28px; color: var(--badge-abstractive-fg);">0.389</div>
-      <span class="badge abstractive mt-2">{{ lang("Longest Common Subsequence") }}</span>
-    </div>
-    <div class="card-precision p-3">
-      <span class="field-label">{{ lang("BLEU Score") }}</span>
-      <div style="font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 28px; color: var(--text-main);">0.342</div>
-      <span class="badge hybrid mt-2">{{ lang("N-Gram Precision") }}</span>
+    <div class="card-body">
+      <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr);">
+        <div class="stat-card accent">
+          <span class="s-label">{{ lang("ROUGE-1 Score") }}</span>
+          <span class="s-value">0.428</span>
+        </div>
+        <div class="stat-card">
+          <span class="s-label">{{ lang("ROUGE-2 Score") }}</span>
+          <span class="s-value">0.215</span>
+        </div>
+        <div class="stat-card accent">
+          <span class="s-label">{{ lang("ROUGE-L Score") }}</span>
+          <span class="s-value">0.389</span>
+        </div>
+        <div class="stat-card">
+          <span class="s-label">{{ lang("BLEU Score") }}</span>
+          <span class="s-value">0.342</span>
+        </div>
+      </div>
     </div>
   </div>
 
   {% if chart_image %}
-    <div class="card-precision p-3 text-center mb-4">
-      <img src="data:image/png;base64,{{ chart_image }}" class="img-fluid rounded" alt="Training History" />
+    <div class="card mb-4">
+      <div class="card-head">
+        <p class="card-title">{{ lang("Model Training Convergence") }}</p>
+      </div>
+      <div class="card-body text-center">
+        <img src="data:image/png;base64,{{ chart_image }}" style="max-width: 100%; height: auto; border-radius: 8px; border: 1px solid var(--border-color);" alt="Training History" />
+      </div>
+    </div>
+  {% endif %}
+
+  {% if report_table %}
+    <div class="card mb-4">
+      <div class="card-head">
+        <p class="card-title">{{ lang("Detailed Performance Classification") }}</p>
+      </div>
+      <div class="card-body" style="padding: 0;">
+        <div style="overflow-x: auto;">
+          <table style="width: 100%; border-collapse: collapse; font-family: 'JetBrains Mono', monospace; font-size: 13px;">
+            <thead>
+              <tr style="border-bottom: 1px solid var(--border-color); background: var(--bg-field);">
+                <th style="padding: 12px 16px;">{{ lang("Metric Class") }}</th>
+                <th style="padding: 12px 16px;">{{ lang("Precision") }}</th>
+                <th style="padding: 12px 16px;">{{ lang("Recall") }}</th>
+                <th style="padding: 12px 16px;">{{ lang("F1-Score") }}</th>
+                <th style="padding: 12px 16px;">{{ lang("Support") }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in report_table %}
+                <tr style="border-bottom: 1px solid var(--border-color);">
+                  <td style="padding: 12px 16px; font-weight: 700;">{{ row.class }}</td>
+                  <td style="padding: 12px 16px;">{{ row.precision }}</td>
+                  <td style="padding: 12px 16px;">{{ row.recall }}</td>
+                  <td style="padding: 12px 16px;">{{ row['f1-score'] }}</td>
+                  <td style="padding: 12px 16px;">{{ row.support }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   {% endif %}
 </section>

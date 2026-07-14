@@ -1,6 +1,6 @@
 {% extends 'summarizer/base.html' %}
 
-{% block title %}{{ lang("Summary history archive — IndoGist") }}{% endblock %}
+{% block title %}{{ lang("History — IndoGist Studio") }}{% endblock %}
 
 {% block content %}
 <section class="view active" id="view-history">
@@ -9,51 +9,37 @@
       <h1 style="margin-bottom:2px;">{{ lang("Summary history archive") }}</h1>
       <p>{{ lang("Every document you've summarized, searchable and filterable.") }}</p>
     </div>
-    <span class="count-badge">{{ summaries|length if summaries else 0 }} {{ lang("entries") }}</span>
+    <span class="count-badge">{{ summaries|length if summaries is defined and summaries else 0 }} {{ lang("entries") }}</span>
   </div>
 
-  <form method="get" action="/history/" hx-get="/history/" hx-target="#app-content" hx-trigger="keyup changed delay:300ms from:find input[name='q'], change from:find select">
-    <div class="toolbar">
-      <div class="search-field">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-        <input type="text" name="q" placeholder="{{ lang("Search by title or keyword") }}" value="{{ search_query or '' }}" aria-label="{{ lang("Search history") }}">
-      </div>
+  <!-- Live HTMX Toolbar -->
+  <form method="get" action="/history/" hx-get="/history/" hx-target="#historyListContainer" hx-trigger="change, keyup changed delay:300ms from:find input[name='q']" class="toolbar">
+    <div class="search-field">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <input type="text" name="q" placeholder="{{ lang("Search by title or keyword") }}" value="{{ search_query or '' }}" aria-label="{{ lang("Search history") }}">
+    </div>
+    
+    <div style="min-width: 140px;">
       <select name="method" class="field-select" aria-label="{{ lang("Filter by method") }}">
         <option value="">{{ lang("All methods") }}</option>
         <option value="hybrid" {% if method_filter == 'hybrid' %}selected{% endif %}>Hybrid</option>
         <option value="traditional" {% if method_filter == 'traditional' %}selected{% endif %}>Extractive</option>
         <option value="abstractive" {% if method_filter == 'abstractive' %}selected{% endif %}>Abstractive</option>
       </select>
+    </div>
+    
+    <div style="min-width: 140px;">
       <select name="sort" class="field-select" aria-label="{{ lang("Sort order") }}">
         <option value="-created_at" {% if sort_by == '-created_at' %}selected{% endif %}>{{ lang("Newest first") }}</option>
         <option value="created_at" {% if sort_by == 'created_at' %}selected{% endif %}>{{ lang("Oldest first") }}</option>
-        <option value="title" {% if sort_by == 'title' %}selected{% endif %}>{{ lang("Title A–Z") }}</option>
+        <option value="title" {% if sort_by == 'title' %}selected{% endif %}>{{ lang("Title A-Z") }}</option>
       </select>
     </div>
   </form>
 
-  <div class="history-list" id="historyList">
-    {% if summaries %}
-      {% for item in summaries %}
-        <div class="history-item">
-          <div class="history-top">
-            <h3 class="history-title">{{ item.title }}</h3>
-            <span class="badge {{ item.method }}">{{ item.get_method_display }}</span>
-            <span class="history-date">{{ item.created_at|date("M d, Y") }}</span>
-          </div>
-          <p class="history-snippet">{{ item.summary_text|truncatewords(25) }}</p>
-          <div class="history-bottom">
-            <a href="/summary/{{ item.id }}/" class="btn" hx-get="/summary/{{ item.id }}/" hx-target="#app-content" hx-push-url="true">
-              {{ lang("View detail") }}
-            </a>
-          </div>
-        </div>
-      {% endfor %}
-    {% else %}
-      <div class="placeholder-view card-precision p-5">
-        <p>{{ lang("No summaries found matching your search.") }}</p>
-      </div>
-    {% endif %}
+  <!-- History List Target Container (Targeted HTMX Swap) -->
+  <div id="historyListContainer">
+    {% include 'summarizer/history_list.html' %}
   </div>
 </section>
 {% endblock %}

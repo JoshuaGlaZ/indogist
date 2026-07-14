@@ -3,53 +3,33 @@
 {% block title %}{{ lang("Login — IndoGist Studio") }}{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-  <div class="col-md-6 col-lg-5">
-    <div class="card-studio p-4">
-      <div class="text-center mb-4">
-        <i class="fas fa-lock fa-2x text-warning mb-2"></i>
-        <h3 class="clip-text-amber mb-1">{{ lang("User Login") }}</h3>
-        <p class="small text-muted mb-0">{{ lang("Sign in to access your saved history and preferences") }}</p>
-      </div>
-
+<section class="view active" style="max-width: 440px; margin: 40px auto 0;">
+  <div class="card">
+    <div class="card-head">
+      <p class="card-title">{{ lang("User Login") }}</p>
+    </div>
+    <div class="card-body">
       <form method="post" action="/accounts/login">
         {{ csrf_field(request) }}
-        <div class="mb-3">
-          <label for="id_username" class="form-label text-main small fw-bold">{{ lang("Username") }}</label>
-          <input
-            type="text"
-            name="username"
-            id="id_username"
-            class="form-control form-control-studio"
-            placeholder="{{ lang("Enter your username") }}"
-            value="{{ form.get('username', '') if hasattr(form, 'get') else '' }}"
-            required
-            autofocus
-          />
+        
+        <div style="margin-bottom: 16px;">
+          <label class="field-label" for="username">{{ lang("Username") }}</label>
+          <input type="text" name="username" id="username" class="field" style="min-height: 42px;" placeholder="{{ lang("Enter your username") }}" value="{{ form.get('username', '') if hasattr(form, 'get') else '' }}" required autofocus>
         </div>
 
-        <div class="mb-4">
-          <label for="id_password" class="form-label text-main small fw-bold">{{ lang("Password") }}</label>
-          <input
-            type="password"
-            name="password"
-            id="id_password"
-            class="form-control form-control-studio"
-            placeholder="{{ lang("Enter your password") }}"
-            required
-          />
+        <div style="margin-bottom: 20px;">
+          <label class="field-label" for="password">{{ lang("Password") }}</label>
+          <input type="password" name="password" id="password" class="field" style="min-height: 42px;" placeholder="{{ lang("Enter your password") }}" required>
         </div>
 
-        <button type="submit" class="btn btn-amber w-100 py-3 mb-3">
-          <i class="fas fa-sign-in-alt me-2"></i> {{ lang("Sign In") }}
-        </button>
+        <button type="submit" class="btn btn-amber btn-block">{{ lang("Sign In") }}</button>
       </form>
 
-      <p class="text-center small text-muted mb-0">
+      <p style="text-align: center; font-size: 13px; color: var(--text-muted); margin-top: 16px; margin-bottom: 0;">
         {{ lang("Don't have an account?") }}
-        <a href="/accounts/register/" class="text-warning text-decoration-none fw-bold ms-1">{{ lang("Register here") }}</a>
+        <a href="/accounts/register/" style="color: var(--accent-amber); text-decoration: none; font-weight: 600;">{{ lang("Register here") }}</a>
       </p>
     </div>
   </div>
-</div>
+</section>
 {% endblock %}

@@ -1,0 +1,25 @@
+{% set items = summaries if summaries is defined and summaries else [] %}
+{% if items %}
+  <div class="history-list">
+    {% for summary in items %}
+      <div class="history-item">
+        <div class="history-top">
+          <h3 class="history-title"><a href="/summary/{{ summary.id if hasattr(summary, 'id') else summary.pk }}/" style="color: inherit; text-decoration: none;">{{ summary.title }}</a></h3>
+          <span class="badge {{ summary.method }}">{{ summary.get_method_display() if hasattr(summary, 'get_method_display') else summary.method }}</span>
+          <span class="history-date">{{ summary.created_at|date("M d, Y") }}</span>
+        </div>
+        <p class="history-snippet">{{ summary.summary_text|truncatewords(24) }}</p>
+        <div class="history-bottom">
+          <a href="/summary/{{ summary.id if hasattr(summary, 'id') else summary.pk }}/" class="btn" style="text-decoration: none;">{{ lang("View detail") }}</a>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="card" style="text-align: center; padding: 48px 20px;">
+    <p class="output-placeholder">{{ lang("No summary history entries found.") }}</p>
+    <div>
+      <a href="/summarize/" class="btn btn-amber">{{ lang("Create new summary") }}</a>
+    </div>
+  </div>
+{% endif %}
