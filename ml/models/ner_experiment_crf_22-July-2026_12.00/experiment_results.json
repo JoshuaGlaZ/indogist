@@ -1,0 +1,30 @@
+{
+  "config": {
+    "embed_dim": 150,
+    "pos_embed_dim": 16,
+    "w2v_window": 5,
+    "w2v_min_count": 1,
+    "w2v_epochs": 10,
+    "w2v_sg": 1,
+    "lstm_units": 128,
+    "dropout": 0.30000000000000004,
+    "learning_rate": 0.005,
+    "trainable_embeddings": true,
+    "num_lstm_layers": 2,
+    "epochs": 24,
+    "batch_size": 128,
+    "max_cap_len": 256,
+    "patience": 10
+  },
+  "metrics": {
+    "val_loss": 0.16461630165576935,
+    "val_accuracy": 0.9601100087165833,
+    "entity_f1": 0.7112462006079028,
+    "entity_precision": 0.7350785340314137,
+    "entity_recall": 0.6889106967615309
+  },
+  "vocab_size": 7582,
+  "num_pos_tags": 18,
+  "num_classes": 8,
+  "timestamp": "2026-07-21T16:13:17.394215"
+}
