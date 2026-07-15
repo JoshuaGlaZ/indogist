@@ -45,6 +45,7 @@
           </div>
 
           <div class="tab-pane" data-pane="upload">
+            <label class="field-label">{{ lang("File attachment") }}</label>
             <div class="dropzone">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2M7 9l5-5 5 5M12 4v13"/></svg>
               <div>{{ lang("Drag a .txt, .pdf, or .docx file here") }}</div>
@@ -54,6 +55,7 @@
           </div>
 
           <div class="tab-pane" data-pane="presets">
+            <label class="field-label">{{ lang("Sample document presets") }}</label>
             <div class="preset-row">
               <button class="btn" type="button" onclick="loadPreset('news')">{{ lang("News article") }}</button>
               <button class="btn" type="button" onclick="loadPreset('tech')">{{ lang("Tech spec") }}</button>

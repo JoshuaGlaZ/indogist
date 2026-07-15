@@ -1,6 +1,7 @@
 /* ==========================================================================
    INDOGIST — PRECISION STUDIO DESIGN SYSTEM (HIGH POLISH)
-   Custom Dropdown Popups, Sleek Ambient Range Sliders, Modal Fullscreen Editor
+   Custom Dropdown Popups, Sleek Ambient Range Sliders, Modal Fullscreen Editor,
+   Uniform Tab Pane Spacing & Preset Margins
    ========================================================================== */
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
@@ -173,7 +174,7 @@ body[data-theme="light"] .theme-toggle .icon-moon,
   padding: 0 0 10px; border-bottom: 2px solid transparent;
 }
 .tab.active { color: var(--accent-amber); border-bottom-color: var(--accent-amber); }
-.tab-pane { display: none; }
+.tab-pane { display: none; margin-top: 14px; }
 .tab-pane.active { display: block; }
 
 /* Textarea & Inputs */
@@ -312,7 +313,7 @@ input[type="range"].field-range::-moz-range-thumb {
 .dropzone svg { width: 26px; height: 26px; color: var(--accent-amber); margin-bottom: 8px; }
 .dropzone .btn { margin-top: 12px; }
 
-.preset-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.preset-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 2px; }
 
 .method-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 @media (max-width: 480px) { .method-grid { grid-template-columns: 1fr; } }
