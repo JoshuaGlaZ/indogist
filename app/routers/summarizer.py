@@ -54,6 +54,7 @@ async def summarize_post(
     compression_ratio: float = Form(0.3),
     method: str = Form("hybrid"),
     hybrid_variant: str = Form("pos_ner"),
+    traditional_variant: str = Form("sentence_rank"),
     file: Optional[UploadFile] = File(None),
     user: Optional[User] = Depends(get_current_user),
     session: Session = Depends(get_session)
@@ -105,8 +106,8 @@ async def summarize_post(
         if is_ajax:
             return HTMLResponse(f'<div class="alert alert-danger mb-0">{str(e)}</div>', status_code=400)
 
-    # Check SHA-256 Cache
-    cache_key = hashlib.sha256(f"{final_text}:{method}:{hybrid_variant}:{compression_ratio}".encode()).hexdigest()
+    variant_key = hybrid_variant if method == "hybrid" else traditional_variant
+    cache_key = hashlib.sha256(f"{final_text}:{method}:{variant_key}:{compression_ratio}".encode()).hexdigest()
     entities_list = []
     if cache_key in SUMMARY_CACHE:
         cached = SUMMARY_CACHE[cache_key]
@@ -114,9 +115,13 @@ async def summarize_post(
         entities_list = cached.get("entities", [])
     else:
         if method == "traditional":
-            summary_result = summarize_traditional(final_text, ratio=compression_ratio)
+            res = summarize_traditional(final_text, title=final_title, compression_ratio=compression_ratio, stream=False)
+            if isinstance(res, dict):
+                summary_result = res.get("summary", "")
+                entities_list = res.get("entities", [])
+            else:
+                summary_result = res
         else:
-            # Run POS/NER Hybrid model
             res = predict_and_summarize(final_text, title=final_title, compression_ratio=compression_ratio)
             if isinstance(res, dict):
                 summary_result = res.get("summary", "")
@@ -141,7 +146,6 @@ async def summarize_post(
         session.refresh(summary_obj)
 
     if is_ajax:
-        # Build Out-Of-Band entity chip HTML for HTMX
         entity_chips_html = ""
         if entities_list:
             for ent in entities_list:
@@ -222,15 +226,17 @@ def comparison(
     summary_b = ""
     if text:
         if model_a == "traditional":
-            summary_a = summarize_traditional(text, ratio=0.3)
+            res_a = summarize_traditional(text, title="", ratio=0.3, stream=False) if hasattr(summarize_traditional, 'ratio') else summarize_traditional(text, title="", compression_ratio=0.3, stream=False)
+            summary_a = res_a.get("summary", "") if isinstance(res_a, dict) else res_a
         else:
-            res_a = predict_and_summarize(text, title="")
+            res_a = predict_and_summarize(text, title="", compression_ratio=0.3)
             summary_a = res_a.get("summary", "") if isinstance(res_a, dict) else res_a
 
         if model_b == "traditional":
-            summary_b = summarize_traditional(text, ratio=0.3)
+            res_b = summarize_traditional(text, title="", compression_ratio=0.3, stream=False)
+            summary_b = res_b.get("summary", "") if isinstance(res_b, dict) else res_b
         else:
-            res_b = predict_and_summarize(text, title="")
+            res_b = predict_and_summarize(text, title="", compression_ratio=0.3)
             summary_b = res_b.get("summary", "") if isinstance(res_b, dict) else res_b
 
     context = {

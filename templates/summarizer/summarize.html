@@ -68,11 +68,11 @@
             <p class="field-label">{{ lang("Summarization method") }}</p>
             <div class="method-grid">
               <label class="method-opt">
-                <input type="radio" name="method" value="hybrid" checked onclick="document.getElementById('hybridVariantRow').style.display='block';">
+                <input type="radio" name="method" value="hybrid" checked onclick="document.getElementById('hybridVariantRow').style.display='block'; document.getElementById('traditionalVariantRow').style.display='none';">
                 <span class="method-card hybrid"><span class="m-name">Hybrid</span><span class="m-sub">POS/NER + TF-IDF</span></span>
               </label>
               <label class="method-opt">
-                <input type="radio" name="method" value="traditional" onclick="document.getElementById('hybridVariantRow').style.display='none';">
+                <input type="radio" name="method" value="traditional" onclick="document.getElementById('hybridVariantRow').style.display='none'; document.getElementById('traditionalVariantRow').style.display='block';">
                 <span class="method-card extractive"><span class="m-name">Extractive</span><span class="m-sub">Sentence rank</span></span>
               </label>
               <label class="method-opt" style="opacity: 0.5; cursor: not-allowed;">
@@ -88,6 +88,15 @@
             <select name="hybrid_variant" id="hybridVariantSelect" class="field-select" style="width: 100%;">
               <option value="pos_ner" selected>POS / NER + TF-IDF (Trained Model)</option>
               <option value="textrank">TF-IDF + TextRank Baseline</option>
+            </select>
+          </div>
+
+          <!-- Traditional Extractive Variant Selector -->
+          <div id="traditionalVariantRow" style="margin-top: 12px; display: none;">
+            <label class="field-label" for="traditionalVariantSelect">{{ lang("Extractive Model Variant") }}</label>
+            <select name="traditional_variant" id="traditionalVariantSelect" class="field-select" style="width: 100%;">
+              <option value="sentence_rank" selected>Sentence Rank + TF-IDF (Statistical)</option>
+              <option value="mmr_diversity">MMR Relevance & Diversity Rank</option>
             </select>
           </div>
 
