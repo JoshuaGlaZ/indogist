@@ -6,7 +6,7 @@
 <section class="view active" id="view-summarize">
   <div class="page-head">
     <h1>INDOGIST STUDIO — {{ lang("TEXT SUMMARIZER") }}</h1>
-    <p>{{ lang("Hybrid, extractive, or abstractive — pick a method and run it on Indonesian text.") }}</p>
+    <p>{{ lang("Hybrid, traditional extractive, or abstractive — pick a method and run it on Indonesian text.") }}</p>
   </div>
 
   <div class="grid-2">
@@ -63,7 +63,7 @@
             </div>
           </div>
 
-          <!-- Method Selection Cards -->
+          <!-- Method Selection Cards (3 Core Paradigms) -->
           <div style="margin-top: 16px;">
             <p class="field-label">{{ lang("Summarization method") }}</p>
             <div class="method-grid">
@@ -73,7 +73,7 @@
               </label>
               <label class="method-opt">
                 <input type="radio" name="method" value="traditional" onclick="document.getElementById('hybridVariantRow').style.display='none'; document.getElementById('traditionalVariantRow').style.display='block';">
-                <span class="method-card extractive"><span class="m-name">Extractive</span><span class="m-sub">Sentence rank</span></span>
+                <span class="method-card extractive"><span class="m-name">Traditional</span><span class="m-sub">Extractive Sentence Rank</span></span>
               </label>
               <label class="method-opt" style="opacity: 0.5; cursor: not-allowed;">
                 <input type="radio" name="method" value="abstractive" disabled>
@@ -94,10 +94,11 @@
 
           <!-- Traditional Extractive Variant Selector -->
           <div id="traditionalVariantRow" style="margin-top: 12px; display: none;">
-            <label class="field-label" for="traditionalVariantSelect">{{ lang("Extractive Model Variant") }}</label>
+            <label class="field-label" for="traditionalVariantSelect">{{ lang("Traditional Extractive Variant") }}</label>
             <select name="traditional_variant" id="traditionalVariantSelect" class="field-select" style="width: 100%;">
-              <option value="sentence_rank" selected>Sentence Rank + TF-IDF (Statistical)</option>
-              <option value="mmr_diversity">MMR Relevance & Diversity Rank</option>
+              <option value="sentence_rank" selected>1. TF-IDF + Sentence Position Rank (Baseline)</option>
+              <option value="mmr_diversity">2. MMR Relevance & Diversity Ranking</option>
+              <option value="textrank">3. TextRank Graph Centrality</option>
             </select>
           </div>
 

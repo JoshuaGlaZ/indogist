@@ -20,7 +20,7 @@
           <div style="flex: 1; min-width: 180px;">
             <label class="field-label">{{ lang("Model A") }}</label>
             <select name="model_a" class="field-select" style="width: 100%;">
-              <option value="traditional" selected>Extractive (Sentence Rank)</option>
+              <option value="traditional" selected>Traditional Extractive (Sentence Rank)</option>
               <option value="hybrid">Hybrid (POS/NER + TF-IDF)</option>
               <option value="abstractive" disabled>Abstractive (Coming Soon)</option>
             </select>
@@ -29,7 +29,7 @@
             <label class="field-label">{{ lang("Model B") }}</label>
             <select name="model_b" class="field-select" style="width: 100%;">
               <option value="hybrid" selected>Hybrid (POS/NER + TF-IDF)</option>
-              <option value="traditional">Extractive (Sentence Rank)</option>
+              <option value="traditional">Traditional Extractive (Sentence Rank)</option>
               <option value="abstractive" disabled>Abstractive (Coming Soon)</option>
             </select>
           </div>
@@ -50,7 +50,7 @@
     {% if traditional_summary or hybrid_summary %}
       <div class="card">
         <div class="card-head">
-          <p class="card-title">{{ lang("Model A: Extractive") }}</p>
+          <p class="card-title">{{ lang("Model A: Traditional Extractive") }}</p>
           <span class="badge extractive">Sentence rank</span>
         </div>
         <div class="card-body">
