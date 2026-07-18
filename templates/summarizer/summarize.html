@@ -27,6 +27,17 @@
           </div>
 
           <div class="tab-pane active" data-pane="raw">
+            <!-- Optional Title Input / Toggle Button -->
+            <button type="button" class="btn btn-ghost" id="addTitleBtn" style="margin-bottom: 12px; font-size: 12.5px;" onclick="toggleTitleInput(true)">+ {{ lang("Add optional title") }}</button>
+            
+            <div id="titleInputWrapper" style="display: none; margin-bottom: 14px;">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                <label class="field-label" for="docTitle" style="margin-bottom: 0;">{{ lang("Document title") }} ({{ lang("optional") }})</label>
+                <button type="button" class="btn btn-ghost" style="padding: 2px 6px; font-size: 12px; color: var(--text-muted);" onclick="toggleTitleInput(false)" title="{{ lang("Remove title input") }}">&times; {{ lang("Remove") }}</button>
+              </div>
+              <input type="text" name="title" id="docTitle" class="field" placeholder="{{ lang("Enter document title...") }}" style="min-height: 38px;">
+            </div>
+
             <label class="field-label" for="rawText">{{ lang("Document text") }}</label>
             <textarea class="field" id="rawText" name="text" lang="id" placeholder="{{ lang("Paste your Indonesian text here...") }}">{{ text or '' }}</textarea>
             
@@ -182,15 +193,48 @@
 
 {% block extra_js %}
 <script>
+function toggleTitleInput(show) {
+  const btn = document.getElementById('addTitleBtn');
+  const wrapper = document.getElementById('titleInputWrapper');
+  const titleInput = document.getElementById('docTitle');
+
+  if (show) {
+    if (btn) btn.style.display = 'none';
+    if (wrapper) wrapper.style.display = 'block';
+    if (titleInput) titleInput.focus();
+  } else {
+    if (titleInput) titleInput.value = '';
+    if (wrapper) wrapper.style.display = 'none';
+    if (btn) btn.style.display = 'inline-flex';
+  }
+}
+
 function loadPreset(type) {
   const presets = {
-    news: "Indonesia merupakan negara kepulauan terbesar di dunia yang terdiri dari 17.504 pulau. Nama alternatif yang biasa dipakai adalah Nusantara. Dengan populasi mencapai 270 juta jiwa pada tahun 2020, Indonesia adalah negara berpenduduk terbanyak keempat di dunia.",
-    tech: "FastAPI adalah kerangka kerja web modern berkinerja tinggi untuk membangun API berbasis Python 3.8+ dengan tipe data standar. Kerangka kerja ini mendukung validasi otomatis berbasis Pydantic.",
-    academic: "Penelitian ini mengevaluasi performa penggabungan ekstraksi kata kunci berbasis TF-IDF dengan pemotongan kata berimbuhan Sastrawi pada korpus berita berbahasa Indonesia."
+    news: {
+      title: "Profil Geografi dan Demografi Indonesia",
+      text: "Indonesia merupakan negara kepulauan terbesar di dunia yang terdiri dari 17.504 pulau. Nama alternatif yang biasa dipakai adalah Nusantara. Dengan populasi mencapai 270 juta jiwa pada tahun 2020, Indonesia adalah negara berpenduduk terbanyak keempat di dunia."
+    },
+    tech: {
+      title: "Arsitektur Kerangka Kerja FastAPI",
+      text: "FastAPI adalah kerangka kerja web modern berkinerja tinggi untuk membangun API berbasis Python 3.8+ dengan tipe data standar. Kerangka kerja ini mendukung validasi otomatis berbasis Pydantic."
+    },
+    academic: {
+      title: "Studi Performa Penggabungan TF-IDF dan Sastrawi",
+      text: "Penelitian ini mengevaluasi performa penggabungan ekstraksi kata kunci berbasis TF-IDF dengan pemotongan kata berimbuhan Sastrawi pada korpus berita berbahasa Indonesia."
+    }
   };
-  const rawText = document.getElementById('rawText');
-  if (rawText) {
-    rawText.value = presets[type] || '';
+
+  const preset = presets[type];
+  if (preset) {
+    const rawText = document.getElementById('rawText');
+    if (rawText) rawText.value = preset.text;
+    
+    if (preset.title) {
+      toggleTitleInput(true);
+      const docTitle = document.getElementById('docTitle');
+      if (docTitle) docTitle.value = preset.title;
+    }
     updateEditorTelemetry();
   }
 }
