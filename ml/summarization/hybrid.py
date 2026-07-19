@@ -60,14 +60,6 @@ def compute_hybrid_scores(sentences, title, ner_results, tfidf_mat, vectorizer):
 def predict_and_summarize(text, title=None, compression_ratio=0.3, stream=False, progress_callback=None):
     """
     Summarize text using hybrid NER-enhanced method.
-
-    Modes:
-      - progress_callback provided: runs synchronously, calls callback with
-        {'step': N} events, returns the result dict directly.
-      - stream=True (no callback): returns a generator yielding {'step': N}
-        events until {'step': 4, 'result': {...}}.
-      - stream=False (no callback): runs to completion and returns the result
-        dict: {'summary': ..., 'entities': [...], 'effective_title': ...}.
     """
     _start_time = time.time()
 
@@ -92,7 +84,7 @@ def predict_and_summarize(text, title=None, compression_ratio=0.3, stream=False,
         if not effective_title or not effective_title.strip():
             effective_title = extract_tf_query(tfidf_mat, vectorizer)
 
-        # --- Step 2: NER Inference (the slow part) ---
+        # --- Step 2: NER Inference ---
         yield {'step': 2}
 
         ner_results = predict_entities(raw_sentences)
@@ -134,9 +126,10 @@ def predict_and_summarize(text, title=None, compression_ratio=0.3, stream=False,
             for ent in ner_results[idx].get('entities', []):
                 key = (ent['text'].lower(), ent['label'])
                 if key not in unique_entities:
-                    # Ensure JSON serializable types
                     clean_ent = {k: float(v) if isinstance(v, (np.floating, float)) else v 
                                  for k, v in ent.items()}
+                    conf_val = float(clean_ent.get("confidence", clean_ent.get("score", 0.9)))
+                    clean_ent["confidence_percent"] = round(conf_val * 100) if conf_val <= 1.0 else round(conf_val)
                     unique_entities[key] = clean_ent
 
         # --- Step 4: Done ---
@@ -152,7 +145,7 @@ def predict_and_summarize(text, title=None, compression_ratio=0.3, stream=False,
             }
         }
 
-    # Mode 1: progress_callback — run synchronously, push events via callback
+    # Mode 1: progress_callback
     if progress_callback is not None:
         result = None
         for step_data in _generator():
@@ -162,11 +155,11 @@ def predict_and_summarize(text, title=None, compression_ratio=0.3, stream=False,
                 progress_callback(step_data)
         return result
 
-    # Mode 2: stream — return the raw generator
+    # Mode 2: stream
     if stream:
         return _generator()
 
-    # Mode 3: non-stream — exhaust generator and return result dict
+    # Mode 3: non-stream
     result = None
     for step_data in _generator():
         if step_data.get('step') == 4 and 'result' in step_data:

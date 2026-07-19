@@ -149,7 +149,8 @@ async def summarize_post(
         entity_chips_html = ""
         if entities_list:
             for ent in entities_list:
-                score = ent.get("confidence_percent", round(ent.get("score", 0.9) * 100))
+                conf_val = float(ent.get("confidence", ent.get("confidence_percent", ent.get("score", 0.9))))
+                score = round(conf_val * 100) if conf_val <= 1.0 else round(conf_val)
                 entity_chips_html += f'''
                 <span class="entity-chip show">
                   <span>{ent.get("text", "")}</span>
@@ -226,7 +227,7 @@ def comparison(
     summary_b = ""
     if text:
         if model_a == "traditional":
-            res_a = summarize_traditional(text, title="", ratio=0.3, stream=False) if hasattr(summarize_traditional, 'ratio') else summarize_traditional(text, title="", compression_ratio=0.3, stream=False)
+            res_a = summarize_traditional(text, title="", compression_ratio=0.3, stream=False)
             summary_a = res_a.get("summary", "") if isinstance(res_a, dict) else res_a
         else:
             res_a = predict_and_summarize(text, title="", compression_ratio=0.3)
