@@ -14,7 +14,7 @@
       <form id="comparisonForm" method="post" action="/comparison/" hx-post="/comparison/" hx-target="#compareGrid" hx-indicator="#loadingIndicator">
         {{ csrf_field(request) }}
         <label class="field-label" for="compareText">{{ lang("Input text for side-by-side evaluation") }}</label>
-        <textarea class="field" name="text" id="compareText" lang="id" style="min-height:120px;" placeholder="{{ lang("Paste text to compare...") }}">{{ source_text or '' }}</textarea>
+        <textarea class="field" name="text" id="compareText" lang="id" style="min-height:120px;" placeholder="{{ lang("Paste text to compare...") }}">{{ (source_text or '').strip() }}</textarea>
         
         <div style="display: flex; gap: 16px; margin-top: 14px; flex-wrap: wrap;">
           <div style="flex: 1; min-width: 180px;">
@@ -54,7 +54,17 @@
           <span class="badge extractive">Sentence rank</span>
         </div>
         <div class="card-body">
-          <div class="output-area">{{ traditional_summary or lang("No extractive summary generated.") }}</div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+            <span class="field-label" style="margin-bottom: 0;">{{ lang("Output View") }}</span>
+            <div class="view-mode-toggle" style="display: flex; gap: 4px;">
+              <button type="button" class="btn btn-ghost active" style="padding: 2px 8px; font-size: 11.5px;" onclick="switchOutputMode(this, 'compareOutputA', 'plain')">{{ lang("Plain") }}</button>
+              <button type="button" class="btn btn-ghost" style="padding: 2px 8px; font-size: 11.5px;" onclick="switchOutputMode(this, 'compareOutputA', 'ner')">{{ lang("NER Highlights") }}</button>
+              <button type="button" class="btn btn-ghost" style="padding: 2px 8px; font-size: 11.5px;" onclick="switchOutputMode(this, 'compareOutputA', 'pos')">{{ lang("POS Tagging") }}</button>
+            </div>
+          </div>
+
+          <div class="output-area" id="compareOutputA">{% if traditional_summary %}{{ traditional_summary.strip() }}{% else %}<span class="output-placeholder">{{ lang("No extractive summary generated.") }}</span>{% endif %}</div>
+          
           <div class="stats-grid" style="margin-top: 12px;">
             <div class="stat-card">
               <span class="s-label">{{ lang("Words") }}</span>
@@ -74,7 +84,17 @@
           <span class="badge hybrid">POS/NER + TF-IDF</span>
         </div>
         <div class="card-body">
-          <div class="output-area">{{ hybrid_summary or lang("No hybrid summary generated.") }}</div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+            <span class="field-label" style="margin-bottom: 0;">{{ lang("Output View") }}</span>
+            <div class="view-mode-toggle" style="display: flex; gap: 4px;">
+              <button type="button" class="btn btn-ghost active" style="padding: 2px 8px; font-size: 11.5px;" onclick="switchOutputMode(this, 'compareOutputB', 'plain')">{{ lang("Plain") }}</button>
+              <button type="button" class="btn btn-ghost" style="padding: 2px 8px; font-size: 11.5px;" onclick="switchOutputMode(this, 'compareOutputB', 'ner')">{{ lang("NER Highlights") }}</button>
+              <button type="button" class="btn btn-ghost" style="padding: 2px 8px; font-size: 11.5px;" onclick="switchOutputMode(this, 'compareOutputB', 'pos')">{{ lang("POS Tagging") }}</button>
+            </div>
+          </div>
+
+          <div class="output-area" id="compareOutputB">{% if hybrid_summary %}{{ hybrid_summary.strip() }}{% else %}<span class="output-placeholder">{{ lang("No hybrid summary generated.") }}</span>{% endif %}</div>
+          
           <div class="stats-grid" style="margin-top: 12px;">
             <div class="stat-card">
               <span class="s-label">{{ lang("Words") }}</span>

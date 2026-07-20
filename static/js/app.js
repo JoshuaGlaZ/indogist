@@ -1,91 +1,105 @@
-/**
- * INDOGIST — PRECISION STUDIO ENGINE (HIGH POLISH)
- * Custom Select Popups, Bi-directional Modal Fullscreen Editor,
- * Ambient Slider Progress Fillers, and Keyboard Shortcuts
- */
+/* ==========================================================================
+   INDOGIST — PRECISION STUDIO JAVASCRIPT APP ENGINE
+   Custom Select Dropdowns, Modal Fullscreen Editor, Toast Notifications,
+   Range Slider Track Fills, Keyboard Shortcuts & Interactive NER/POS Highlights
+   ========================================================================== */
 
-// ——————————————————————————————————————————————————
-// 1. Toast Notification Manager
-// ——————————————————————————————————————————————————
-function showToast(message, type = 'info', duration = 4000) {
-  let toastContainer = document.querySelector('.toast-container');
-  if (!toastContainer) {
-    toastContainer = document.createElement('div');
-    toastContainer.className = 'toast-container';
-    document.body.appendChild(toastContainer);
-  }
+const OUTPUT_TEXT_CACHE = {};
 
-  const toast = document.createElement('div');
-  toast.className = `toast toast-${type}`;
-  toast.setAttribute('role', 'status');
-  toast.setAttribute('aria-live', 'polite');
+document.addEventListener('DOMContentLoaded', () => {
+  initThemeToggle();
+  initTabs();
+  initCustomSelects();
+  initRangeSliders();
+  initEditorTelemetry();
+  initKeyboardShortcuts();
+});
 
-  const icons = {
-    success: '✓ ',
-    info: 'ℹ ',
-    warning: '⚠ ',
-    error: '✕ '
-  };
+// Theme Management
+function initThemeToggle() {
+  const toggleBtn = document.querySelector('.theme-toggle');
+  if (!toggleBtn) return;
+  const currentTheme = localStorage.getItem('theme') || 'dark';
+  document.body.setAttribute('data-theme', currentTheme);
 
-  toast.innerHTML = `
-    <span><strong>${icons[type] || ''}</strong>${message}</span>
-    <button class="toast-close" aria-label="Close">&times;</button>
-  `;
-
-  toast.querySelector('.toast-close').addEventListener('click', () => {
-    toast.remove();
+  toggleBtn.addEventListener('click', () => {
+    const theme = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    document.body.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
   });
-
-  toastContainer.appendChild(toast);
-
-  if (duration > 0) {
-    setTimeout(() => {
-      if (toast.parentNode) toast.remove();
-    }, duration);
-  }
 }
 
-// ——————————————————————————————————————————————————
-// 2. Custom Non-Native Select Dropdowns Popup Module
-// ——————————————————————————————————————————————————
+// Tab Switching
+function initTabs() {
+  document.querySelectorAll('.tabs').forEach(tabGroup => {
+    tabGroup.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        const target = tab.dataset.tab;
+        tabGroup.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+
+        const cardBody = tabGroup.closest('.card-body');
+        if (cardBody) {
+          cardBody.querySelectorAll('.tab-pane').forEach(pane => {
+            pane.classList.remove('active');
+            if (pane.dataset.pane === target) pane.classList.add('active');
+          });
+        }
+      });
+    });
+  });
+}
+
+// Custom Select Popup Component (Replaces Default Select Menu List)
 function initCustomSelects() {
-  document.querySelectorAll('select.field-select').forEach((select) => {
-    if (select.dataset.customized === 'true') return;
-    select.dataset.customized = 'true';
+  document.querySelectorAll('select.field-select').forEach(select => {
+    if (select.dataset.customInitialized) return;
+    select.dataset.customInitialized = 'true';
     select.style.display = 'none';
 
     const wrapper = document.createElement('div');
     wrapper.className = 'custom-select';
 
-    const selectedOption = select.options[select.selectedIndex] || select.options[0];
-    const trigger = document.createElement('button');
-    trigger.type = 'button';
+    const trigger = document.createElement('div');
     trigger.className = 'custom-select-trigger';
-    trigger.innerHTML = `
-      <span class="custom-select-val">${selectedOption ? selectedOption.text : ''}</span>
-      <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-    `;
+    trigger.tabIndex = 0;
+
+    const labelSpan = document.createElement('span');
+    const selectedOption = select.options[select.selectedIndex];
+    labelSpan.innerText = selectedOption ? selectedOption.text : 'Select option';
+
+    const chevron = document.createElement('span');
+    chevron.className = 'chevron';
+    chevron.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>`;
+
+    trigger.appendChild(labelSpan);
+    trigger.appendChild(chevron);
+    wrapper.appendChild(trigger);
 
     const optionsContainer = document.createElement('div');
     optionsContainer.className = 'custom-select-options';
 
     Array.from(select.options).forEach((opt, idx) => {
-      const optionEl = document.createElement('div');
-      optionEl.className = 'custom-select-option' + (idx === select.selectedIndex ? ' selected' : '');
-      optionEl.textContent = opt.text;
-      optionEl.dataset.value = opt.value;
+      const optEl = document.createElement('div');
+      optEl.className = `custom-select-option ${idx === select.selectedIndex ? 'selected' : ''}`;
+      if (opt.disabled) optEl.style.opacity = '0.5';
+      optEl.innerText = opt.text;
 
-      optionEl.addEventListener('click', () => {
+      optEl.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (opt.disabled) return;
         select.selectedIndex = idx;
-        select.dispatchEvent(new Event('change', { bubbles: true }));
-        trigger.querySelector('.custom-select-val').textContent = opt.text;
-        optionsContainer.querySelectorAll('.custom-select-option').forEach(el => el.classList.remove('selected'));
-        optionEl.classList.add('selected');
+        labelSpan.innerText = opt.text;
+        optionsContainer.querySelectorAll('.custom-select-option').forEach(o => o.classList.remove('selected'));
+        optEl.classList.add('selected');
         wrapper.classList.remove('open');
+        select.dispatchEvent(new Event('change', { bubbles: true }));
       });
-
-      optionsContainer.appendChild(optionEl);
+      optionsContainer.appendChild(optEl);
     });
+
+    wrapper.appendChild(optionsContainer);
+    select.parentNode.insertBefore(wrapper, select);
 
     trigger.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -94,10 +108,6 @@ function initCustomSelects() {
       });
       wrapper.classList.toggle('open');
     });
-
-    wrapper.appendChild(trigger);
-    wrapper.appendChild(optionsContainer);
-    select.parentNode.insertBefore(wrapper, select.nextSibling);
   });
 
   document.addEventListener('click', () => {
@@ -105,189 +115,257 @@ function initCustomSelects() {
   });
 }
 
-// ——————————————————————————————————————————————————
-// 3. Theme Switcher Module
-// ——————————————————————————————————————————————————
-function initTheme() {
-  const savedTheme = localStorage.getItem('indogist_theme');
-  const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  const initialTheme = savedTheme || (systemPrefersDark ? 'dark' : 'light');
-  applyTheme(initialTheme);
-}
-
-function applyTheme(theme) {
-  document.documentElement.setAttribute('data-theme', theme);
-  document.body.setAttribute('data-theme', theme);
-  const appEl = document.getElementById('app');
-  if (appEl) appEl.setAttribute('data-theme', theme);
-  localStorage.setItem('indogist_theme', theme);
-}
-
-function toggleTheme() {
-  const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
-  const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-  applyTheme(newTheme);
-}
-
-// ——————————————————————————————————————————————————
-// 4. Editor Telemetry & Modal Fullscreen Editor
-// ——————————————————————————————————————————————————
-function countWords(str) {
-  return str && str.trim() ? str.trim().split(/\s+/).length : 0;
-}
-
-function updateEditorTelemetry() {
-  const rawText = document.getElementById('rawText');
-  const modalRawText = document.getElementById('modalRawText');
-  const wordCountEl = document.getElementById('wordCount');
-  const modalWordCountEl = document.getElementById('modalWordCount');
-  const charCountEl = document.getElementById('charCount');
-  const tokenCountEl = document.getElementById('tokenCount');
-  const limitMsgEl = document.getElementById('limitMessage');
-  const generateBtn = document.getElementById('generateBtn');
-
-  if (!rawText) return;
-
-  const val = rawText.value;
-  const words = countWords(val);
-  const chars = val.length;
-  const estTokens = Math.round(words * 1.3);
-
-  if (wordCountEl) wordCountEl.textContent = words;
-  if (modalWordCountEl) modalWordCountEl.textContent = words;
-  if (charCountEl) charCountEl.textContent = chars.toLocaleString();
-  if (tokenCountEl) tokenCountEl.textContent = estTokens.toLocaleString();
-  if (modalRawText && modalRawText.value !== val) modalRawText.value = val;
-
-  const maxWords = 8000;
-  if (limitMsgEl) {
-    if (words > maxWords) {
-      limitMsgEl.innerHTML = `<span class="limit-danger">Limit exceeded (${words}/${maxWords} words). Shorten text.</span>`;
-      if (generateBtn) generateBtn.disabled = true;
-    } else if (words > maxWords * 0.85) {
-      limitMsgEl.innerHTML = `<span class="limit-warning">${words}/${maxWords} words</span>`;
-      if (generateBtn) generateBtn.disabled = false;
-    } else {
-      limitMsgEl.innerHTML = `Limit: ${maxWords.toLocaleString()} words`;
-      if (generateBtn) generateBtn.disabled = false;
-    }
-  }
-}
-
-function openFullscreenEditor() {
-  const modal = document.getElementById('editorModal');
-  const rawText = document.getElementById('rawText');
-  const modalRawText = document.getElementById('modalRawText');
-  if (modal && rawText && modalRawText) {
-    modalRawText.value = rawText.value;
-    modal.classList.add('active');
-    modalRawText.focus();
-  }
-}
-
-function closeFullscreenEditor() {
-  const modal = document.getElementById('editorModal');
-  const rawText = document.getElementById('rawText');
-  const modalRawText = document.getElementById('modalRawText');
-  if (modal && rawText && modalRawText) {
-    rawText.value = modalRawText.value;
-    updateEditorTelemetry();
-    modal.classList.remove('active');
-  }
-}
-
-// ——————————————————————————————————————————————————
-// 5. Custom Range Slider Ambient Track Filler
-// ——————————————————————————————————————————————————
-function updateSliderProgress(slider) {
-  if (!slider) return;
-  const min = parseFloat(slider.min) || 0;
-  const max = parseFloat(slider.max) || 100;
-  const val = parseFloat(slider.value) || 0;
-  const pct = ((val - min) / (max - min)) * 100;
-  slider.style.setProperty('--progress', pct + '%');
-  const ratioDisplay = document.getElementById('ratioDisplay');
-  if (ratioDisplay) ratioDisplay.innerText = Math.round(val * 100) + '%';
-}
-
-function initSliders() {
+// Custom Range Slider Fill Progress
+function initRangeSliders() {
   document.querySelectorAll('input[type="range"].field-range').forEach(slider => {
     updateSliderProgress(slider);
     slider.addEventListener('input', () => updateSliderProgress(slider));
   });
 }
 
-// ——————————————————————————————————————————————————
-// 6. Tab & Entity Helpers
-// ——————————————————————————————————————————————————
-function initTabs() {
-  document.querySelectorAll('.tabs').forEach(function (tabGroup) {
-    var tabs = tabGroup.querySelectorAll('.tab');
-    tabs.forEach(function (tab) {
-      tab.addEventListener('click', function () {
-        tabs.forEach(function (t) { t.classList.remove('active'); });
-        tab.classList.add('active');
-        var container = tabGroup.parentElement;
-        container.querySelectorAll('.tab-pane').forEach(function (p) { p.classList.remove('active'); });
-        var targetPane = container.querySelector('.tab-pane[data-pane="' + tab.dataset.tab + '"]');
-        if (targetPane) targetPane.classList.add('active');
-      });
-    });
+function updateSliderProgress(slider) {
+  const min = parseFloat(slider.min) || 0;
+  const max = parseFloat(slider.max) || 1;
+  const val = parseFloat(slider.value) || 0;
+  const percentage = ((val - min) / (max - min)) * 100;
+  slider.style.setProperty('--progress', `${percentage}%`);
+
+  const displayEl = document.getElementById('ratioDisplay');
+  if (displayEl) {
+    displayEl.innerText = `${Math.round(val * 100)}%`;
+  }
+}
+
+// Editor Telemetry & Word Counter
+function initEditorTelemetry() {
+  const rawText = document.getElementById('rawText');
+  if (!rawText) return;
+
+  const update = () => updateEditorTelemetry();
+  rawText.addEventListener('input', update);
+  rawText.addEventListener('change', update);
+  updateEditorTelemetry();
+}
+
+function updateEditorTelemetry() {
+  const rawText = document.getElementById('rawText');
+  if (!rawText) return;
+  const val = rawText.value || '';
+
+  const words = val.trim() ? val.trim().split(/\s+/).length : 0;
+  const chars = val.length;
+  const tokens = Math.round(words * 1.3);
+
+  const wordCount = document.getElementById('wordCount');
+  const charCount = document.getElementById('charCount');
+  const tokenCount = document.getElementById('tokenCount');
+  const limitMsg = document.getElementById('limitMessage');
+
+  if (wordCount) wordCount.innerText = words.toLocaleString();
+  if (charCount) charCount.innerText = chars.toLocaleString();
+  if (tokenCount) tokenCount.innerText = tokens.toLocaleString();
+
+  if (limitMsg) {
+    if (words > 8000) {
+      limitMsg.className = 'limit-danger';
+      limitMsg.innerText = 'Exceeds limit (Max 8,000 words)';
+    } else if (words > 6000) {
+      limitMsg.className = 'limit-warning';
+      limitMsg.innerText = 'Approaching limit (Max 8,000 words)';
+    } else {
+      limitMsg.className = '';
+      limitMsg.innerText = 'Limit: 8,000 words';
+    }
+  }
+
+  // Bi-directional sync with modal editor
+  const modalText = document.getElementById('modalRawText');
+  if (modalText && modalText.value !== val) {
+    modalText.value = val;
+    const modalWordCount = document.getElementById('modalWordCount');
+    if (modalWordCount) modalWordCount.innerText = words.toLocaleString();
+  }
+}
+
+// Fullscreen Editor Modal
+function openFullscreenEditor() {
+  const modal = document.getElementById('editorModal');
+  const rawText = document.getElementById('rawText');
+  const modalText = document.getElementById('modalRawText');
+  if (!modal) return;
+
+  if (rawText && modalText) {
+    modalText.value = rawText.value;
+  }
+  modal.classList.add('active');
+
+  if (modalText) {
+    modalText.focus();
+    modalText.oninput = () => {
+      if (rawText) {
+        rawText.value = modalText.value;
+        updateEditorTelemetry();
+      }
+    };
+  }
+}
+
+function closeFullscreenEditor() {
+  const modal = document.getElementById('editorModal');
+  if (modal) modal.classList.remove('active');
+}
+
+// Toast Notification Manager
+function showToast(message, type = 'info', duration = 3000) {
+  let container = document.querySelector('.toast-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.className = 'toast-container';
+    document.body.appendChild(container);
+  }
+
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+  toast.innerHTML = `
+    <span>${message}</span>
+    <button class="toast-close" onclick="this.parentElement.remove()">&times;</button>
+  `;
+  container.appendChild(toast);
+
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateY(-10px)';
+    setTimeout(() => toast.remove(), 200);
+  }, duration);
+}
+
+// Copy & Save Output Handlers
+function copySummaryOutput(targetId, btnEl) {
+  const textEl = document.getElementById(targetId);
+  if (!textEl) return;
+  const text = textEl.innerText.trim();
+  if (!text || text.includes('Waiting for input')) {
+    showToast('No summary text to copy.', 'error');
+    return;
+  }
+  navigator.clipboard.writeText(text).then(() => {
+    showToast('Summary copied to clipboard!', 'success');
+  }).catch(() => {
+    showToast('Failed to copy text.', 'error');
   });
 }
 
-function copySummaryOutput(elementId = 'outputArea', btnElement = null) {
-  const output = document.getElementById(elementId);
-  if (!output) return;
-  const textToCopy = output.value || output.innerText;
-  if (!textToCopy.trim()) {
-    showToast('Nothing to copy', 'warning');
+function saveSummaryOutput(targetId) {
+  const textEl = document.getElementById(targetId);
+  if (!textEl) return;
+  const text = textEl.innerText.trim();
+  if (!text || text.includes('Waiting for input')) {
+    showToast('No summary text to save.', 'error');
     return;
   }
-
-  if (navigator.clipboard) {
-    navigator.clipboard.writeText(textToCopy).then(() => {
-      showToast('Summary copied to clipboard!', 'success');
-      if (btnElement) {
-        const origText = btnElement.innerText;
-        btnElement.innerText = 'Copied ✓';
-        setTimeout(() => { btnElement.innerText = origText; }, 2000);
-      }
-    }).catch(() => {
-      showToast('Failed to copy text', 'error');
-    });
-  }
-}
-
-function saveSummaryOutput(elementId = 'outputArea', filenamePrefix = 'indogist-summary') {
-  const output = document.getElementById(elementId);
-  if (!output) return;
-  const textToDownload = output.value || output.innerText;
-  if (!textToDownload.trim()) {
-    showToast('No output content to download', 'warning');
-    return;
-  }
-
-  const blob = new Blob([textToDownload], { type: 'text/plain;charset=utf-8' });
+  const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `${filenamePrefix}-${Date.now()}.txt`;
-  document.body.appendChild(a);
+  a.download = `indogist_summary_${Date.now()}.txt`;
   a.click();
-  document.body.removeChild(a);
   URL.revokeObjectURL(url);
-  showToast('TXT export started', 'success');
+  showToast('Summary downloaded as file.', 'success');
 }
 
-function initSearchShortcuts() {
+// Interactive NER & POS Output View Mode Switcher
+function switchOutputMode(btnEl, targetId, mode) {
+  const targetEl = document.getElementById(targetId);
+  if (!targetEl) return;
+
+  const parent = btnEl.closest('.view-mode-toggle');
+  if (parent) {
+    parent.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+    btnEl.classList.add('active');
+  }
+
+  if (!OUTPUT_TEXT_CACHE[targetId]) {
+    OUTPUT_TEXT_CACHE[targetId] = targetEl.innerText || targetEl.textContent || '';
+  }
+  const plainText = OUTPUT_TEXT_CACHE[targetId].trim();
+  if (!plainText || plainText.includes('Waiting for input')) return;
+
+  if (mode === 'plain') {
+    targetEl.innerHTML = plainText;
+    return;
+  }
+
+  if (mode === 'ner') {
+    let entities = [];
+    const entityWrap = document.getElementById('entityWrap');
+    if (entityWrap) {
+      entityWrap.querySelectorAll('.entity-chip').forEach(chip => {
+        const textEl = chip.querySelector('span:first-child');
+        const typeEl = chip.querySelector('.e-type');
+        if (textEl && typeEl) {
+          entities.push({
+            text: textEl.innerText.trim(),
+            label: typeEl.innerText.trim()
+          });
+        }
+      });
+    }
+
+    if (entities.length === 0) {
+      showToast('No detected entities available for this summary.', 'info');
+      targetEl.innerHTML = plainText;
+      return;
+    }
+
+    entities.sort((a, b) => b.text.length - a.text.length);
+
+    let highlightedText = plainText;
+    entities.forEach(ent => {
+      if (!ent.text) return;
+      const typeLower = ent.label.toLowerCase();
+      const markClass = ['per', 'loc', 'org'].includes(typeLower) ? typeLower : 'ent';
+      const regex = new RegExp(`\\b(${escapeRegExp(ent.text)})\\b`, 'gi');
+      highlightedText = highlightedText.replace(regex, `<span class="ner-mark ${markClass}">$1 <sup class="ner-tag">${ent.label}</sup></span>`);
+    });
+
+    targetEl.innerHTML = highlightedText;
+    return;
+  }
+
+  if (mode === 'pos') {
+    const tokens = plainText.split(/(\s+|[,.:;?!()"])/);
+    const highlightedText = tokens.map(token => {
+      const trimmed = token.trim();
+      if (!trimmed || /^[,.:;?!()"]+$/.test(trimmed)) return token;
+
+      let posTag = 'NOUN';
+      const lower = trimmed.toLowerCase();
+      if (/^[A-Z][a-z]+/.test(trimmed)) posTag = 'PROPN';
+      else if (['merupakan', 'adalah', 'berkunjung', 'mencapai', 'mengevaluasi', 'dipakai', 'menjadi', 'terdiri'].includes(lower)) posTag = 'VERB';
+      else if (['dan', 'yang', 'dengan', 'pada', 'atau', 'ke', 'di', 'dari', 'untuk'].includes(lower)) posTag = 'ADP';
+      else if (['terbesar', 'terbanyak', 'keempat', 'modern', 'berbasis', 'standar'].includes(lower)) posTag = 'ADJ';
+      else if (/^\d+$/.test(lower)) posTag = 'NUM';
+
+      return `<span class="pos-mark">${trimmed} <sup class="pos-tag">${posTag}</sup></span>`;
+    }).join('');
+
+    targetEl.innerHTML = highlightedText;
+    return;
+  }
+}
+
+function escapeRegExp(string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// Keyboard Shortcuts (Ctrl+Enter -> Submit, Esc -> Close Modal)
+function initKeyboardShortcuts() {
   document.addEventListener('keydown', (e) => {
-    if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
-      const searchInput = document.querySelector('.search-field input');
-      if (searchInput) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      const form = document.getElementById('summarizeForm');
+      if (form) {
         e.preventDefault();
-        searchInput.focus();
-        showToast('Search focused', 'info', 1500);
+        form.requestSubmit();
       }
     }
     if (e.key === 'Escape') {
@@ -295,38 +373,3 @@ function initSearchShortcuts() {
     }
   });
 }
-
-// ——————————————————————————————————————————————————
-// 7. Initialization Hooks
-// ——————————————————————————————————————————————————
-document.addEventListener('DOMContentLoaded', () => {
-  initTheme();
-  initTabs();
-  initCustomSelects();
-  initSliders();
-  initSearchShortcuts();
-
-  const themeToggleBtn = document.getElementById('themeToggle');
-  if (themeToggleBtn) themeToggleBtn.addEventListener('click', toggleTheme);
-
-  const rawText = document.getElementById('rawText');
-  if (rawText) {
-    rawText.addEventListener('input', updateEditorTelemetry);
-    updateEditorTelemetry();
-  }
-
-  const modalRawText = document.getElementById('modalRawText');
-  if (modalRawText) {
-    modalRawText.addEventListener('input', () => {
-      if (rawText) rawText.value = modalRawText.value;
-      updateEditorTelemetry();
-    });
-  }
-});
-
-document.addEventListener('htmx:afterSwap', () => {
-  initTabs();
-  initCustomSelects();
-  initSliders();
-  updateEditorTelemetry();
-});
