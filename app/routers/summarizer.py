@@ -109,16 +109,19 @@ async def summarize_post(
     variant_key = hybrid_variant if method == "hybrid" else traditional_variant
     cache_key = hashlib.sha256(f"{final_text}:{method}:{variant_key}:{compression_ratio}".encode()).hexdigest()
     entities_list = []
+    pos_tokens = []
     if cache_key in SUMMARY_CACHE:
         cached = SUMMARY_CACHE[cache_key]
         summary_result = cached["summary"]
         entities_list = cached.get("entities", [])
+        pos_tokens = cached.get("pos_tokens", [])
     else:
         if method == "traditional":
             res = summarize_traditional(final_text, title=final_title, compression_ratio=compression_ratio, stream=False)
             if isinstance(res, dict):
                 summary_result = res.get("summary", "")
                 entities_list = res.get("entities", [])
+                pos_tokens = res.get("pos_tokens", [])
             else:
                 summary_result = res
         else:
@@ -126,10 +129,11 @@ async def summarize_post(
             if isinstance(res, dict):
                 summary_result = res.get("summary", "")
                 entities_list = res.get("entities", [])
+                pos_tokens = res.get("pos_tokens", [])
             else:
                 summary_result = res
         
-        SUMMARY_CACHE[cache_key] = {"summary": summary_result, "entities": entities_list}
+        SUMMARY_CACHE[cache_key] = {"summary": summary_result, "entities": entities_list, "pos_tokens": pos_tokens}
 
     if user:
         summary_obj = Summary(
@@ -159,15 +163,16 @@ async def summarize_post(
         else:
             entity_chips_html = f'<span class="output-placeholder">{lang(request, "No named entities detected in this text.")}</span>'
 
-        # Build entity data as JSON for NER highlight JS
+        # Build NER + POS data as JSON for client-side rendering
         import json as _json
         entities_json = _json.dumps([{"text": e.get("text",""), "label": e.get("label","ENTITY")} for e in entities_list]) if entities_list else "[]"
+        pos_json = _json.dumps(pos_tokens) if pos_tokens else "[]"
 
         summary_html = summary_result.strip()
         return HTMLResponse(
             f'{summary_html}'
             f'<div id="entityWrap" hx-swap-oob="true">{entity_chips_html}</div>'
-            f'<script>window.__nerEntities = {entities_json}; if(window.OUTPUT_TEXT_CACHE) delete window.OUTPUT_TEXT_CACHE["outputArea"];</script>'
+            f'<script>window.__nerEntities = {entities_json}; window.__posData = {pos_json}; window.__posActiveFilters = null; if(window.OUTPUT_TEXT_CACHE) delete window.OUTPUT_TEXT_CACHE["outputArea"];</script>'
         )
 
     context = {"summary": {"summary_text": summary_result}, "entities_list": entities_list, "user": user}

@@ -354,42 +354,109 @@ function switchOutputMode(btnEl, targetId, mode) {
   }
 
   if (mode === 'pos') {
-    // Simple client-side POS heuristic for Indonesian text
-    // Splits on whitespace, preserving punctuation
-    const words = plainText.split(/(\s+)/);
-    const html = words.map(token => {
-      const trimmed = token.trim();
-      if (!trimmed) return token; // preserve whitespace
-      if (/^[,.:;?!"'()\-—]+$/.test(trimmed)) return '<span class="pos-mark">' + trimmed + ' <sup class="pos-tag">PUNCT</sup></span>';
+    const posData = window.__posData || [];
+    if (!posData.length) {
+      showToast('No POS data available — Stanza tagger may not be loaded.', 'info');
+      targetEl.textContent = plainText;
+      return;
+    }
 
-      let posTag = 'NOUN';
-      const lower = trimmed.toLowerCase();
+    // Collect unique POS categories present in this summary
+    const categories = new Set();
+    posData.forEach(t => { if (t.pos) categories.add(t.pos); });
 
-      // Numbers
-      if (/^[\d.,]+$/.test(trimmed)) posTag = 'NUM';
-      // Proper nouns (capitalized, not sentence start — approximate)
-      else if (/^[A-Z][a-z]/.test(trimmed)) posTag = 'PROPN';
-      // Common Indonesian verbs (me-, ber-, di-, ter- prefix)
-      else if (/^(me|ber|di|ter|mem|men|meng|meny|menge|per|pem|pen|peng|peny|penge)[a-z]/i.test(lower)) posTag = 'VERB';
-      // Function words: prepositions/conjunctions
-      else if (['dan', 'atau', 'serta', 'namun', 'tetapi', 'tapi', 'karena', 'sebab', 'agar', 'supaya', 'jika', 'kalau', 'bila', 'meski', 'meskipun', 'walau', 'walaupun', 'bahwa', 'ketika', 'saat', 'sebelum', 'sesudah', 'setelah'].includes(lower)) posTag = 'CCONJ';
-      else if (['yang', 'ini', 'itu', 'tersebut', 'para', 'sang', 'si'].includes(lower)) posTag = 'DET';
-      else if (['ke', 'di', 'dari', 'pada', 'untuk', 'dengan', 'oleh', 'dalam', 'antara', 'tanpa', 'tentang', 'terhadap', 'mengenai', 'selama', 'sejak', 'hingga', 'sampai', 'sebagai'].includes(lower)) posTag = 'ADP';
-      // Adjectives (common suffixes/patterns)
-      else if (['besar', 'kecil', 'tinggi', 'rendah', 'banyak', 'sedikit', 'baru', 'lama', 'baik', 'buruk', 'modern', 'utama', 'berbasis', 'standar', 'penting', 'terbesar', 'terbanyak', 'terkecil', 'tertinggi'].includes(lower)) posTag = 'ADJ';
-      // Adverbs
-      else if (['sangat', 'tidak', 'bukan', 'belum', 'sudah', 'akan', 'telah', 'masih', 'juga', 'pun', 'pula', 'hanya', 'saja', 'sekali', 'lagi', 'segera', 'selalu', 'sering', 'jarang'].includes(lower)) posTag = 'ADV';
-      // Pronouns
-      else if (['saya', 'aku', 'kamu', 'anda', 'dia', 'ia', 'mereka', 'kami', 'kita', 'beliau'].includes(lower)) posTag = 'PRON';
-      // Common verbs (non-prefixed)
-      else if (['adalah', 'merupakan', 'ada', 'bisa', 'dapat', 'harus', 'perlu', 'mau', 'ingin', 'akan', 'boleh', 'tahu', 'kenal'].includes(lower)) posTag = 'VERB';
+    // Initialize active filter set if not present
+    if (!window.__posActiveFilters) {
+      window.__posActiveFilters = new Set();
+    }
 
-      return '<span class="pos-mark">' + trimmed + ' <sup class="pos-tag">' + posTag + '</sup></span>';
-    }).join('');
-
-    targetEl.innerHTML = html;
+    // Render: category chip bar + highlighted text
+    renderPosOutput(targetEl, posData, categories);
     return;
   }
+}
+
+// POS color map — consistent, distinguishable, not too harsh
+const POS_COLORS = {
+  NOUN:  { bg: 'rgba(99,102,241,0.15)',  border: 'rgba(99,102,241,0.4)',  text: '#818cf8' },
+  PROPN: { bg: 'rgba(244,114,182,0.15)', border: 'rgba(244,114,182,0.4)', text: '#f472b6' },
+  VERB:  { bg: 'rgba(52,211,153,0.15)',  border: 'rgba(52,211,153,0.4)',  text: '#34d399' },
+  ADJ:   { bg: 'rgba(251,191,36,0.15)',  border: 'rgba(251,191,36,0.4)',  text: '#fbbf24' },
+  ADV:   { bg: 'rgba(167,139,250,0.15)', border: 'rgba(167,139,250,0.4)', text: '#a78bfa' },
+  ADP:   { bg: 'rgba(148,163,184,0.12)', border: 'rgba(148,163,184,0.3)', text: '#94a3b8' },
+  CCONJ: { bg: 'rgba(148,163,184,0.12)', border: 'rgba(148,163,184,0.3)', text: '#94a3b8' },
+  SCONJ: { bg: 'rgba(148,163,184,0.12)', border: 'rgba(148,163,184,0.3)', text: '#94a3b8' },
+  DET:   { bg: 'rgba(148,163,184,0.10)', border: 'rgba(148,163,184,0.25)', text: '#94a3b8' },
+  NUM:   { bg: 'rgba(56,189,248,0.15)',  border: 'rgba(56,189,248,0.4)',  text: '#38bdf8' },
+  PRON:  { bg: 'rgba(244,63,94,0.15)',   border: 'rgba(244,63,94,0.4)',   text: '#fb7185' },
+  PUNCT: { bg: 'transparent',            border: 'transparent',           text: 'var(--text-muted)' },
+  SYM:   { bg: 'transparent',            border: 'transparent',           text: 'var(--text-muted)' },
+  X:     { bg: 'rgba(100,116,139,0.12)', border: 'rgba(100,116,139,0.3)', text: '#64748b' },
+};
+const POS_DEFAULT_COLOR = { bg: 'rgba(100,116,139,0.12)', border: 'rgba(100,116,139,0.3)', text: '#64748b' };
+
+function renderPosOutput(targetEl, posData, categories) {
+  const active = window.__posActiveFilters || new Set();
+  const targetId = targetEl.id;
+
+  // Build category chip bar
+  const chipOrder = ['NOUN','PROPN','VERB','ADJ','ADV','NUM','PRON','ADP','CCONJ','SCONJ','DET','PUNCT'];
+  const sortedCats = [...categories].sort((a,b) => {
+    const ai = chipOrder.indexOf(a), bi = chipOrder.indexOf(b);
+    return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+  });
+
+  let chipBar = '<div class="pos-chip-bar">';
+  sortedCats.forEach(cat => {
+    if (cat === 'PUNCT' || cat === 'SYM') return; // skip trivial
+    const isActive = active.has(cat);
+    const color = POS_COLORS[cat] || POS_DEFAULT_COLOR;
+    const activeStyle = isActive
+      ? 'background:' + color.bg + ';border-color:' + color.border + ';color:' + color.text
+      : '';
+    chipBar += '<button type="button" class="pos-chip' + (isActive ? ' active' : '') + '" '
+      + 'style="' + activeStyle + '" '
+      + 'data-pos="' + cat + '" '
+      + 'onclick="togglePosCategory(this, \'' + targetId + '\', \'' + cat + '\')">'
+      + cat + '</button>';
+  });
+  chipBar += '</div>';
+
+  // Build highlighted text
+  let textHtml = '';
+  posData.forEach(t => {
+    const tok = t.token;
+    const pos = t.pos || 'X';
+    const isHighlighted = active.has(pos);
+    const color = POS_COLORS[pos] || POS_DEFAULT_COLOR;
+
+    if (isHighlighted) {
+      textHtml += '<span class="pos-mark-active" style="background:' + color.bg + ';border-color:' + color.border + '">'
+        + tok + ' <sup class="pos-tag" style="color:' + color.text + '">' + pos + '</sup></span>';
+    } else {
+      // Hover tooltip for non-highlighted tokens
+      textHtml += '<span class="pos-token-hover" data-pos-tooltip="' + pos + '">' + tok + '</span>';
+    }
+  });
+
+  targetEl.innerHTML = chipBar + '<div class="pos-text-output">' + textHtml + '</div>';
+}
+
+function togglePosCategory(chipEl, targetId, category) {
+  if (!window.__posActiveFilters) window.__posActiveFilters = new Set();
+
+  if (window.__posActiveFilters.has(category)) {
+    window.__posActiveFilters.delete(category);
+  } else {
+    window.__posActiveFilters.add(category);
+  }
+
+  const targetEl = document.getElementById(targetId);
+  const posData = window.__posData || [];
+  const categories = new Set();
+  posData.forEach(t => { if (t.pos) categories.add(t.pos); });
+
+  renderPosOutput(targetEl, posData, categories);
 }
 
 function escapeRegExp(string) {

@@ -2,7 +2,7 @@ import time
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-from .utils import text_to_sentences, preprocess_tfidf, extract_tf_query
+from .utils import text_to_sentences, preprocess_tfidf, extract_tf_query, pos_tag_summary
 from ..ner.predict import predict_entities
 
 WEIGHTS = np.array([
@@ -132,7 +132,9 @@ def predict_and_summarize(text, title=None, compression_ratio=0.3, stream=False,
                     clean_ent["confidence_percent"] = round(conf_val * 100) if conf_val <= 1.0 else round(conf_val)
                     unique_entities[key] = clean_ent
 
-        # --- Step 4: Done ---
+        # --- Step 4: POS Tagging & Done ---
+        pos_tokens = pos_tag_summary(summary)
+
         elapsed = time.time() - _start_time
         print(f"[TIMING] Hybrid summarization completed in {elapsed:.3f}s")
         yield {
@@ -140,6 +142,7 @@ def predict_and_summarize(text, title=None, compression_ratio=0.3, stream=False,
             'result': {
                 'summary': summary,
                 'entities': list(unique_entities.values()),
+                'pos_tokens': pos_tokens,
                 'effective_title': effective_title,
                 'elapsed_time': elapsed
             }

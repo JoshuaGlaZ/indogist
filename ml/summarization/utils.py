@@ -86,3 +86,35 @@ def add_to_indosum_dataset(title, text, summary, user):
     except Exception as e:
         print(f"[ERROR] Failed to save to dataset: {e}")
         raise e
+
+
+def pos_tag_summary(summary_text):
+    """
+    POS-tag the summary text using the already-loaded Stanza tagger.
+    Returns a list of {token, pos} dicts.
+    """
+    from ml.ner.loader import nlp_service
+
+    if not summary_text or not summary_text.strip():
+        return []
+
+    # Use the already-initialized Stanza POS tagger from NLPService singleton
+    if nlp_service.pos_tagger is None:
+        return []
+
+    try:
+        # The NLPService pipeline uses tokenize_pretokenized=True,
+        # so we must pre-tokenize the text into list-of-lists format.
+        import nltk
+        sentences = nltk.sent_tokenize(summary_text)
+        tokenized = [nltk.word_tokenize(sent) for sent in sentences]
+
+        doc = nlp_service.pos_tagger(tokenized)
+        tokens = []
+        for sent in doc.sentences:
+            for word in sent.words:
+                tokens.append({"token": word.text, "pos": word.upos})
+        return tokens
+    except Exception as e:
+        print(f"[WARNING] POS tagging failed: {e}")
+        return []
