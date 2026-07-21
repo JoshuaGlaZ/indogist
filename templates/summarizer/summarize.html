@@ -39,7 +39,7 @@
             </div>
 
             <label class="field-label" for="rawText">{{ lang("Document text") }}</label>
-            <textarea class="field" id="rawText" name="text" lang="id" placeholder="{{ lang("Paste your Indonesian text here...") }}">{{ (text or '').strip() }}</textarea>
+            <textarea class="field" id="rawText" name="text" lang="id" placeholder="{{ lang("Paste your Indonesian text here...") }}">{{ (text or '')|trim }}</textarea>
             
             <!-- Editor Footer Telemetry & Expand Trigger -->
             <div class="editor-footer">
@@ -159,7 +159,7 @@
           </div>
         </div>
 
-        <div class="output-area" id="outputArea">{% if summary %}{{ summary.summary_text.strip() }}{% else %}<span class="output-placeholder">{{ lang("Waiting for input — select a method and generate a summary.") }}</span>{% endif %}</div>
+        <div class="output-area" id="outputArea">{% if summary %}{{ summary.summary_text|trim }}{% else %}<span class="output-placeholder">{{ lang("Waiting for input — select a method and generate a summary.") }}</span>{% endif %}</div>
         
         <div class="entity-section">
           <p class="field-label" style="margin-bottom:0;">{{ lang("Detected entities") }}</p>

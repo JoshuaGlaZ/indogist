@@ -14,7 +14,7 @@
       <form id="comparisonForm" method="post" action="/comparison/" hx-post="/comparison/" hx-target="#compareGrid" hx-indicator="#loadingIndicator">
         {{ csrf_field(request) }}
         <label class="field-label" for="compareText">{{ lang("Input text for side-by-side evaluation") }}</label>
-        <textarea class="field" name="text" id="compareText" lang="id" style="min-height:120px;" placeholder="{{ lang("Paste text to compare...") }}">{{ (source_text or '').strip() }}</textarea>
+        <textarea class="field" name="text" id="compareText" lang="id" style="min-height:120px;" placeholder="{{ lang("Paste text to compare...") }}">{{ (source_text or '')|trim }}</textarea>
         
         <div style="display: flex; gap: 16px; margin-top: 14px; flex-wrap: wrap;">
           <div style="flex: 1; min-width: 180px;">
@@ -63,7 +63,7 @@
             </div>
           </div>
 
-          <div class="output-area" id="compareOutputA">{% if traditional_summary %}{{ traditional_summary.strip() }}{% else %}<span class="output-placeholder">{{ lang("No extractive summary generated.") }}</span>{% endif %}</div>
+          <div class="output-area" id="compareOutputA">{% if traditional_summary %}{{ traditional_summary|trim }}{% else %}<span class="output-placeholder">{{ lang("No extractive summary generated.") }}</span>{% endif %}</div>
           
           <div class="stats-grid" style="margin-top: 12px;">
             <div class="stat-card">
@@ -93,7 +93,7 @@
             </div>
           </div>
 
-          <div class="output-area" id="compareOutputB">{% if hybrid_summary %}{{ hybrid_summary.strip() }}{% else %}<span class="output-placeholder">{{ lang("No hybrid summary generated.") }}</span>{% endif %}</div>
+          <div class="output-area" id="compareOutputB">{% if hybrid_summary %}{{ hybrid_summary|trim }}{% else %}<span class="output-placeholder">{{ lang("No hybrid summary generated.") }}</span>{% endif %}</div>
           
           <div class="stats-grid" style="margin-top: 12px;">
             <div class="stat-card">

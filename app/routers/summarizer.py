@@ -146,27 +146,29 @@ async def summarize_post(
         session.refresh(summary_obj)
 
     if is_ajax:
-        entity_chips_html = ""
+        # Build entity chips as compact HTML (no indentation whitespace)
+        chips = []
         if entities_list:
             for ent in entities_list:
                 conf_val = float(ent.get("confidence", ent.get("confidence_percent", ent.get("score", 0.9))))
                 score = round(conf_val * 100) if conf_val <= 1.0 else round(conf_val)
-                entity_chips_html += f'''
-                <span class="entity-chip show">
-                  <span>{ent.get("text", "")}</span>
-                  <span class="e-type">{ent.get("label", "ENTITY")}</span>
-                  <span class="e-score">{score}%</span>
-                </span>
-                '''
+                text = ent.get("text", "")
+                label = ent.get("label", "ENTITY")
+                chips.append(f'<span class="entity-chip show"><span>{text}</span><span class="e-type">{label}</span><span class="e-score">{score}%</span></span>')
+            entity_chips_html = "".join(chips)
         else:
             entity_chips_html = f'<span class="output-placeholder">{lang(request, "No named entities detected in this text.")}</span>'
 
-        return HTMLResponse(f'''
-        <div class="summary-output-text">{summary_result}</div>
-        <div id="entityWrap" hx-swap-oob="true">
-            {entity_chips_html}
-        </div>
-        ''')
+        # Build entity data as JSON for NER highlight JS
+        import json as _json
+        entities_json = _json.dumps([{"text": e.get("text",""), "label": e.get("label","ENTITY")} for e in entities_list]) if entities_list else "[]"
+
+        summary_html = summary_result.strip()
+        return HTMLResponse(
+            f'{summary_html}'
+            f'<div id="entityWrap" hx-swap-oob="true">{entity_chips_html}</div>'
+            f'<script>window.__nerEntities = {entities_json}; if(window.OUTPUT_TEXT_CACHE) delete window.OUTPUT_TEXT_CACHE["outputArea"];</script>'
+        )
 
     context = {"summary": {"summary_text": summary_result}, "entities_list": entities_list, "user": user}
     return render_template(request, "summarizer/summarize.html", context)

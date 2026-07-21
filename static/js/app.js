@@ -4,7 +4,7 @@
    Range Slider Track Fills, Keyboard Shortcuts & Interactive NER/POS Highlights
    ========================================================================== */
 
-const OUTPUT_TEXT_CACHE = {};
+window.OUTPUT_TEXT_CACHE = {};
 
 document.addEventListener('DOMContentLoaded', () => {
   initThemeToggle();
@@ -278,78 +278,116 @@ function switchOutputMode(btnEl, targetId, mode) {
   const targetEl = document.getElementById(targetId);
   if (!targetEl) return;
 
+  // Toggle active button style
   const parent = btnEl.closest('.view-mode-toggle');
   if (parent) {
     parent.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
     btnEl.classList.add('active');
   }
 
-  if (!OUTPUT_TEXT_CACHE[targetId]) {
-    OUTPUT_TEXT_CACHE[targetId] = targetEl.innerText || targetEl.textContent || '';
+  // Cache the plain text on first access
+  if (!window.OUTPUT_TEXT_CACHE[targetId]) {
+    window.OUTPUT_TEXT_CACHE[targetId] = (targetEl.innerText || targetEl.textContent || '').trim();
   }
-  const plainText = OUTPUT_TEXT_CACHE[targetId].trim();
-  if (!plainText || plainText.includes('Waiting for input')) return;
+  const plainText = window.OUTPUT_TEXT_CACHE[targetId];
+  if (!plainText || plainText.includes('Waiting for input') || plainText.includes('No ')) return;
 
   if (mode === 'plain') {
-    targetEl.innerHTML = plainText;
+    targetEl.textContent = plainText;
     return;
   }
 
   if (mode === 'ner') {
+    // Source entities from: 1) window.__nerEntities (set by HTMX), 2) entityWrap chips in DOM
     let entities = [];
-    const entityWrap = document.getElementById('entityWrap');
-    if (entityWrap) {
-      entityWrap.querySelectorAll('.entity-chip').forEach(chip => {
-        const textEl = chip.querySelector('span:first-child');
-        const typeEl = chip.querySelector('.e-type');
-        if (textEl && typeEl) {
-          entities.push({
-            text: textEl.innerText.trim(),
-            label: typeEl.innerText.trim()
-          });
-        }
-      });
+
+    if (window.__nerEntities && Array.isArray(window.__nerEntities) && window.__nerEntities.length > 0) {
+      entities = window.__nerEntities;
+    } else {
+      // Fallback: scrape from entity chips in the page
+      const entityWrap = document.getElementById('entityWrap');
+      if (entityWrap) {
+        entityWrap.querySelectorAll('.entity-chip').forEach(chip => {
+          const spans = chip.querySelectorAll('span');
+          if (spans.length >= 2) {
+            const textVal = spans[0].innerText.trim();
+            const labelEl = chip.querySelector('.e-type');
+            if (textVal && labelEl) {
+              entities.push({ text: textVal, label: labelEl.innerText.trim() });
+            }
+          }
+        });
+      }
     }
 
     if (entities.length === 0) {
       showToast('No detected entities available for this summary.', 'info');
-      targetEl.innerHTML = plainText;
+      targetEl.textContent = plainText;
       return;
     }
 
+    // Sort longest first to avoid partial matches overwriting longer entity names
     entities.sort((a, b) => b.text.length - a.text.length);
 
-    let highlightedText = plainText;
-    entities.forEach(ent => {
+    // Deduplicate by text+label
+    const seen = new Set();
+    const uniqueEntities = entities.filter(e => {
+      const key = e.text.toLowerCase() + '|' + e.label;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+    let html = plainText;
+    uniqueEntities.forEach(ent => {
       if (!ent.text) return;
       const typeLower = ent.label.toLowerCase();
       const markClass = ['per', 'loc', 'org'].includes(typeLower) ? typeLower : 'ent';
-      const regex = new RegExp(`\\b(${escapeRegExp(ent.text)})\\b`, 'gi');
-      highlightedText = highlightedText.replace(regex, `<span class="ner-mark ${markClass}">$1 <sup class="ner-tag">${ent.label}</sup></span>`);
+      // Use word boundary-safe matching (handles Indonesian multi-word entities)
+      const escaped = ent.text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp('(' + escaped + ')', 'gi');
+      html = html.replace(regex, '<span class="ner-mark ' + markClass + '">$1 <sup class="ner-tag">' + ent.label + '</sup></span>');
     });
 
-    targetEl.innerHTML = highlightedText;
+    targetEl.innerHTML = html;
     return;
   }
 
   if (mode === 'pos') {
-    const tokens = plainText.split(/(\s+|[,.:;?!()"])/);
-    const highlightedText = tokens.map(token => {
+    // Simple client-side POS heuristic for Indonesian text
+    // Splits on whitespace, preserving punctuation
+    const words = plainText.split(/(\s+)/);
+    const html = words.map(token => {
       const trimmed = token.trim();
-      if (!trimmed || /^[,.:;?!()"]+$/.test(trimmed)) return token;
+      if (!trimmed) return token; // preserve whitespace
+      if (/^[,.:;?!"'()\-—]+$/.test(trimmed)) return '<span class="pos-mark">' + trimmed + ' <sup class="pos-tag">PUNCT</sup></span>';
 
       let posTag = 'NOUN';
       const lower = trimmed.toLowerCase();
-      if (/^[A-Z][a-z]+/.test(trimmed)) posTag = 'PROPN';
-      else if (['merupakan', 'adalah', 'berkunjung', 'mencapai', 'mengevaluasi', 'dipakai', 'menjadi', 'terdiri'].includes(lower)) posTag = 'VERB';
-      else if (['dan', 'yang', 'dengan', 'pada', 'atau', 'ke', 'di', 'dari', 'untuk'].includes(lower)) posTag = 'ADP';
-      else if (['terbesar', 'terbanyak', 'keempat', 'modern', 'berbasis', 'standar'].includes(lower)) posTag = 'ADJ';
-      else if (/^\d+$/.test(lower)) posTag = 'NUM';
 
-      return `<span class="pos-mark">${trimmed} <sup class="pos-tag">${posTag}</sup></span>`;
+      // Numbers
+      if (/^[\d.,]+$/.test(trimmed)) posTag = 'NUM';
+      // Proper nouns (capitalized, not sentence start — approximate)
+      else if (/^[A-Z][a-z]/.test(trimmed)) posTag = 'PROPN';
+      // Common Indonesian verbs (me-, ber-, di-, ter- prefix)
+      else if (/^(me|ber|di|ter|mem|men|meng|meny|menge|per|pem|pen|peng|peny|penge)[a-z]/i.test(lower)) posTag = 'VERB';
+      // Function words: prepositions/conjunctions
+      else if (['dan', 'atau', 'serta', 'namun', 'tetapi', 'tapi', 'karena', 'sebab', 'agar', 'supaya', 'jika', 'kalau', 'bila', 'meski', 'meskipun', 'walau', 'walaupun', 'bahwa', 'ketika', 'saat', 'sebelum', 'sesudah', 'setelah'].includes(lower)) posTag = 'CCONJ';
+      else if (['yang', 'ini', 'itu', 'tersebut', 'para', 'sang', 'si'].includes(lower)) posTag = 'DET';
+      else if (['ke', 'di', 'dari', 'pada', 'untuk', 'dengan', 'oleh', 'dalam', 'antara', 'tanpa', 'tentang', 'terhadap', 'mengenai', 'selama', 'sejak', 'hingga', 'sampai', 'sebagai'].includes(lower)) posTag = 'ADP';
+      // Adjectives (common suffixes/patterns)
+      else if (['besar', 'kecil', 'tinggi', 'rendah', 'banyak', 'sedikit', 'baru', 'lama', 'baik', 'buruk', 'modern', 'utama', 'berbasis', 'standar', 'penting', 'terbesar', 'terbanyak', 'terkecil', 'tertinggi'].includes(lower)) posTag = 'ADJ';
+      // Adverbs
+      else if (['sangat', 'tidak', 'bukan', 'belum', 'sudah', 'akan', 'telah', 'masih', 'juga', 'pun', 'pula', 'hanya', 'saja', 'sekali', 'lagi', 'segera', 'selalu', 'sering', 'jarang'].includes(lower)) posTag = 'ADV';
+      // Pronouns
+      else if (['saya', 'aku', 'kamu', 'anda', 'dia', 'ia', 'mereka', 'kami', 'kita', 'beliau'].includes(lower)) posTag = 'PRON';
+      // Common verbs (non-prefixed)
+      else if (['adalah', 'merupakan', 'ada', 'bisa', 'dapat', 'harus', 'perlu', 'mau', 'ingin', 'akan', 'boleh', 'tahu', 'kenal'].includes(lower)) posTag = 'VERB';
+
+      return '<span class="pos-mark">' + trimmed + ' <sup class="pos-tag">' + posTag + '</sup></span>';
     }).join('');
 
-    targetEl.innerHTML = highlightedText;
+    targetEl.innerHTML = html;
     return;
   }
 }

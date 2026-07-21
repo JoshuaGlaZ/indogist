@@ -26,7 +26,7 @@
           </div>
         </div>
         <div class="card-body">
-          <p class="prose" id="detailOriginal">{{ summary.original_text.strip() }}</p>
+          <p class="prose" id="detailOriginal">{{ summary.original_text|trim }}</p>
         </div>
       </div>
 
@@ -50,7 +50,7 @@
             </div>
           </div>
 
-          <div class="output-area" id="detailSummary">{{ summary.summary_text.strip() }}</div>
+          <div class="output-area" id="detailSummary">{{ summary.summary_text|trim }}</div>
         </div>
       </div>
 
