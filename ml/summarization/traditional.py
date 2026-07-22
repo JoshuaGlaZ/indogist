@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-from .utils import text_to_sentences, preprocess_tfidf, extract_tf_query, pos_tag_summary
+from .utils import text_to_sentences, preprocess_tfidf, extract_tf_query
 from ml.ner.loader import stemmer, stopword_remover
 
 
@@ -91,9 +91,7 @@ def summarize_traditional(text, title, compression_ratio=0.3, stream=True, progr
 
         summary = " ".join([sentences[i] for i in sorted_indices])
 
-        # --- Step 4: POS Tagging & Done ---
-        pos_tokens = pos_tag_summary(summary)
-
+        # --- Step 4: Done ---
         elapsed = time.time() - _start_time
         print(f"[TIMING] Traditional summarization completed in {elapsed:.3f}s")
         yield {
@@ -101,7 +99,7 @@ def summarize_traditional(text, title, compression_ratio=0.3, stream=True, progr
             'result': {
                 'summary': summary,
                 'entities': [],
-                'pos_tokens': pos_tokens,
+                'pos_tokens': [],
                 'effective_title': effective_title,
                 'elapsed_time': elapsed
             }

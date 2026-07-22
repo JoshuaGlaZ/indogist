@@ -45,8 +45,10 @@
             <span class="field-label" style="margin-bottom: 0;">{{ lang("Output View") }}</span>
             <div class="view-mode-toggle" style="display: flex; gap: 4px;">
               <button type="button" class="btn btn-ghost active" style="padding: 2px 8px; font-size: 11.5px;" onclick="switchOutputMode(this, 'detailSummary', 'plain')">{{ lang("Plain") }}</button>
+              {% if summary.method == 'hybrid' %}
               <button type="button" class="btn btn-ghost" style="padding: 2px 8px; font-size: 11.5px;" onclick="switchOutputMode(this, 'detailSummary', 'ner')">{{ lang("NER Highlights") }}</button>
               <button type="button" class="btn btn-ghost" style="padding: 2px 8px; font-size: 11.5px;" onclick="switchOutputMode(this, 'detailSummary', 'pos')">{{ lang("POS Tagging") }}</button>
+              {% endif %}
             </div>
           </div>
 
@@ -54,6 +56,7 @@
         </div>
       </div>
 
+      {% if summary.method == 'hybrid' %}
       <!-- Detected Named Entities Card -->
       <div class="card">
         <div class="card-head">
@@ -75,6 +78,7 @@
           </div>
         </div>
       </div>
+      {% endif %}
     </div>
 
     <div class="detail-main">

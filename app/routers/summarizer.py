@@ -150,29 +150,53 @@ async def summarize_post(
         session.refresh(summary_obj)
 
     if is_ajax:
-        # Build entity chips as compact HTML (no indentation whitespace)
-        chips = []
-        if entities_list:
-            for ent in entities_list:
+        # Determine capabilities based on method + variant
+        has_ner = method == "hybrid"
+        has_pos = method == "hybrid" and variant_key in ("tfidf_ner_pos", "tfidf_ner_pos_crf")
+
+        # Zero-out data that this method/variant doesn't provide
+        ner_data = entities_list if has_ner else []
+        pos_data = pos_tokens if has_pos else []
+
+        # Build entity chips (only if method provides NER)
+        if has_ner and ner_data:
+            chips = []
+            for ent in ner_data:
                 conf_val = float(ent.get("confidence", ent.get("confidence_percent", ent.get("score", 0.9))))
                 score = round(conf_val * 100) if conf_val <= 1.0 else round(conf_val)
                 text = ent.get("text", "")
                 label = ent.get("label", "ENTITY")
                 chips.append(f'<span class="entity-chip show"><span>{text}</span><span class="e-type">{label}</span><span class="e-score">{score}%</span></span>')
             entity_chips_html = "".join(chips)
-        else:
+        elif has_ner:
             entity_chips_html = f'<span class="output-placeholder">{lang(request, "No named entities detected in this text.")}</span>'
+        else:
+            entity_chips_html = f'<span class="output-placeholder">{lang(request, "This method does not perform entity detection.")}</span>'
 
         # Build NER + POS data as JSON for client-side rendering
         import json as _json
-        entities_json = _json.dumps([{"text": e.get("text",""), "label": e.get("label","ENTITY")} for e in entities_list]) if entities_list else "[]"
-        pos_json = _json.dumps(pos_tokens) if pos_tokens else "[]"
+        entities_json = _json.dumps([{"text": e.get("text",""), "label": e.get("label","ENTITY")} for e in ner_data]) if ner_data else "[]"
+        pos_json = _json.dumps(pos_data) if pos_data else "[]"
 
         summary_html = summary_result.strip()
+
+        # Build dynamic toggle bar via OOB swap
+        toggle_btns = '<button type="button" class="btn btn-ghost active" style="padding:2px 8px;font-size:11.5px;" onclick="switchOutputMode(this,\'outputArea\',\'plain\')">' + lang(request, "Plain") + '</button>'
+        if has_ner:
+            toggle_btns += '<button type="button" class="btn btn-ghost" style="padding:2px 8px;font-size:11.5px;" onclick="switchOutputMode(this,\'outputArea\',\'ner\')">' + lang(request, "NER Highlights") + '</button>'
+        if has_pos:
+            toggle_btns += '<button type="button" class="btn btn-ghost" style="padding:2px 8px;font-size:11.5px;" onclick="switchOutputMode(this,\'outputArea\',\'pos\')">' + lang(request, "POS Tagging") + '</button>'
+
         return HTMLResponse(
             f'{summary_html}'
             f'<div id="entityWrap" hx-swap-oob="true">{entity_chips_html}</div>'
-            f'<script>window.__nerEntities = {entities_json}; window.__posData = {pos_json}; window.__posActiveFilters = null; if(window.OUTPUT_TEXT_CACHE) delete window.OUTPUT_TEXT_CACHE["outputArea"];</script>'
+            f'<div id="viewModeToggle" hx-swap-oob="true" class="view-mode-toggle" style="display:flex;gap:4px;">{toggle_btns}</div>'
+            f'<div id="entitySection" hx-swap-oob="true" class="entity-section" style="display:{"block" if has_ner else "none"}">'
+            f'<p class="field-label" style="margin-bottom:0;">{lang(request, "Detected entities")}</p>'
+            f'<div class="entity-wrap" id="entityWrap">{entity_chips_html}</div></div>'
+            f'<script>window.__nerEntities={entities_json};window.__posData={pos_json};window.__posActiveFilters=null;'
+            f'window.__hasNer={"true" if has_ner else "false"};window.__hasPos={"true" if has_pos else "false"};'
+            f'if(window.OUTPUT_TEXT_CACHE)delete window.OUTPUT_TEXT_CACHE["outputArea"];</script>'
         )
 
     context = {"summary": {"summary_text": summary_result}, "entities_list": entities_list, "user": user}
@@ -257,14 +281,35 @@ def comparison(
     }
 
     if is_ajax and text:
+        has_ner_a = (model_a == "hybrid")
+        has_pos_a = (model_a == "hybrid")
+        has_ner_b = (model_b == "hybrid")
+        has_pos_b = (model_b == "hybrid")
+
+        toggle_a = '<button type="button" class="btn btn-ghost active" style="padding:2px 8px;font-size:11.5px;" onclick="switchOutputMode(this,\'compareOutputA\',\'plain\')">Plain</button>'
+        if has_ner_a:
+            toggle_a += '<button type="button" class="btn btn-ghost" style="padding:2px 8px;font-size:11.5px;" onclick="switchOutputMode(this,\'compareOutputA\',\'ner\')">NER Highlights</button>'
+        if has_pos_a:
+            toggle_a += '<button type="button" class="btn btn-ghost" style="padding:2px 8px;font-size:11.5px;" onclick="switchOutputMode(this,\'compareOutputA\',\'pos\')">POS Tagging</button>'
+
+        toggle_b = '<button type="button" class="btn btn-ghost active" style="padding:2px 8px;font-size:11.5px;" onclick="switchOutputMode(this,\'compareOutputB\',\'plain\')">Plain</button>'
+        if has_ner_b:
+            toggle_b += '<button type="button" class="btn btn-ghost" style="padding:2px 8px;font-size:11.5px;" onclick="switchOutputMode(this,\'compareOutputB\',\'ner\')">NER Highlights</button>'
+        if has_pos_b:
+            toggle_b += '<button type="button" class="btn btn-ghost" style="padding:2px 8px;font-size:11.5px;" onclick="switchOutputMode(this,\'compareOutputB\',\'pos\')">POS Tagging</button>'
+
         return HTMLResponse(f'''
         <div class="card">
           <div class="card-head">
-            <p class="card-title">Model A ({model_a|upper})</p>
+            <p class="card-title">Model A ({model_a.upper()})</p>
             <span class="badge {model_a}">{model_a}</span>
           </div>
           <div class="card-body">
-            <div class="output-area">{summary_a}</div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+              <span class="field-label" style="margin-bottom: 0;">Output View</span>
+              <div class="view-mode-toggle" style="display: flex; gap: 4px;">{toggle_a}</div>
+            </div>
+            <div class="output-area" id="compareOutputA">{summary_a.strip()}</div>
             <div class="stats-grid" style="margin-top: 12px;">
               <div class="stat-card"><span class="s-label">Words</span><span class="s-value">{len(summary_a.split()) if summary_a else 0}</span></div>
               <div class="stat-card accent"><span class="s-label">Sentences</span><span class="s-value">{len(summary_a.split('.')) if summary_a else 0}</span></div>
@@ -274,11 +319,15 @@ def comparison(
 
         <div class="card">
           <div class="card-head">
-            <p class="card-title">Model B ({model_b|upper})</p>
+            <p class="card-title">Model B ({model_b.upper()})</p>
             <span class="badge {model_b}">{model_b}</span>
           </div>
           <div class="card-body">
-            <div class="output-area">{summary_b}</div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+              <span class="field-label" style="margin-bottom: 0;">Output View</span>
+              <div class="view-mode-toggle" style="display: flex; gap: 4px;">{toggle_b}</div>
+            </div>
+            <div class="output-area" id="compareOutputB">{summary_b.strip()}</div>
             <div class="stats-grid" style="margin-top: 12px;">
               <div class="stat-card"><span class="s-label">Words</span><span class="s-value">{len(summary_b.split()) if summary_b else 0}</span></div>
               <div class="stat-card accent"><span class="s-label">Sentences</span><span class="s-value">{len(summary_b.split('.')) if summary_b else 0}</span></div>
