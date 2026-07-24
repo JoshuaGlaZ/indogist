@@ -180,3 +180,4 @@ notebooks/kt_tuning/
 docker-compose*.yml
 docker-compose*.yaml
 
+.sisyphus/
