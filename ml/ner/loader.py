@@ -75,8 +75,15 @@ class NLPService:
         if self.initialized:
             return
             
+        self.ner_model = None
+        self.vectorizer = None
+        self.idx_to_tag = {}
+        self.max_len = 256
         self.pos_to_idx = None
         self.pos_tagger = None
+        self.stemmer = None
+        self.stopword_remover = None
+        self.is_keras_model = False
         
         # Load models immediately upon instantiation
         self.load_models()
@@ -104,7 +111,7 @@ class NLPService:
             else:
                 pos_dirs = sorted([
                     d for d in os.listdir(models_root)
-                    if d.startswith("ner_pos_experiment_") and os.path.isdir(os.path.join(models_root, d))
+                    if (d.startswith("ner_pos_experiment_") or d.startswith("ner_experiment_pos_") or d == "ner_experiment_pos_10-May-2026_10.00") and os.path.isdir(os.path.join(models_root, d))
                 ], reverse=True)
                 if pos_dirs:
                     model_dir = os.path.join(models_root, pos_dirs[0])
@@ -190,6 +197,3 @@ pos_tagger = nlp_service.pos_tagger
 max_len = nlp_service.max_len
 stemmer = nlp_service.stemmer
 stopword_remover = nlp_service.stopword_remover
-
-def load_all_models():
-    pass

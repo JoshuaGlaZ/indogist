@@ -2,6 +2,7 @@ from typing import Optional
 from fastapi import APIRouter, Request, Depends, Form, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlmodel import Session, select, func
+from sqlalchemy.exc import IntegrityError
 
 from app.database import get_session
 from app.models import User, Summary
@@ -55,9 +56,14 @@ def register_post(
         email=email.strip().lower(),
         hashed_password=hash_password(password)
     )
-    session.add(new_user)
-    session.commit()
-    session.refresh(new_user)
+    try:
+        session.add(new_user)
+        session.commit()
+        session.refresh(new_user)
+    except IntegrityError:
+        session.rollback()
+        add_flash_message(request, lang("Username is already taken."), "danger")
+        return render_template(request, "accounts/register.html", {"form": form_data}, status_code=status.HTTP_400_BAD_REQUEST)
 
     request.session["user_id"] = new_user.id
     add_flash_message(request, lang(f"Account created for {new_user.username}! You are now logged in."), "success")
@@ -102,9 +108,18 @@ def profile_get(
     current_user: User = Depends(require_current_user),
     session: Session = Depends(get_session)
 ):
-    total_summaries = session.exec(
-        select(func.count(Summary.id)).where(Summary.user_id == current_user.id)
-    ).one() or 0
+    try:
+        res = session.exec(
+            select(func.count(Summary.id)).where(Summary.user_id == current_user.id)
+        ).first()
+        if isinstance(res, (int, float)):
+            total_summaries = int(res)
+        elif res and isinstance(res, (tuple, list)) and len(res) > 0:
+            total_summaries = int(res[0])
+        else:
+            total_summaries = 0
+    except (Exception, IndexError):
+        total_summaries = 0
 
     return render_template(
         request,
@@ -138,9 +153,18 @@ def profile_post(
         session.refresh(current_user)
         add_flash_message(request, lang("Your profile has been updated!"), "success")
 
-    total_summaries = session.exec(
-        select(func.count(Summary.id)).where(Summary.user_id == current_user.id)
-    ).one() or 0
+    try:
+        res = session.exec(
+            select(func.count(Summary.id)).where(Summary.user_id == current_user.id)
+        ).first()
+        if isinstance(res, (int, float)):
+            total_summaries = int(res)
+        elif res and isinstance(res, (tuple, list)) and len(res) > 0:
+            total_summaries = int(res[0])
+        else:
+            total_summaries = 0
+    except (Exception, IndexError):
+        total_summaries = 0
 
     return render_template(
         request,

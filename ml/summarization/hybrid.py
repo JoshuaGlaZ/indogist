@@ -63,90 +63,106 @@ def predict_and_summarize(text, title=None, compression_ratio=0.3, stream=False,
     """
     _start_time = time.time()
 
+    def _make_empty(title_val=None):
+        return {
+            'summary': '',
+            'entities': [],
+            'pos_tokens': [],
+            'effective_title': title_val or '',
+            'elapsed_time': time.time() - _start_time
+        }
+
     def _generator():
         # --- Step 1: Preprocessing ---
         yield {'step': 1}
 
-        raw_sentences = text_to_sentences(text)
-        if not raw_sentences:
-            yield {'step': 4, 'result': {'summary': '', 'entities': [], 'effective_title': ''}}
+        if not isinstance(text, str) or not text.strip():
+            yield {'step': 4, 'result': _make_empty(title)}
             return
 
-        processed_sents = preprocess_tfidf(raw_sentences)
-        if not any(processed_sents):
-            yield {'step': 4, 'result': {'summary': raw_sentences[0], 'entities': [], 'effective_title': title}}
-            return
+        try:
+            raw_sentences = text_to_sentences(text)
+            if not raw_sentences:
+                yield {'step': 4, 'result': _make_empty(title)}
+                return
 
-        vectorizer = TfidfVectorizer()
-        tfidf_mat = vectorizer.fit_transform(processed_sents)
+            processed_sents = preprocess_tfidf(raw_sentences)
+            if not any(processed_sents):
+                yield {'step': 4, 'result': {'summary': raw_sentences[0], 'entities': [], 'pos_tokens': [], 'effective_title': title or ''}}
+                return
 
-        effective_title = title
-        if not effective_title or not effective_title.strip():
-            effective_title = extract_tf_query(tfidf_mat, vectorizer)
+            vectorizer = TfidfVectorizer()
+            tfidf_mat = vectorizer.fit_transform(processed_sents)
 
-        # --- Step 2: NER Inference ---
-        yield {'step': 2}
+            effective_title = title
+            if not effective_title or not effective_title.strip():
+                effective_title = extract_tf_query(tfidf_mat, vectorizer)
 
-        ner_results = predict_entities(raw_sentences)
+            # --- Step 2: NER Inference ---
+            yield {'step': 2}
 
-        # --- Step 3: Scoring & Selection ---
-        yield {'step': 3}
+            ner_results = predict_entities(raw_sentences)
 
-        feature_matrix = compute_hybrid_scores(
-            raw_sentences, effective_title, ner_results, tfidf_mat, vectorizer
-        )
-        final_scores = feature_matrix @ WEIGHTS
+            # --- Step 3: Scoring & Selection ---
+            yield {'step': 3}
 
-        n_select = max(1, round(len(raw_sentences) * compression_ratio))
-        
-        # --- Maximal Marginal Relevance (MMR) Selection ---
-        selected_indices = []
-        unselected_indices = list(range(len(raw_sentences)))
-        
-        sim_matrix = cosine_similarity(tfidf_mat, tfidf_mat)
-        lambda_param = 0.7  # 0.7 relevance vs 0.3 diversity
+            feature_matrix = compute_hybrid_scores(
+                raw_sentences, effective_title, ner_results, tfidf_mat, vectorizer
+            )
+            final_scores = feature_matrix @ WEIGHTS
 
-        for _ in range(min(n_select, len(raw_sentences))):
-            if not selected_indices:
-                best_idx = max(unselected_indices, key=lambda i: final_scores[i])
-            else:
-                def mmr_score(i):
-                    max_sim = max(sim_matrix[i, j] for j in selected_indices)
-                    return lambda_param * final_scores[i] - (1 - lambda_param) * max_sim
-                best_idx = max(unselected_indices, key=mmr_score)
-            selected_indices.append(best_idx)
-            unselected_indices.remove(best_idx)
+            n_select = max(1, round(len(raw_sentences) * compression_ratio))
+            
+            # --- Maximal Marginal Relevance (MMR) Selection ---
+            selected_indices = []
+            unselected_indices = list(range(len(raw_sentences)))
+            
+            sim_matrix = cosine_similarity(tfidf_mat, tfidf_mat)
+            lambda_param = 0.7  # 0.7 relevance vs 0.3 diversity
 
-        top_indices = sorted(selected_indices)
+            for _ in range(min(n_select, len(raw_sentences))):
+                if not selected_indices:
+                    best_idx = max(unselected_indices, key=lambda i: final_scores[i])
+                else:
+                    def mmr_score(i):
+                        max_sim = max(sim_matrix[i, j] for j in selected_indices)
+                        return lambda_param * final_scores[i] - (1 - lambda_param) * max_sim
+                    best_idx = max(unselected_indices, key=mmr_score)
+                selected_indices.append(best_idx)
+                unselected_indices.remove(best_idx)
 
-        summary = " ".join([raw_sentences[i] for i in top_indices])
+            top_indices = sorted(selected_indices)
 
-        unique_entities = {}
-        for idx in top_indices:
-            for ent in ner_results[idx].get('entities', []):
-                key = (ent['text'].lower(), ent['label'])
-                if key not in unique_entities:
-                    clean_ent = {k: float(v) if isinstance(v, (np.floating, float)) else v 
-                                 for k, v in ent.items()}
-                    conf_val = float(clean_ent.get("confidence", clean_ent.get("score", 0.9)))
-                    clean_ent["confidence_percent"] = round(conf_val * 100) if conf_val <= 1.0 else round(conf_val)
-                    unique_entities[key] = clean_ent
+            summary = " ".join([raw_sentences[i] for i in top_indices])
 
-        # --- Step 4: POS Tagging & Done ---
-        pos_tokens = pos_tag_summary(summary)
+            unique_entities = {}
+            for idx in top_indices:
+                for ent in ner_results[idx].get('entities', []):
+                    key = (ent['text'].lower(), ent['label'])
+                    if key not in unique_entities:
+                        clean_ent = {k: float(v) if isinstance(v, (np.floating, float)) else v 
+                                     for k, v in ent.items()}
+                        conf_val = float(clean_ent.get("confidence", clean_ent.get("score", 0.9)))
+                        clean_ent["confidence_percent"] = round(conf_val * 100) if conf_val <= 1.0 else round(conf_val)
+                        unique_entities[key] = clean_ent
 
-        elapsed = time.time() - _start_time
-        print(f"[TIMING] Hybrid summarization completed in {elapsed:.3f}s")
-        yield {
-            'step': 4,
-            'result': {
-                'summary': summary,
-                'entities': list(unique_entities.values()),
-                'pos_tokens': pos_tokens,
-                'effective_title': effective_title,
-                'elapsed_time': elapsed
+            # --- Step 4: POS Tagging & Done ---
+            pos_tokens = pos_tag_summary(summary)
+
+            elapsed = time.time() - _start_time
+            print(f"[TIMING] Hybrid summarization completed in {elapsed:.3f}s")
+            yield {
+                'step': 4,
+                'result': {
+                    'summary': summary,
+                    'entities': list(unique_entities.values()),
+                    'pos_tokens': pos_tokens,
+                    'effective_title': effective_title,
+                    'elapsed_time': elapsed
+                }
             }
-        }
+        except Exception:
+            yield {'step': 4, 'result': _make_empty(title)}
 
     # Mode 1: progress_callback
     if progress_callback is not None:
@@ -156,7 +172,7 @@ def predict_and_summarize(text, title=None, compression_ratio=0.3, stream=False,
                 result = step_data['result']
             else:
                 progress_callback(step_data)
-        return result
+        return result or _make_empty(title)
 
     # Mode 2: stream
     if stream:
@@ -167,4 +183,4 @@ def predict_and_summarize(text, title=None, compression_ratio=0.3, stream=False,
     for step_data in _generator():
         if step_data.get('step') == 4 and 'result' in step_data:
             result = step_data['result']
-    return result
+    return result or _make_empty(title)

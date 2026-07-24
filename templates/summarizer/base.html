@@ -51,8 +51,8 @@
   <main id="app-content">
     {% if messages %}
       {% for message in messages %}
-        <div class="alert alert-{{ message.tags if hasattr(message, 'tags') else 'info' }}">
-          <span>{{ message }}</span>
+        <div class="alert alert-{{ message.category if message is mapping else (message.tags if hasattr(message, 'tags') else 'info') }}">
+          <span>{{ message.message if message is mapping else message }}</span>
           <button class="alert-close" onclick="this.parentElement.remove()" aria-label="Close alert">&times;</button>
         </div>
       {% endfor %}
