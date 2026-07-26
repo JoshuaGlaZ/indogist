@@ -62,14 +62,24 @@ function initTabs() {
     tabGroup.querySelectorAll('.tab').forEach(tab => {
       tab.addEventListener('click', () => {
         const target = tab.dataset.tab;
-        tabGroup.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        tabGroup.querySelectorAll('.tab').forEach(t => {
+          t.classList.remove('active');
+          delete t.dataset.state;
+          t.setAttribute('aria-selected', 'false');
+        });
         tab.classList.add('active');
+        tab.dataset.state = 'active';
+        tab.setAttribute('aria-selected', 'true');
 
         const cardBody = tabGroup.closest('.card-body');
         if (cardBody) {
           cardBody.querySelectorAll('.tab-pane').forEach(pane => {
             pane.classList.remove('active');
-            if (pane.dataset.pane === target) pane.classList.add('active');
+            delete pane.dataset.state;
+            if (pane.dataset.pane === target) {
+              pane.classList.add('active');
+              pane.dataset.state = 'active';
+            }
           });
         }
       });
@@ -90,6 +100,7 @@ function initCustomSelects() {
     const trigger = document.createElement('div');
     trigger.className = 'custom-select-trigger';
     trigger.tabIndex = 0;
+    trigger.setAttribute('aria-expanded', 'false');
 
     const labelSpan = document.createElement('span');
     const selectedOption = select.options[select.selectedIndex];
@@ -121,6 +132,8 @@ function initCustomSelects() {
         optionsContainer.querySelectorAll('.custom-select-option').forEach(o => o.classList.remove('selected'));
         optEl.classList.add('selected');
         wrapper.classList.remove('open');
+        delete wrapper.dataset.state;
+        trigger.setAttribute('aria-expanded', 'false');
         select.dispatchEvent(new Event('change', { bubbles: true }));
       });
       optionsContainer.appendChild(optEl);
@@ -132,18 +145,38 @@ function initCustomSelects() {
     trigger.addEventListener('click', (e) => {
       e.stopPropagation();
       document.querySelectorAll('.custom-select').forEach(cs => {
-        if (cs !== wrapper) cs.classList.remove('open');
+        if (cs !== wrapper) {
+          cs.classList.remove('open');
+          delete cs.dataset.state;
+          cs.querySelector('.custom-select-trigger')?.setAttribute('aria-expanded', 'false');
+        }
       });
-      wrapper.classList.toggle('open');
+      const isOpen = wrapper.classList.toggle('open');
+      if (isOpen) {
+        wrapper.dataset.state = 'open';
+        trigger.setAttribute('aria-expanded', 'true');
+      } else {
+        delete wrapper.dataset.state;
+        trigger.setAttribute('aria-expanded', 'false');
+      }
     });
 
     trigger.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
-        wrapper.classList.toggle('open');
+        const isOpen = wrapper.classList.toggle('open');
+        if (isOpen) {
+          wrapper.dataset.state = 'open';
+          trigger.setAttribute('aria-expanded', 'true');
+        } else {
+          delete wrapper.dataset.state;
+          trigger.setAttribute('aria-expanded', 'false');
+        }
       }
       if (e.key === 'Escape') {
         wrapper.classList.remove('open');
+        delete wrapper.dataset.state;
+        trigger.setAttribute('aria-expanded', 'false');
         trigger.focus();
       }
     });

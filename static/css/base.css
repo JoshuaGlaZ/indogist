@@ -436,15 +436,31 @@ input[type="range"].field-range::-moz-range-thumb {
 
 .slider-ticks { display: flex; justify-content: space-between; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--text-muted); }
 
-/* Interactive NER & POS Tagging System Style */
+/* Interactive NER & POS Tagging System Style (CSS Color Mix) */
 .ner-mark {
   display: inline-flex; align-items: baseline; gap: 4px; padding: 2px 7px;
   border-radius: 6px; font-weight: 500; margin: 2px 2px; font-size: 13px; line-height: 1.5;
 }
-.ner-mark.per { background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.35); color: #fbbf24; }
-.ner-mark.loc { background: rgba(65, 105, 225, 0.15); border: 1px solid rgba(65, 105, 225, 0.35); color: #818cf8; }
-.ner-mark.org { background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.35); color: #34d399; }
-.ner-mark.ent { background: rgba(168, 85, 247, 0.15); border: 1px solid rgba(168, 85, 247, 0.35); color: #c084fc; }
+.ner-mark.per {
+  background: color-mix(in srgb, var(--accent-amber) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent-amber) 35%, transparent);
+  color: #fbbf24;
+}
+.ner-mark.loc {
+  background: color-mix(in srgb, var(--accent-blue) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent-blue) 35%, transparent);
+  color: #818cf8;
+}
+.ner-mark.org {
+  background: color-mix(in srgb, #10b981 15%, transparent);
+  border: 1px solid color-mix(in srgb, #10b981 35%, transparent);
+  color: #34d399;
+}
+.ner-mark.ent {
+  background: color-mix(in srgb, #a855f7 15%, transparent);
+  border: 1px solid color-mix(in srgb, #a855f7 35%, transparent);
+  color: #c084fc;
+}
 .ner-tag { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 700; opacity: 0.85; text-transform: uppercase; }
 
 /* POS Category Chip Bar */
@@ -461,7 +477,7 @@ input[type="range"].field-range::-moz-range-thumb {
   user-select: none;
 }
 .pos-chip:hover { border-color: var(--text-secondary); color: var(--text-secondary); }
-.pos-chip.active { font-weight: 700; }
+.pos-chip[data-state="active"], .pos-chip.active { font-weight: 700; }
 
 /* POS Text Output Container */
 .pos-text-output { line-height: 1.85; font-size: 13px; word-wrap: break-word; }
