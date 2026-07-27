@@ -12,8 +12,8 @@
 
   <div class="detail-head">
     <h1>{{ summary.title }}</h1>
-    <span class="badge {{ summary.method }}">{{ summary.get_method_display }}</span>
-    <span class="detail-date">{{ summary.created_at|date("M d, Y H:i") }}</span>
+    <span class="badge {{ summary.method }}">{{ _("Hybrid") if summary.method == 'hybrid' else (_("Traditional") if summary.method == 'traditional' else summary.method) }}</span>
+    <span class="detail-date">{{ summary.created_at|format_date("medium") }}</span>
   </div>
 
   <div class="detail-grid">

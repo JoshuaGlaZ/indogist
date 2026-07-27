@@ -17,6 +17,12 @@
   <script src="https://unpkg.com/htmx.org@2.0.0/dist/htmx.min.js"></script>
 
   {% block extra_css %}{% endblock %}
+  <script>
+    (function() {
+      var saved = localStorage.getItem('theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', saved);
+    })();
+  </script>
 </head>
 <body data-theme="dark">
 <div class="app" data-theme="dark" id="app">

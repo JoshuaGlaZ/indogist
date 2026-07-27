@@ -16,16 +16,24 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Theme Management
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  document.body.setAttribute('data-theme', theme);
+  const appEl = document.getElementById('app');
+  if (appEl) appEl.setAttribute('data-theme', theme);
+  localStorage.setItem('theme', theme);
+}
+
 function initThemeToggle() {
   const toggleBtn = document.querySelector('.theme-toggle');
   if (!toggleBtn) return;
   const currentTheme = localStorage.getItem('theme') || 'dark';
-  document.body.setAttribute('data-theme', currentTheme);
+  applyTheme(currentTheme);
 
   toggleBtn.addEventListener('click', () => {
-    const theme = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-    document.body.setAttribute('data-theme', theme);
-    localStorage.setItem('theme', theme);
+    const activeTheme = document.body.getAttribute('data-theme') || 'dark';
+    const nextTheme = activeTheme === 'dark' ? 'light' : 'dark';
+    applyTheme(nextTheme);
   });
 }
 
