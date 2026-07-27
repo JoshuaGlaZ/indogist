@@ -2,8 +2,8 @@ from fastapi import Request
 from sqlmodel import Session
 
 import app.database as app_db
+from app.i18n import get_translations, negotiate_locale
 from app.models import User
-from app.i18n import negotiate_locale, get_translations
 
 
 class AnonymousUser:
@@ -23,7 +23,10 @@ async def locale_middleware(request: Request, call_next):
 
 
 async def user_and_messages_middleware(request: Request, call_next):
-    if request.url.path.startswith("/static") or request.url.path in ("/health", "/favicon.ico"):
+    if request.url.path.startswith("/static") or request.url.path in (
+        "/health",
+        "/favicon.ico",
+    ):
         request.state.user = AnonymousUser()
         request.scope["user"] = AnonymousUser()
         return await call_next(request)

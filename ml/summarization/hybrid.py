@@ -1,15 +1,17 @@
-import time
 import logging
+import time
+
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+
+from ..ner.predict import predict_entities
 from .utils import (
-    text_to_sentences,
-    preprocess_tfidf,
     extract_tf_query,
     pos_tag_summary,
+    preprocess_tfidf,
+    text_to_sentences,
 )
-from ..ner.predict import predict_entities
 
 logger = logging.getLogger("indogist.hybrid")
 
@@ -46,9 +48,7 @@ def compute_hybrid_scores(sentences, title, ner_results, tfidf_mat, vectorizer):
     agg_scores = sim_mat.sum(axis=1)
 
     title_scores = np.zeros(n)
-    effective_title = (
-        title if title and title.strip() else extract_tf_query(tfidf_mat, vectorizer)
-    )
+    effective_title = title if title and title.strip() else extract_tf_query(tfidf_mat, vectorizer)
     title_vec = vectorizer.transform([effective_title])
     title_scores = cosine_similarity(tfidf_mat, title_vec).flatten()
 
@@ -158,10 +158,7 @@ def predict_and_summarize(
 
                     def mmr_score(i):
                         max_sim = max(sim_matrix[i, j] for j in selected_indices)
-                        return (
-                            lambda_param * final_scores[i]
-                            - (1 - lambda_param) * max_sim
-                        )
+                        return lambda_param * final_scores[i] - (1 - lambda_param) * max_sim
 
                     best_idx = max(unselected_indices, key=mmr_score)
                 selected_indices.append(best_idx)
@@ -180,13 +177,9 @@ def predict_and_summarize(
                             k: float(v) if isinstance(v, (np.floating, float)) else v
                             for k, v in ent.items()
                         }
-                        conf_val = float(
-                            clean_ent.get("confidence", clean_ent.get("score", 0.9))
-                        )
+                        conf_val = float(clean_ent.get("confidence", clean_ent.get("score", 0.9)))
                         clean_ent["confidence_percent"] = (
-                            round(conf_val * 100)
-                            if conf_val <= 1.0
-                            else round(conf_val)
+                            round(conf_val * 100) if conf_val <= 1.0 else round(conf_val)
                         )
                         unique_entities[key] = clean_ent
 

@@ -1,6 +1,7 @@
 import os
-from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
-from fastapi import Request, HTTPException
+
+from fastapi import HTTPException, Request
+from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.config import settings
@@ -50,18 +51,12 @@ class CSRFMiddleware(BaseHTTPMiddleware):
                 try:
                     form = await request.form()
                     token = (
-                        form.get("csrf_token")
-                        or form.get("_csrf_header")
-                        or form.get("csrf")
-                        or ""
+                        form.get("csrf_token") or form.get("_csrf_header") or form.get("csrf") or ""
                     )
                 except Exception:
                     token = ""
 
         if not token or not validate_csrf_token(str(token), session_id):
-            raise HTTPException(
-                status_code=403, detail="Invalid or missing CSRF token"
-            )
+            raise HTTPException(status_code=403, detail="Invalid or missing CSRF token")
 
         return await call_next(request)
-

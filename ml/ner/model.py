@@ -1,7 +1,7 @@
 import keras
 import numpy as np
-import tensorflow as tf
-from ml.ner.crf import CRFLayer, crf_loss, crf_accuracy
+
+from ml.ner.crf import CRFLayer, crf_accuracy, crf_loss
 
 
 def build_bilstm_crf_model(
@@ -19,7 +19,7 @@ def build_bilstm_crf_model(
 ) -> keras.Model:
     """
     Builds and compiles a dual-input BiLSTM-CRF Keras model incorporating Word & PoS Tag features.
-    
+
     Inputs:
         word_input: Tensor of shape (Batch, Seq_Len) with word IDs.
         pos_input: Tensor of shape (Batch, Seq_Len) with PoS tag IDs.

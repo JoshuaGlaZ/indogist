@@ -1,17 +1,18 @@
+import contextlib
 import datetime
 import hashlib
 from pathlib import Path
-from typing import Optional
+
 from fastapi import Request
 from fastapi.templating import Jinja2Templates
 
-from app.csrf import generate_csrf_token
 from app.auth import get_flash_messages
+from app.csrf import generate_csrf_token
 from app.i18n import (
-    lang,
-    negotiate_locale,
     cldr_format_date,
     cldr_format_number,
+    lang,
+    negotiate_locale,
 )
 from app.middlewares import AnonymousUser
 
@@ -26,10 +27,8 @@ def compute_static_hashes() -> dict[str, str]:
     for file in static.rglob("*"):
         if file.is_file():
             rel = file.relative_to(static).as_posix()
-            try:
+            with contextlib.suppress(OSError):
                 hashes[rel] = hashlib.sha256(file.read_bytes()).hexdigest()[:12]
-            except OSError:
-                pass
     return hashes
 
 
@@ -84,11 +83,11 @@ def truncatewords(value: str, count: int) -> str:
     return str(value)
 
 
-def date_filter(value, format_str: str = "medium", locale: Optional[str] = None):
+def date_filter(value, format_str: str = "medium", locale: str | None = None):
     return cldr_format_date(value, format_str=format_str, locale=locale)
 
 
-def number_filter(value, locale: Optional[str] = None):
+def number_filter(value, locale: str | None = None):
     return cldr_format_number(value, locale=locale)
 
 
@@ -110,8 +109,7 @@ def csrf_field(request: Request) -> str:
         session_id = str(request.session.get("user_id", ""))
     token = generate_csrf_token(session_id)
     return (
-        f'<meta name="csrf-token" content="{token}">'
-        f'<script>window.__CSRF_TOKEN="{token}"</script>'
+        f'<meta name="csrf-token" content="{token}"><script>window.__CSRF_TOKEN="{token}"</script>'
     )
 
 
@@ -119,7 +117,7 @@ def floatformat(value, decimal_places=1):
     try:
         val = float(value)
         if decimal_places == 0:
-            return str(int(round(val)))
+            return str(round(val))
         return f"{val:.{decimal_places}f}"
     except (ValueError, TypeError):
         return str(value)
@@ -175,13 +173,15 @@ templates.env.filters.update(
 
 
 def render_template(
-    request: Request, name: str, context: Optional[dict] = None, status_code: int = 200
+    request: Request, name: str, context: dict | None = None, status_code: int = 200
 ):
     ctx = context.copy() if context else {}
     ctx["request"] = request
     curr_locale = getattr(request.state, "locale", negotiate_locale(request))
     ctx["current_locale"] = curr_locale
-    bound_t = lambda msg, *args, **kwargs: lang(request, msg, *args, **kwargs)
+
+    def bound_t(msg, *args, **kwargs):
+        return lang(request, msg, *args, **kwargs)
 
     ctx["_"] = bound_t
     ctx["gettext"] = bound_t

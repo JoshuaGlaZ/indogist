@@ -1,25 +1,25 @@
-from typing import Optional
-from fastapi import APIRouter, Request, Depends, Form, status
+import os
+
+from fastapi import APIRouter, Depends, Form, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from slowapi import Limiter
 from slowapi.util import get_remote_address
-from sqlmodel import Session, select, func
 from sqlalchemy.exc import IntegrityError
+from sqlmodel import Session, func, select
 
-from app.database import get_session
-from app.models import User, Summary
 from app.auth import (
-    hash_password,
-    verify_password,
-    get_current_user,
-    require_current_user,
     add_flash_message,
+    get_current_user,
+    hash_password,
+    require_current_user,
+    verify_password,
 )
+from app.database import get_session
 from app.i18n import lang
+from app.models import Summary, User
 
 router = APIRouter(prefix="/accounts", tags=["accounts"])
 
-import os
 
 limiter = Limiter(
     key_func=get_remote_address,
@@ -27,13 +27,12 @@ limiter = Limiter(
 )
 
 
-
-def render_template(request: Request, name: str, context: dict = None):
+def render_template(request: Request, name: str, context: dict | None = None):
     return request.app.state.render_template(request, name, context)
 
 
 @router.get("/register", response_class=HTMLResponse)
-def register_get(request: Request, user: Optional[User] = Depends(get_current_user)):
+def register_get(request: Request, user: User | None = Depends(get_current_user)):
     if user:
         return RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
     return render_template(request, "accounts/register.html", {"form": {}})
@@ -57,16 +56,12 @@ def register_post(
 
     existing_user = session.exec(select(User).where(User.username == username)).first()
     if existing_user:
-        add_flash_message(
-            request, lang(request, "Username is already taken."), "danger"
-        )
+        add_flash_message(request, lang(request, "Username is already taken."), "danger")
         return render_template(request, "accounts/register.html", {"form": form_data})
 
     existing_email = session.exec(select(User).where(User.email == email)).first()
     if existing_email:
-        add_flash_message(
-            request, lang(request, "Email address is already registered."), "danger"
-        )
+        add_flash_message(request, lang(request, "Email address is already registered."), "danger")
         return render_template(request, "accounts/register.html", {"form": form_data})
 
     new_user = User(
@@ -80,9 +75,7 @@ def register_post(
         session.refresh(new_user)
     except IntegrityError:
         session.rollback()
-        add_flash_message(
-            request, lang(request, "Username is already taken."), "danger"
-        )
+        add_flash_message(request, lang(request, "Username is already taken."), "danger")
         return render_template(
             request,
             "accounts/register.html",
@@ -101,7 +94,7 @@ def register_post(
 
 
 @router.get("/login", response_class=HTMLResponse)
-def login_get(request: Request, user: Optional[User] = Depends(get_current_user)):
+def login_get(request: Request, user: User | None = Depends(get_current_user)):
     if user:
         return RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
     return render_template(request, "accounts/login.html", {"form": {}})
@@ -118,12 +111,8 @@ def login_post(
     user = session.exec(select(User).where(User.username == username)).first()
 
     if not user or not verify_password(password, user.hashed_password):
-        add_flash_message(
-            request, lang(request, "Invalid username or password."), "danger"
-        )
-        return render_template(
-            request, "accounts/login.html", {"form": {"username": username}}
-        )
+        add_flash_message(request, lang(request, "Invalid username or password."), "danger")
+        return render_template(request, "accounts/login.html", {"form": {"username": username}})
 
     request.session["user_id"] = user.id
     add_flash_message(
@@ -206,13 +195,9 @@ def profile_post(
     ).first()
 
     if existing_username:
-        add_flash_message(
-            request, lang(request, "Username is already taken."), "danger"
-        )
+        add_flash_message(request, lang(request, "Username is already taken."), "danger")
     elif existing_email:
-        add_flash_message(
-            request, lang(request, "Email is already in use."), "danger"
-        )
+        add_flash_message(request, lang(request, "Email is already in use."), "danger")
     else:
         try:
             current_user.username = clean_username
@@ -220,15 +205,12 @@ def profile_post(
             session.add(current_user)
             session.commit()
             session.refresh(current_user)
-            add_flash_message(
-                request, lang(request, "Your profile has been updated!"), "success"
-            )
+            add_flash_message(request, lang(request, "Your profile has been updated!"), "success")
         except IntegrityError:
             session.rollback()
             add_flash_message(
                 request, lang(request, "Username or email is already taken."), "danger"
             )
-
 
     try:
         res = session.exec(

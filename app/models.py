@@ -1,12 +1,14 @@
 import json
 from datetime import datetime, timezone
-from typing import Optional, List, Dict, Any
-from sqlmodel import SQLModel, Field, Relationship
+from typing import Any
+
+from sqlmodel import Field, Relationship, SQLModel
+
 
 class User(SQLModel, table=True):
     __tablename__ = "users"
 
-    id: Optional[int] = Field(default=None, primary_key=True)
+    id: int | None = Field(default=None, primary_key=True)
     username: str = Field(index=True, unique=True, nullable=False)
     email: str = Field(index=True, unique=True, nullable=False)
     hashed_password: str = Field(nullable=False)
@@ -14,7 +16,7 @@ class User(SQLModel, table=True):
     is_superuser: bool = Field(default=False)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
-    summaries: List["Summary"] = Relationship(back_populates="user")
+    summaries: list["Summary"] = Relationship(back_populates="user")
 
     @property
     def is_authenticated(self) -> bool:
@@ -24,7 +26,7 @@ class User(SQLModel, table=True):
 class Summary(SQLModel, table=True):
     __tablename__ = "summaries"
 
-    id: Optional[int] = Field(default=None, primary_key=True)
+    id: int | None = Field(default=None, primary_key=True)
     user_id: int = Field(foreign_key="users.id", index=True)
     title: str = Field(max_length=500)
     original_text: str
@@ -33,14 +35,15 @@ class Summary(SQLModel, table=True):
     entities_json: str = Field(default="[]")
     method: str = Field(default="hybrid", index=True)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), index=True)
+
     word_count_original: int = Field(default=0)
     word_count_summary: int = Field(default=0)
     added_to_dataset: bool = Field(default=False)
 
-    user: Optional[User] = Relationship(back_populates="summaries")
+    user: User | None = Relationship(back_populates="summaries")
 
     @property
-    def pk(self) -> Optional[int]:
+    def pk(self) -> int | None:
         return self.id
 
     @property
@@ -48,12 +51,12 @@ class Summary(SQLModel, table=True):
         method_labels = {
             "hybrid": "Hybrid (AI/NER)",
             "traditional": "Extractive (Statistical)",
-            "abstractive": "Abstractive (Neural)"
+            "abstractive": "Abstractive (Neural)",
         }
         return method_labels.get(self.method, str(self.method).title())
 
     @property
-    def entities(self) -> List[Dict[str, Any]]:
+    def entities(self) -> list[dict[str, Any]]:
         try:
             return json.loads(self.entities_json)
         except Exception:
@@ -74,14 +77,14 @@ class Summary(SQLModel, table=True):
             return self.word_count_summary / self.word_count_original
         return 0.0
 
-    def get_entities_by_type(self) -> Dict[str, List[str]]:
-        entities_by_type: Dict[str, List[str]] = {}
+    def get_entities_by_type(self) -> dict[str, list[str]]:
+        entities_by_type: dict[str, list[str]] = {}
         entities_list = self.entities
         if isinstance(entities_list, list):
             for entity in entities_list:
                 if isinstance(entity, dict):
-                    label = entity.get('label', 'UNKNOWN')
-                    text = entity.get('text', '')
+                    label = entity.get("label", "UNKNOWN")
+                    text = entity.get("text", "")
                     if label not in entities_by_type:
                         entities_by_type[label] = []
                     if text and text not in entities_by_type[label]:

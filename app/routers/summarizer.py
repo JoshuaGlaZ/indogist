@@ -1,34 +1,33 @@
-import json
-import hashlib
 import asyncio
-import anyio
+import hashlib
+import json
+import os
 from datetime import datetime
-from typing import Optional, List
+from functools import lru_cache
+
 from cachetools import TTLCache
-from fastapi import APIRouter, Request, Depends, Form, File, UploadFile, status, Query
-from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, Response
+from fastapi import APIRouter, Depends, File, Form, Query, Request, UploadFile
+from fastapi.responses import HTMLResponse, JSONResponse, Response
 from slowapi import Limiter
 from slowapi.util import get_remote_address
-from sqlmodel import Session, select, func, or_, desc, asc
+from sqlmodel import Session, asc, desc, func, or_, select
 
+from app.auth import add_flash_message, get_current_user
 from app.config import settings
 from app.database import get_session
-from app.models import User, Summary
-from app.auth import get_current_user, require_current_user, add_flash_message
 from app.i18n import lang
+from app.models import Summary, User
 from app.schemas import (
     parse_uploaded_file_content,
     validate_input_edge_cases,
     validate_text_content,
 )
-
 from ml.summarization.hybrid import predict_and_summarize
 from ml.summarization.traditional import summarize_traditional
 from ml.summarization.utils import add_to_indosum_dataset
 
 router = APIRouter(tags=["summarizer"])
 
-import os
 
 limiter = Limiter(
     key_func=get_remote_address,
@@ -39,14 +38,14 @@ limiter = Limiter(
 SUMMARY_CACHE = TTLCache(maxsize=256, ttl=3600)
 
 
-def render_template(request: Request, name: str, context: dict = None):
+def render_template(request: Request, name: str, context: dict | None = None):
     return request.app.state.render_template(request, name, context)
 
 
 @router.get("/", response_class=HTMLResponse)
 def home_get(
     request: Request,
-    user: Optional[User] = Depends(get_current_user),
+    user: User | None = Depends(get_current_user),
     session: Session = Depends(get_session),
 ):
     recent_summaries = []
@@ -66,25 +65,23 @@ def home_get(
 
 
 @router.get("/summarize/", response_class=HTMLResponse)
-def summarize_get(request: Request, user: Optional[User] = Depends(get_current_user)):
-    return render_template(
-        request, "summarizer/summarize.html", {"form": {}, "user": user}
-    )
+def summarize_get(request: Request, user: User | None = Depends(get_current_user)):
+    return render_template(request, "summarizer/summarize.html", {"form": {}, "user": user})
 
 
 @router.post("/summarize/")
 @limiter.limit("10/minute")
 async def summarize_post(
     request: Request,
-    title: Optional[str] = Form(""),
-    original_text: Optional[str] = Form(""),
-    text: Optional[str] = Form(""),
+    title: str | None = Form(""),
+    original_text: str | None = Form(""),
+    text: str | None = Form(""),
     compression_ratio: float = Form(0.3),
     method: str = Form("hybrid"),
     hybrid_variant: str = Form("pos_ner"),
     traditional_variant: str = Form("sentence_rank"),
-    file: Optional[UploadFile] = File(None),
-    user: Optional[User] = Depends(get_current_user),
+    file: UploadFile | None = File(None),
+    user: User | None = Depends(get_current_user),
     session: Session = Depends(get_session),
 ):
     is_ajax = (
@@ -103,9 +100,7 @@ async def summarize_post(
                 f"File exceeds maximum size of {settings.MAX_UPLOAD_SIZE_MB}MB.",
             )
             if is_ajax:
-                return JSONResponse(
-                    {"success": False, "error": err_msg}, status_code=413
-                )
+                return JSONResponse({"success": False, "error": err_msg}, status_code=413)
             add_flash_message(request, err_msg, "danger")
             return render_template(request, "summarizer/summarize.html", {"user": user})
         try:
@@ -117,9 +112,7 @@ async def summarize_post(
             )
 
             if is_ajax:
-                return JSONResponse(
-                    {"success": False, "error": err_msg}, status_code=400
-                )
+                return JSONResponse({"success": False, "error": err_msg}, status_code=400)
             add_flash_message(request, err_msg, "danger")
             return render_template(request, "summarizer/summarize.html", {"user": user})
 
@@ -151,7 +144,7 @@ async def summarize_post(
         except ValueError as e:
             if is_ajax:
                 return HTMLResponse(
-                    f'<div class="alert alert-danger mb-0">{str(e)}</div>',
+                    f'<div class="alert alert-danger mb-0">{e!s}</div>',
                     status_code=400,
                 )
             add_flash_message(request, str(e), "danger")
@@ -169,7 +162,7 @@ async def summarize_post(
     except ValueError as e:
         if is_ajax:
             return HTMLResponse(
-                f'<div class="alert alert-danger mb-0">{str(e)}</div>', status_code=400
+                f'<div class="alert alert-danger mb-0">{e!s}</div>', status_code=400
             )
 
     variant_key = hybrid_variant if method == "hybrid" else traditional_variant
@@ -274,10 +267,7 @@ async def summarize_post(
 
         entities_json = (
             _json.dumps(
-                [
-                    {"text": e.get("text", ""), "label": e.get("label", "ENTITY")}
-                    for e in ner_data
-                ]
+                [{"text": e.get("text", ""), "label": e.get("label", "ENTITY")} for e in ner_data]
             )
             if ner_data
             else "[]"
@@ -328,11 +318,11 @@ async def summarize_post(
 @router.get("/history/", response_class=HTMLResponse)
 def history_get(
     request: Request,
-    q: Optional[str] = Query(""),
-    method: Optional[str] = Query(""),
-    sort: Optional[str] = Query("-created_at"),
+    q: str | None = Query(""),
+    method: str | None = Query(""),
+    sort: str | None = Query("-created_at"),
     page: int = Query(1, ge=1),
-    user: Optional[User] = Depends(get_current_user),
+    user: User | None = Depends(get_current_user),
     session: Session = Depends(get_session),
 ):
     PAGE_SIZE = 10
@@ -389,9 +379,6 @@ def history_get(
     return render_template(request, "summarizer/history.html", context)
 
 
-from functools import lru_cache
-
-
 @lru_cache(maxsize=1)
 def _load_chart_metrics_cache():
     import base64
@@ -419,7 +406,7 @@ def _load_chart_metrics_cache():
     report_files = list(models_dir.glob("**/classification_report.txt"))
     if report_files:
         try:
-            with open(report_files[0], "r") as f:
+            with open(report_files[0]) as f:
                 lines = f.readlines()
             for line in lines[2:]:
                 parts = line.strip().split()
@@ -503,7 +490,7 @@ def _load_chart_metrics_cache():
 
 
 @router.get("/charts/", response_class=HTMLResponse)
-def charts_get(request: Request, user: Optional[User] = Depends(get_current_user)):
+def charts_get(request: Request, user: User | None = Depends(get_current_user)):
     chart_image_b64, report_table = _load_chart_metrics_cache()
     return render_template(
         request,
@@ -516,10 +503,10 @@ def charts_get(request: Request, user: Optional[User] = Depends(get_current_user
 @router.post("/comparison/", response_class=HTMLResponse)
 async def comparison(
     request: Request,
-    text: Optional[str] = Form(""),
-    model_a: Optional[str] = Form("traditional"),
-    model_b: Optional[str] = Form("hybrid"),
-    user: Optional[User] = Depends(get_current_user),
+    text: str | None = Form(""),
+    model_a: str | None = Form("traditional"),
+    model_b: str | None = Form("hybrid"),
+    user: User | None = Depends(get_current_user),
 ):
     is_ajax = (
         request.headers.get("X-Requested-With") == "XMLHttpRequest"
@@ -528,11 +515,10 @@ async def comparison(
     summary_a = ""
     summary_b = ""
     if text:
+
         def _run_model(model_name: str):
             if model_name == "traditional":
-                res = summarize_traditional(
-                    text, title="", compression_ratio=0.3, stream=False
-                )
+                res = summarize_traditional(text, title="", compression_ratio=0.3, stream=False)
                 return res.get("summary", "") if isinstance(res, dict) else res
             else:
                 res = predict_and_summarize(text, title="", compression_ratio=0.3)
@@ -557,7 +543,8 @@ async def comparison(
         has_ner_b = model_b == "hybrid"
         has_pos_b = model_b == "hybrid"
 
-        _t = lambda msg: lang(request, msg)
+        def _t(msg):
+            return lang(request, msg)
 
         toggle_a = (
             '<button type="button" class="btn btn-ghost active" style="padding:2px 8px;font-size:11.5px;" onclick="switchOutputMode(this,\'compareOutputA\',\'plain\')">'
@@ -645,7 +632,7 @@ async def comparison(
 def summary_detail(
     request: Request,
     pk: int,
-    user: Optional[User] = Depends(get_current_user),
+    user: User | None = Depends(get_current_user),
     session: Session = Depends(get_session),
 ):
     summary = session.get(Summary, pk)
@@ -666,7 +653,7 @@ def summary_detail(
 def export_summary(
     request: Request,
     pk: int,
-    user: Optional[User] = Depends(get_current_user),
+    user: User | None = Depends(get_current_user),
     session: Session = Depends(get_session),
 ):
     summary = session.get(Summary, pk)
@@ -685,7 +672,7 @@ def export_summary(
 def add_dataset_post(
     request: Request,
     summary_id: int = Form(...),
-    user: Optional[User] = Depends(get_current_user),
+    user: User | None = Depends(get_current_user),
     session: Session = Depends(get_session),
 ):
     summary = session.get(Summary, summary_id)

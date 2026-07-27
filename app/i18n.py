@@ -5,15 +5,17 @@ Provides CLDR-compliant locale negotiation, Gettext translation catalog manageme
 universal translation helpers (lang / _), and locale-aware date/number formatting.
 """
 
+import gettext
 from datetime import date, datetime
 from functools import lru_cache
-import gettext
 from pathlib import Path
-from typing import Any, List, Optional, Union
+from typing import Any
 
 from babel import Locale
 from babel.dates import (
     format_date as babel_format_date,
+)
+from babel.dates import (
     format_datetime as babel_format_datetime,
 )
 from babel.numbers import format_decimal as babel_format_decimal
@@ -21,12 +23,12 @@ from fastapi import Request
 
 # Application Locale Constants
 LOCALE_DIR: Path = Path(__file__).resolve().parent.parent / "locale"
-SUPPORTED_LOCALES: List[str] = ["id", "en"]
+SUPPORTED_LOCALES: list[str] = ["id", "en"]
 DEFAULT_LOCALE: str = "id"
 
 
 @lru_cache(maxsize=16)
-def _load_translation_catalog(locale: str) -> Optional[gettext.GNUTranslations]:
+def _load_translation_catalog(locale: str) -> gettext.GNUTranslations | None:
     """Internal LRU-cached loader for GNU gettext compiled binary catalogs (.mo)."""
     try:
         catalog = gettext.translation("messages", localedir=LOCALE_DIR, languages=[locale])
@@ -37,9 +39,9 @@ def _load_translation_catalog(locale: str) -> Optional[gettext.GNUTranslations]:
     return None
 
 
-def get_translations(locale: str) -> Union[gettext.GNUTranslations, gettext.NullTranslations]:
+def get_translations(locale: str) -> gettext.GNUTranslations | gettext.NullTranslations:
     """Retrieve the gettext translation catalog for the specified locale code.
-    
+
     Returns a GNUTranslations catalog if compiled .mo exists, otherwise a NullTranslations fallback.
     """
     catalog = _load_translation_catalog(locale)
@@ -53,14 +55,14 @@ def clear_translation_cache() -> None:
     _load_translation_catalog.cache_clear()
 
 
-def parse_accept_language(header: str) -> List[str]:
+def parse_accept_language(header: str) -> list[str]:
     """Parse HTTP Accept-Language header string into a prioritized list of language codes.
-    
+
     Example: 'en-US,en;q=0.9,id;q=0.8' -> ['en_US', 'en', 'id']
     """
     if not header:
         return []
-    languages: List[str] = []
+    languages: list[str] = []
     for item in header.split(","):
         parts = item.strip().split(";")
         lang_code = parts[0].strip().replace("-", "_")
@@ -74,9 +76,9 @@ def parse_accept_language(header: str) -> List[str]:
     return languages
 
 
-def negotiate_locale(request: Optional[Request] = None) -> str:
+def negotiate_locale(request: Request | None = None) -> str:
     """Determine the active request locale code using a 4-tier fallback hierarchy:
-    
+
     1. URL Query Parameter: ?lang=id or ?lang=en
     2. Cookie Preference: preferred_locale=id
     3. HTTP Accept-Language Header matching via Babel
@@ -108,17 +110,17 @@ def negotiate_locale(request: Optional[Request] = None) -> str:
 
 def lang(*args: Any, **kwargs: Any) -> str:
     """Universal Gettext translation helper function.
-    
+
     Supports flexible invocation patterns:
       - lang("Text to translate")
       - lang(request, "Text to translate")
-    
+
     Dynamically resolves locale from request state or negotiation fallback.
     """
     if not args:
         return ""
 
-    req: Optional[Request] = None
+    req: Request | None = None
     msg: str = ""
 
     if isinstance(args[0], Request):
@@ -131,9 +133,7 @@ def lang(*args: Any, **kwargs: Any) -> str:
         return ""
 
     target_locale = (
-        req.state.locale
-        if (req and hasattr(req.state, "locale"))
-        else negotiate_locale(req)
+        req.state.locale if (req and hasattr(req.state, "locale")) else negotiate_locale(req)
     )
     catalog = get_translations(target_locale)
     translated = catalog.gettext(msg)
@@ -148,15 +148,14 @@ def lang(*args: Any, **kwargs: Any) -> str:
     return translated
 
 
-
 # Standard Gettext Shorthand Alias
 _ = lang
 
 
 def cldr_format_date(
-    value: Union[datetime, date, str, None],
+    value: datetime | date | str | None,
     format_str: str = "medium",
-    locale: Optional[str] = None,
+    locale: str | None = None,
 ) -> str:
     """Format dates and datetimes according to Unicode CLDR standards via Babel."""
     if not value:
@@ -173,8 +172,8 @@ def cldr_format_date(
 
 
 def cldr_format_number(
-    value: Union[int, float, str, None],
-    locale: Optional[str] = None,
+    value: float | str | None,
+    locale: str | None = None,
 ) -> str:
     """Format decimal numbers with locale-appropriate thousand/decimal separators via Babel."""
     if value is None or value == "":

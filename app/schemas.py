@@ -1,9 +1,11 @@
-from typing import Optional, Tuple
-from fastapi import UploadFile
 from starlette.requests import Request
+
 from app.i18n import lang
 
-def parse_uploaded_file_content(content_str: str, request: Optional[Request] = None) -> Tuple[str, str]:
+
+def parse_uploaded_file_content(
+    content_str: str, request: Request | None = None
+) -> tuple[str, str]:
     """Parse uploaded text file with template format (TITLE= and TEXT=)."""
     lines = content_str.split("\n")
     title = ""
@@ -37,44 +39,69 @@ def parse_uploaded_file_content(content_str: str, request: Optional[Request] = N
                 "File format invalid. Please ensure:\n"
                 "1. TITLE= is present with a title\n"
                 "2. TEXT= is present with text content\n"
-                "Use the official template."
+                "Use the official template.",
             )
         )
     return title, text
 
+
 def is_template_format(content_str: str) -> bool:
     return "TITLE=" in content_str and "TEXT=" in content_str
 
-def validate_input_edge_cases(title: str, text: str, has_file: bool, file_content: Optional[str] = None, request: Optional[Request] = None) -> Tuple[bool, Optional[str]]:
+
+def validate_input_edge_cases(
+    title: str,
+    text: str,
+    has_file: bool,
+    file_content: str | None = None,
+    request: Request | None = None,
+) -> tuple[bool, str | None]:
     has_title = bool(title and title.strip())
     has_text = bool(text and text.strip())
 
     if not has_title and not has_text and not has_file:
-        return False, lang(request, "Please provide content to summarize. You must either:\n• Enter a title and text manually, OR\n• Upload a file using the template format")
+        return False, lang(
+            request,
+            "Please provide content to summarize. You must either:\n• Enter a title and text manually, OR\n• Upload a file using the template format",
+        )
 
     if has_title and not has_text and not has_file:
-        return False, lang(request, "Title provided but no text content found. Please either:\n• Enter text in the 'Original Text' field, OR\n• Upload a file using the template format")
+        return False, lang(
+            request,
+            "Title provided but no text content found. Please either:\n• Enter text in the 'Original Text' field, OR\n• Upload a file using the template format",
+        )
 
     if not has_title and not has_text and has_file:
         if file_content and not is_template_format(file_content):
-            return False, lang(request, "Uploaded file does not follow the template format. Please:\n• Download the template file\n• Fill it with TITLE= and TEXT= markers\n• Upload the completed template")
+            return False, lang(
+                request,
+                "Uploaded file does not follow the template format. Please:\n• Download the template file\n• Fill it with TITLE= and TEXT= markers\n• Upload the completed template",
+            )
         return True, None
 
     return True, None
 
-def validate_text_content(text: str, min_words: int = 10, request: Optional[Request] = None) -> bool:
+
+def validate_text_content(text: str, min_words: int = 10, request: Request | None = None) -> bool:
     if not text or not text.strip():
         raise ValueError(lang(request, "Text content is empty."))
     words = text.split()
     word_count = len(words)
     if word_count < min_words:
         raise ValueError(
-            lang(request, "Text is too short for summarization. Please provide at least %(min_words)d words (currently: %(word_count)d words).") % {"min_words": min_words, "word_count": word_count}
+            lang(
+                request,
+                "Text is too short for summarization. Please provide at least %(min_words)d words (currently: %(word_count)d words).",
+            )
+            % {"min_words": min_words, "word_count": word_count}
         )
 
     meaningful_words = [w for w in words if len(w) > 2]
     if len(meaningful_words) < min_words // 2:
         raise ValueError(
-            lang(request, "Text contains insufficient meaningful content. Please provide more substantial text for summarization.")
+            lang(
+                request,
+                "Text contains insufficient meaningful content. Please provide more substantial text for summarization.",
+            )
         )
     return True

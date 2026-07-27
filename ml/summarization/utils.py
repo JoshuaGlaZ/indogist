@@ -1,12 +1,15 @@
-import numpy as np
-import nltk
 import json
 import os
 import uuid
 from datetime import datetime
 from pathlib import Path
-BASE_DIR = Path(__file__).resolve().parent.parent.parent
+
+import nltk
+import numpy as np
+
 from ml.ner.loader import stemmer, stopword_remover
+
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 
 def tokens_to_text(token_lists):
@@ -27,6 +30,7 @@ def preprocess_tfidf(sentences):
         processed_sents.append(stopwords_removed)
     return processed_sents
 
+
 def extract_tf_query(tfidf_matrix, vectorizer, top_n=10):
     """fitur tf-based query"""
     sum_scores = np.asarray(tfidf_matrix.sum(axis=0)).ravel()
@@ -41,25 +45,25 @@ def add_to_indosum_dataset(title, text, summary, user):
     - summary: ['sentence1', 'sentence2']
     - category: 'user-submission'
     """
-    
-    dataset_dir = os.path.join(str(BASE_DIR), 'data', 'indosum')
+
+    dataset_dir = os.path.join(str(BASE_DIR), "data", "indosum")
     if not os.path.exists(dataset_dir):
         os.makedirs(dataset_dir)
-        
-    target_file = os.path.join(dataset_dir, 'user_fold.jsonl')
-    
-    raw_paragraphs = text.split('\n\n')
+
+    target_file = os.path.join(dataset_dir, "user_fold.jsonl")
+
+    raw_paragraphs = text.split("\n\n")
     structured_paragraphs = []
-    
+
     for p in raw_paragraphs:
         clean_p = p.strip()
         if not clean_p:
             continue
-            
+
         sents = nltk.tokenize.sent_tokenize(clean_p)
         tokenized_sents = [nltk.tokenize.word_tokenize(s) for s in sents]
         structured_paragraphs.append(tokenized_sents)
-        
+
     summary_sentences = nltk.tokenize.sent_tokenize(summary)
     new_id = f"user-{uuid.uuid4().hex[:10]}"
 
@@ -72,20 +76,20 @@ def add_to_indosum_dataset(title, text, summary, user):
         "source": str(user),
         "source_url": "",
         "title": title,
-        "created_at": datetime.now().isoformat()
+        "created_at": datetime.now().isoformat(),
     }
-    
+
     try:
-        with open(target_file, 'a', encoding='utf-8') as f:
+        with open(target_file, "a", encoding="utf-8") as f:
             json_str = json.dumps(entry, ensure_ascii=False)
-            f.write(json_str + '\n')
-            
+            f.write(json_str + "\n")
+
         print(f"[INFO] Added summary {entry['id']} to dataset.")
         return True
-        
+
     except Exception as e:
         print(f"[ERROR] Failed to save to dataset: {e}")
-        raise e
+        raise
 
 
 def pos_tag_summary(summary_text):
@@ -106,6 +110,7 @@ def pos_tag_summary(summary_text):
         # The NLPService pipeline uses tokenize_pretokenized=True,
         # so we must pre-tokenize the text into list-of-lists format.
         import nltk
+
         sentences = nltk.sent_tokenize(summary_text)
         tokenized = [nltk.word_tokenize(sent) for sent in sentences]
 

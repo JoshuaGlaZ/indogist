@@ -1,20 +1,19 @@
 import os
-import json
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any
 
 from ml.ner.loader import nlp_service
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-def get_model_status() -> Dict[str, Any]:
+def get_model_status() -> dict[str, Any]:
     """
-    Scans the ML directory structure and returns a comprehensive status dictionary 
+    Scans the ML directory structure and returns a comprehensive status dictionary
     for model availability, loaded components, and inference readiness.
     """
     models_root = BASE_DIR / "ml" / "models"
-    
+
     # 1. Discover Active Model Directory
     active_dir = None
     if models_root.exists():
@@ -22,11 +21,18 @@ def get_model_status() -> Dict[str, Any]:
         if final_pos_dir.exists():
             active_dir = final_pos_dir
         else:
-            pos_dirs = sorted([
-                d for d in os.listdir(models_root)
-                if (d.startswith("ner_pos_experiment_") or d.startswith("ner_experiment_pos_") or d == "ner_experiment_pos_10-May-2026_10.00") 
-                and (models_root / d).is_dir()
-            ], reverse=True)
+            pos_dirs = sorted(
+                [
+                    d
+                    for d in os.listdir(models_root)
+                    if (
+                        d.startswith(("ner_pos_experiment_", "ner_experiment_pos_"))
+                        or d == "ner_experiment_pos_10-May-2026_10.00"
+                    )
+                    and (models_root / d).is_dir()
+                ],
+                reverse=True,
+            )
             if pos_dirs:
                 active_dir = models_root / pos_dirs[0]
 
@@ -56,9 +62,13 @@ def get_model_status() -> Dict[str, Any]:
         "active_dir": str(active_dir) if active_dir.exists() else None,
         "active_dir_name": active_dir.name if active_dir.exists() else "None",
         "keras_available": keras_path.exists(),
-        "keras_size_mb": round(os.path.getsize(keras_path) / (1024 * 1024), 2) if keras_path.exists() else 0.0,
+        "keras_size_mb": round(os.path.getsize(keras_path) / (1024 * 1024), 2)
+        if keras_path.exists()
+        else 0.0,
         "tflite_available": tflite_path.exists(),
-        "tflite_size_mb": round(os.path.getsize(tflite_path) / (1024 * 1024), 2) if tflite_path.exists() else 0.0,
+        "tflite_size_mb": round(os.path.getsize(tflite_path) / (1024 * 1024), 2)
+        if tflite_path.exists()
+        else 0.0,
         "vectorizer_available": vectorizer_path.exists(),
         "tags_available": tag_path.exists(),
         "pos_mapping_available": pos_path.exists(),
@@ -79,11 +89,12 @@ def check_models(verbose: bool = True) -> int:
     singleton = status["singleton"]
 
     try:
+        from rich.align import Align
         from rich.console import Console
         from rich.panel import Panel
         from rich.table import Table
         from rich.text import Text
-        from rich.align import Align
+
         has_rich = True
     except ImportError:
         has_rich = False
@@ -94,10 +105,16 @@ def check_models(verbose: bool = True) -> int:
         print("           INDOGIST ML MODEL STATUS               ")
         print("==================================================")
         print(f"Active Model Dir : {status['active_dir_name']}")
-        print(f"Keras Model      : {'READY' if status['keras_available'] else 'NOT FOUND'} ({status['keras_size_mb']} MB)")
-        print(f"TFLite Model     : {'READY' if status['tflite_available'] else 'NOT FOUND'} ({status['tflite_size_mb']} MB)")
+        print(
+            f"Keras Model      : {'READY' if status['keras_available'] else 'NOT FOUND'} ({status['keras_size_mb']} MB)"
+        )
+        print(
+            f"TFLite Model     : {'READY' if status['tflite_available'] else 'NOT FOUND'} ({status['tflite_size_mb']} MB)"
+        )
         print(f"Active Format    : {singleton['model_format']}")
-        print(f"Vectorizer       : {'READY' if status['vectorizer_available'] else 'NOT FOUND'} (vocab={singleton['vocab_size']}, max_len={singleton['max_len']})")
+        print(
+            f"Vectorizer       : {'READY' if status['vectorizer_available'] else 'NOT FOUND'} (vocab={singleton['vocab_size']}, max_len={singleton['max_len']})"
+        )
         print(f"POS Tagger       : {singleton['pos_tagger_status']}")
         print(f"Pipeline State   : {'READY' if singleton['is_ready'] else 'INCOMPLETE'}")
         print("==================================================")
@@ -119,7 +136,11 @@ def check_models(verbose: bool = True) -> int:
 
     # Keras Row
     if status["keras_available"]:
-        keras_badge = "[bold black on green]  AVAILABLE  [/]" if singleton["model_format"] == "Keras" else "[bold green]AVAILABLE[/]"
+        keras_badge = (
+            "[bold black on green]  AVAILABLE  [/]"
+            if singleton["model_format"] == "Keras"
+            else "[bold green]AVAILABLE[/]"
+        )
         keras_detail = f"[green]v2/v3 Saved Model format ({status['keras_size_mb']} MB)[/green]"
     else:
         keras_badge = "[bold red]MISSING[/]"
@@ -128,7 +149,11 @@ def check_models(verbose: bool = True) -> int:
 
     # TFLite Row
     if status["tflite_available"]:
-        tflite_badge = "[bold black on green]  AVAILABLE  [/]" if singleton["model_format"] == "TFLite" else "[bold green]AVAILABLE[/]"
+        tflite_badge = (
+            "[bold black on green]  AVAILABLE  [/]"
+            if singleton["model_format"] == "TFLite"
+            else "[bold green]AVAILABLE[/]"
+        )
         tflite_detail = f"[green]CPU Quantized FlatBuffer ({status['tflite_size_mb']} MB)[/green]"
     else:
         tflite_badge = "[bold red]MISSING[/]"
@@ -136,12 +161,24 @@ def check_models(verbose: bool = True) -> int:
     table.add_row("TFLite Model", tflite_badge, tflite_detail)
 
     # Active Format Row
-    active_fmt_badge = f"[bold green]{singleton['model_format']}[/]" if singleton["model_format"] != "None" else "[bold red]NONE[/]"
-    table.add_row("Active Format", active_fmt_badge, f"Selected for live inference (is_keras={singleton['is_keras_model']})")
+    active_fmt_badge = (
+        f"[bold green]{singleton['model_format']}[/]"
+        if singleton["model_format"] != "None"
+        else "[bold red]NONE[/]"
+    )
+    table.add_row(
+        "Active Format",
+        active_fmt_badge,
+        f"Selected for live inference (is_keras={singleton['is_keras_model']})",
+    )
 
     # Vectorizer Row
-    vect_badge = "[bold green]LOADED[/]" if status["vectorizer_available"] else "[bold red]MISSING[/]"
-    vect_detail = f"Vocabulary Size: {singleton['vocab_size']:,} terms | Max Cap Len: {singleton['max_len']}"
+    vect_badge = (
+        "[bold green]LOADED[/]" if status["vectorizer_available"] else "[bold red]MISSING[/]"
+    )
+    vect_detail = (
+        f"Vocabulary Size: {singleton['vocab_size']:,} terms | Max Cap Len: {singleton['max_len']}"
+    )
     table.add_row("Text Vectorizer", vect_badge, vect_detail)
 
     # NER Tags Row
@@ -159,13 +196,21 @@ def check_models(verbose: bool = True) -> int:
     table.add_row("POS Tagger Engine", pos_badge, singleton["pos_tagger_status"])
 
     # Extractive Summarization Row
-    table.add_row("Summarizer Engine", "[bold green]READY[/bold green]", "TF-IDF + Cosine Similarity + MMR (lambda=0.7)")
+    table.add_row(
+        "Summarizer Engine",
+        "[bold green]READY[/bold green]",
+        "TF-IDF + Cosine Similarity + MMR (lambda=0.7)",
+    )
 
     # Overall Pipeline Readiness
     is_ready = singleton["is_ready"]
-    overall_status = "[bold black on green]  PIPELINE READY  [/]" if is_ready else "[bold white on red]  PIPELINE INCOMPLETE  [/]"
+    overall_status = (
+        "[bold black on green]  PIPELINE READY  [/]"
+        if is_ready
+        else "[bold white on red]  PIPELINE INCOMPLETE  [/]"
+    )
 
-    panel_title = f"[bold white]Indogist ML Model & Pipeline Availability[/bold white]"
+    panel_title = "[bold white]Indogist ML Model & Pipeline Availability[/bold white]"
     panel_subtitle = f"Active Directory: [cyan]{status['active_dir_name']}[/cyan]"
 
     main_panel = Panel(
@@ -186,4 +231,5 @@ def check_models(verbose: bool = True) -> int:
 
 if __name__ == "__main__":
     import sys
+
     sys.exit(check_models())
