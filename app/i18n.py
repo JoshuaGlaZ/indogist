@@ -1,8 +1,15 @@
-import gettext
+"""
+IndoGist Internationalization (i18n) & Localization (l10n) Engine.
+
+Provides CLDR-compliant locale negotiation, Gettext translation catalog management,
+universal translation helpers (lang / _), and locale-aware date/number formatting.
+"""
+
+from datetime import date, datetime
 from functools import lru_cache
+import gettext
 from pathlib import Path
-from typing import List, Optional, Union
-from datetime import datetime, date
+from typing import Any, List, Optional, Union
 
 from babel import Locale
 from babel.dates import (
@@ -12,71 +19,101 @@ from babel.dates import (
 from babel.numbers import format_decimal as babel_format_decimal
 from fastapi import Request
 
-LOCALE_DIR = Path(__file__).resolve().parent.parent / "locale"
-SUPPORTED_LOCALES = ["id", "en"]
-DEFAULT_LOCALE = "id"
+# Application Locale Constants
+LOCALE_DIR: Path = Path(__file__).resolve().parent.parent / "locale"
+SUPPORTED_LOCALES: List[str] = ["id", "en"]
+DEFAULT_LOCALE: str = "id"
 
 
 @lru_cache(maxsize=16)
-def get_translations(locale: str) -> gettext.NullTranslations:
-    """Load and cache gettext translations catalog for a given locale."""
+def _load_translation_catalog(locale: str) -> Optional[gettext.GNUTranslations]:
+    """Internal LRU-cached loader for GNU gettext compiled binary catalogs (.mo)."""
     try:
-        return gettext.translation("messages", localedir=LOCALE_DIR, languages=[locale])
+        catalog = gettext.translation("messages", localedir=LOCALE_DIR, languages=[locale])
+        if isinstance(catalog, gettext.GNUTranslations):
+            return catalog
     except Exception:
-        return gettext.NullTranslations()
+        pass
+    return None
+
+
+def get_translations(locale: str) -> Union[gettext.GNUTranslations, gettext.NullTranslations]:
+    """Retrieve the gettext translation catalog for the specified locale code.
+    
+    Returns a GNUTranslations catalog if compiled .mo exists, otherwise a NullTranslations fallback.
+    """
+    catalog = _load_translation_catalog(locale)
+    if catalog is not None:
+        return catalog
+    return gettext.NullTranslations()
+
+
+def clear_translation_cache() -> None:
+    """Clear the in-memory translation catalog LRU cache (useful during dev/testing)."""
+    _load_translation_catalog.cache_clear()
 
 
 def parse_accept_language(header: str) -> List[str]:
-    """Parse HTTP Accept-Language header into ordered list of language codes."""
+    """Parse HTTP Accept-Language header string into a prioritized list of language codes.
+    
+    Example: 'en-US,en;q=0.9,id;q=0.8' -> ['en_US', 'en', 'id']
+    """
     if not header:
         return []
-    languages = []
+    languages: List[str] = []
     for item in header.split(","):
         parts = item.strip().split(";")
         lang_code = parts[0].strip().replace("-", "_")
         if lang_code:
             languages.append(lang_code)
-            # Also append 2-letter base code if full locale (e.g. 'en_US' -> 'en')
+            # Also extract 2-letter ISO base code (e.g. 'en_US' -> 'en')
             if "_" in lang_code:
-                languages.append(lang_code.split("_")[0])
+                base_code = lang_code.split("_")[0]
+                if base_code not in languages:
+                    languages.append(base_code)
     return languages
 
 
 def negotiate_locale(request: Optional[Request] = None) -> str:
-    """
-    Determine request locale with priority:
-    1. Query Parameter (?lang=en)
-    2. Cookie (preferred_locale=en)
-    3. Accept-Language Header matching via Babel
-    4. Default Locale fallback ('id')
+    """Determine the active request locale code using a 4-tier fallback hierarchy:
+    
+    1. URL Query Parameter: ?lang=id or ?lang=en
+    2. Cookie Preference: preferred_locale=id
+    3. HTTP Accept-Language Header matching via Babel
+    4. Default System Locale ('id')
     """
     if not request:
         return DEFAULT_LOCALE
 
-    # 1. Query param
+    # 1. Query parameter override
     query_lang = request.query_params.get("lang")
     if query_lang and query_lang in SUPPORTED_LOCALES:
         return query_lang
 
-    # 2. Cookie
+    # 2. Cookie preference override
     cookie_lang = request.cookies.get("preferred_locale")
     if cookie_lang and cookie_lang in SUPPORTED_LOCALES:
         return cookie_lang
 
-    # 3. Accept-Language header
+    # 3. Accept-Language HTTP header negotiation via Babel
     accept_header = request.headers.get("accept-language", "")
     requested = parse_accept_language(accept_header)
     matched = Locale.negotiate(requested, SUPPORTED_LOCALES)
-    if matched:
+    if matched and matched.language in SUPPORTED_LOCALES:
         return matched.language
 
+    # 4. Default locale fallback
     return DEFAULT_LOCALE
 
 
-def lang(*args, **kwargs) -> str:
-    """
-    Global translation helper. Supports both lang(msg) and lang(request, msg) signatures.
-    Resolves locale dynamically based on request or falls back to default locale catalog.
+def lang(*args: Any, **kwargs: Any) -> str:
+    """Universal Gettext translation helper function.
+    
+    Supports flexible invocation patterns:
+      - lang("Text to translate")
+      - lang(request, "Text to translate")
+    
+    Dynamically resolves locale from request state or negotiation fallback.
     """
     if not args:
         return ""
@@ -98,19 +135,20 @@ def lang(*args, **kwargs) -> str:
         if (req and hasattr(req.state, "locale"))
         else negotiate_locale(req)
     )
-    translation = get_translations(target_locale)
-    return translation.gettext(msg)
+    catalog = get_translations(target_locale)
+    return catalog.gettext(msg)
 
 
+# Standard Gettext Shorthand Alias
 _ = lang
 
 
 def cldr_format_date(
-    value: Union[datetime, date, str],
+    value: Union[datetime, date, str, None],
     format_str: str = "medium",
     locale: Optional[str] = None,
 ) -> str:
-    """CLDR-compliant date formatting via Babel."""
+    """Format dates and datetimes according to Unicode CLDR standards via Babel."""
     if not value:
         return ""
     target_locale = locale or DEFAULT_LOCALE
@@ -125,10 +163,11 @@ def cldr_format_date(
 
 
 def cldr_format_number(
-    value: Union[int, float, str], locale: Optional[str] = None
+    value: Union[int, float, str, None],
+    locale: Optional[str] = None,
 ) -> str:
-    """CLDR-compliant decimal number formatting via Babel."""
-    if value is None:
+    """Format decimal numbers with locale-appropriate thousand/decimal separators via Babel."""
+    if value is None or value == "":
         return ""
     target_locale = locale or DEFAULT_LOCALE
     try:

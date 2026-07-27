@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-07-27 09:48+0700\n"
+"POT-Creation-Date: 2026-07-27 10:26+0700\n"
 "PO-Revision-Date: 2026-07-24 16:00+0700\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: id\n"
@@ -36,9 +36,9 @@ msgid ""
 "• Enter a title and text manually, OR\n"
 "• Upload a file using the template format"
 msgstr ""
-"Please provide content to summarize. You must either:\n"
-"• Enter a title and text manually, OR\n"
-"• Upload a file using the template format"
+"Harap berikan konten untuk diringkas. Anda harus:\n"
+"• Memasukkan judul dan teks secara manual, ATAU\n"
+"• Mengunggah berkas menggunakan format template"
 
 #: app/schemas.py:56
 msgid ""
@@ -46,9 +46,9 @@ msgid ""
 "• Enter text in the 'Original Text' field, OR\n"
 "• Upload a file using the template format"
 msgstr ""
-"Title provided but no text content found. Please either:\n"
-"• Enter text in the 'Original Text' field, OR\n"
-"• Upload a file using the template format"
+"Judul diberikan tetapi tidak ada konten teks yang ditemukan. Harap:\n"
+"• Memasukkan teks di kolom 'Teks Asli', ATAU\n"
+"• Mengunggah berkas menggunakan format template"
 
 #: app/schemas.py:60
 msgid ""
@@ -57,10 +57,10 @@ msgid ""
 "• Fill it with TITLE= and TEXT= markers\n"
 "• Upload the completed template"
 msgstr ""
-"Uploaded file does not follow the template format. Please:\n"
-"• Download the template file\n"
-"• Fill it with TITLE= and TEXT= markers\n"
-"• Upload the completed template"
+"Berkas yang diunggah tidak mengikuti format template. Harap:\n"
+"• Mengunduh berkas template\n"
+"• Mengisinya dengan penanda TITLE= dan TEXT=\n"
+"• Mengunggah template yang telah diisi"
 
 #: app/schemas.py:67
 msgid "Text content is empty."
@@ -279,31 +279,31 @@ msgstr "Masuk di sini"
 msgid "IndoGist — Precision Studio"
 msgstr "IndoGist — Studio Presisi"
 
-#: templates/summarizer/base.html:29
-msgid "Summarize studio"
+#: templates/summarizer/base.html:35
+msgid "Summarize"
 msgstr "Studio Peringkas"
 
-#: templates/summarizer/base.html:30
+#: templates/summarizer/base.html:36
 msgid "History"
 msgstr "Riwayat"
 
-#: templates/summarizer/base.html:31
+#: templates/summarizer/base.html:37
 msgid "Metrics"
 msgstr "Metrik"
 
-#: templates/summarizer/base.html:32
+#: templates/summarizer/base.html:38
 msgid "Compare"
 msgstr "Bandingkan"
 
-#: templates/summarizer/base.html:48
+#: templates/summarizer/base.html:54
 msgid "Logout"
 msgstr "Keluar"
 
-#: templates/summarizer/base.html:51
+#: templates/summarizer/base.html:57
 msgid "Login"
 msgstr "Masuk"
 
-#: templates/summarizer/base.html:71
+#: templates/summarizer/base.html:77
 msgid "Text Summarization Engine"
 msgstr "Mesin Peringkas Teks"
 
@@ -490,8 +490,10 @@ msgstr "Filter berdasarkan metode"
 msgid "All methods"
 msgstr "Semua metode"
 
-#: templates/summarizer/history.html:25 templates/summarizer/home.html:69
-#: templates/summarizer/summarize.html:83
+#: templates/summarizer/history.html:25
+#: templates/summarizer/history_list.html:8 templates/summarizer/home.html:33
+#: templates/summarizer/home.html:69 templates/summarizer/summarize.html:83
+#: templates/summarizer/summary_detail.html:15
 msgid "Hybrid"
 msgstr "Hibrida"
 
@@ -518,6 +520,12 @@ msgstr "Terlama pertama"
 #: templates/summarizer/history.html:36
 msgid "Title A-Z"
 msgstr "Judul A-Z"
+
+#: templates/summarizer/history_list.html:8 templates/summarizer/home.html:33
+#: templates/summarizer/summarize.html:87
+#: templates/summarizer/summary_detail.html:15
+msgid "Traditional"
+msgstr "Ekstraktif Tradisional"
 
 #: templates/summarizer/history_list.html:13 templates/summarizer/home.html:38
 msgid "View detail"
@@ -592,8 +600,8 @@ msgid "Sample Summary Output"
 msgstr "Contoh Hasil Ringkasan"
 
 #: templates/summarizer/summarize.html:3
-msgid "Summarize Studio — IndoGist"
-msgstr "Studio Peringkas — IndoGist"
+msgid "IndoGist — Summarizer Smart"
+msgstr "IndoGist — Studio Peringkas Cerdas"
 
 #: templates/summarizer/summarize.html:9
 msgid ""
@@ -615,15 +623,15 @@ msgstr "kata"
 
 #: templates/summarizer/summarize.html:24
 msgid "Raw text"
-msgstr "Teks mentah"
+msgstr "Teks Mentah"
 
 #: templates/summarizer/summarize.html:25
 msgid "File upload"
-msgstr "Unggah file"
+msgstr "Unggah Berkas"
 
 #: templates/summarizer/summarize.html:26
 msgid "Presets"
-msgstr "Preset"
+msgstr "Preset Dokumen"
 
 #: templates/summarizer/summarize.html:31
 msgid "Add optional title"
@@ -679,7 +687,7 @@ msgstr "Batas: 8.000 kata"
 
 #: templates/summarizer/summarize.html:59
 msgid "File attachment"
-msgstr "Lampiran file"
+msgstr "Lampiran Berkas"
 
 #: templates/summarizer/summarize.html:62
 msgid "Drag a .txt, .pdf, or .docx file here"
@@ -687,11 +695,11 @@ msgstr "Tarik dan lepas file .txt, .pdf, atau .docx di sini"
 
 #: templates/summarizer/summarize.html:64
 msgid "Browse files"
-msgstr "Pilih file"
+msgstr "Pilih Berkas"
 
 #: templates/summarizer/summarize.html:69
 msgid "Sample document presets"
-msgstr "Preset contoh dokumen"
+msgstr "Preset Contoh Dokumen"
 
 #: templates/summarizer/summarize.html:71
 msgid "News article"
@@ -712,10 +720,6 @@ msgstr "Metode peringkasan"
 #: templates/summarizer/summarize.html:83
 msgid "POS/NER + TF-IDF"
 msgstr "POS/NER + TF-IDF"
-
-#: templates/summarizer/summarize.html:87
-msgid "Traditional"
-msgstr "Tradisional"
 
 #: templates/summarizer/summarize.html:87
 msgid "Extractive Sentence Rank"
@@ -768,7 +772,7 @@ msgstr "Buat ringkasan"
 #: templates/summarizer/summarize.html:142
 #: templates/summarizer/summary_detail.html:37
 msgid "Summary output"
-msgstr "Hasil ringkasan"
+msgstr "Hasil Ringkasan"
 
 #: templates/summarizer/summarize.html:144
 #: templates/summarizer/summary_detail.html:26
@@ -811,15 +815,15 @@ msgstr "Kembali ke riwayat"
 
 #: templates/summarizer/summary_detail.html:24
 msgid "Original text"
-msgstr "Teks asli"
+msgstr "Teks Asli"
 
 #: templates/summarizer/summary_detail.html:64
 msgid "Detected named entities"
-msgstr "Entitas bernama terdeteksi"
+msgstr "Entitas Terdeteksi"
 
 #: templates/summarizer/summary_detail.html:89
 msgid "Summary statistics"
-msgstr "Statistik ringkasan"
+msgstr "Statistik Ringkasan"
 
 #: templates/summarizer/summary_detail.html:94
 msgid "Original words"
@@ -836,4 +840,10 @@ msgstr "Rasio Kompresi"
 #: templates/summarizer/summary_detail.html:103
 msgid "shorter"
 msgstr "lebih pendek"
+
+#~ msgid "Summarize studio"
+#~ msgstr "Studio Peringkas"
+
+#~ msgid "Summarize Studio — IndoGist"
+#~ msgstr "Studio Peringkas — IndoGist"
 

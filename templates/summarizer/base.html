@@ -32,7 +32,7 @@
   <header class="topbar">
     <a href="/" class="brand">INDOGIST</a>
     <nav class="nav" aria-label="Primary">
-      <a class="nav-link {% if request.url.path == '/summarize/' %}active{% endif %}" href="/summarize/">{{ _("Summarize studio") }}</a>
+      <a class="nav-link {% if request.url.path == '/summarize/' %}active{% endif %}" href="/summarize/">{{ _("Summarize") }}</a>
       <a class="nav-link {% if 'history' in request.url.path %}active{% endif %}" href="/history/">{{ _("History") }}</a>
       <a class="nav-link {% if 'charts' in request.url.path %}active{% endif %}" href="/charts/">{{ _("Metrics") }}</a>
       <a class="nav-link {% if 'comparison' in request.url.path %}active{% endif %}" href="/comparison/">{{ _("Compare") }}</a>
@@ -42,10 +42,15 @@
         <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
         <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z"/></svg>
       </button>
-      <div class="lang-switcher">
-        <a href="/language/id" class="lang-link{% if current_locale == 'id' %} active{% endif %}" title="Bahasa Indonesia">ID</a>
-        <span class="lang-sep">|</span>
-        <a href="/language/en" class="lang-link{% if current_locale == 'en' %} active{% endif %}" title="English">EN</a>
+      <div class="lang-switcher" aria-label="Language selector">
+        <a href="/language/id" class="lang-btn{% if current_locale == 'id' %} active{% endif %}" title="Bahasa Indonesia">
+          <img src="{{ static('img/id.png') }}" alt="ID" class="flag-icon" width="16" height="11" />
+          <span>ID</span>
+        </a>
+        <a href="/language/en" class="lang-btn{% if current_locale == 'en' %} active{% endif %}" title="English">
+          <img src="{{ static('img/us.png') }}" alt="EN" class="flag-icon" width="16" height="11" />
+          <span>EN</span>
+        </a>
       </div>
       {% if request.user and request.user.is_authenticated %}
         <a href="/accounts/profile/" class="btn btn-ghost">{{ request.user.username }}</a>

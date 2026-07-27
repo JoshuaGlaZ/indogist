@@ -1,6 +1,7 @@
 import pytest
 import asyncio
 import time
+import uuid
 from httpx import AsyncClient, ASGITransport
 from sqlmodel import Session, select
 from app.main import app
@@ -169,7 +170,7 @@ async def test_concurrent_registration_race_condition():
     Verifies handling of race conditions on unique username constraints without server crashes.
     """
     transport = ASGITransport(app=app)
-    target_username = "race_condition_user_99"
+    target_username = f"race_user_{uuid.uuid4().hex[:8]}"
 
     async def attempt_register(index):
         try:

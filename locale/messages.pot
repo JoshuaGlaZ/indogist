@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-07-27 09:48+0700\n"
+"POT-Creation-Date: 2026-07-27 10:26+0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -258,31 +258,31 @@ msgstr ""
 msgid "IndoGist — Precision Studio"
 msgstr ""
 
-#: templates/summarizer/base.html:29
-msgid "Summarize studio"
+#: templates/summarizer/base.html:35
+msgid "Summarize"
 msgstr ""
 
-#: templates/summarizer/base.html:30
+#: templates/summarizer/base.html:36
 msgid "History"
 msgstr ""
 
-#: templates/summarizer/base.html:31
+#: templates/summarizer/base.html:37
 msgid "Metrics"
 msgstr ""
 
-#: templates/summarizer/base.html:32
+#: templates/summarizer/base.html:38
 msgid "Compare"
 msgstr ""
 
-#: templates/summarizer/base.html:48
+#: templates/summarizer/base.html:54
 msgid "Logout"
 msgstr ""
 
-#: templates/summarizer/base.html:51
+#: templates/summarizer/base.html:57
 msgid "Login"
 msgstr ""
 
-#: templates/summarizer/base.html:71
+#: templates/summarizer/base.html:77
 msgid "Text Summarization Engine"
 msgstr ""
 
@@ -467,8 +467,10 @@ msgstr ""
 msgid "All methods"
 msgstr ""
 
-#: templates/summarizer/history.html:25 templates/summarizer/home.html:69
-#: templates/summarizer/summarize.html:83
+#: templates/summarizer/history.html:25
+#: templates/summarizer/history_list.html:8 templates/summarizer/home.html:33
+#: templates/summarizer/home.html:69 templates/summarizer/summarize.html:83
+#: templates/summarizer/summary_detail.html:15
 msgid "Hybrid"
 msgstr ""
 
@@ -494,6 +496,12 @@ msgstr ""
 
 #: templates/summarizer/history.html:36
 msgid "Title A-Z"
+msgstr ""
+
+#: templates/summarizer/history_list.html:8 templates/summarizer/home.html:33
+#: templates/summarizer/summarize.html:87
+#: templates/summarizer/summary_detail.html:15
+msgid "Traditional"
 msgstr ""
 
 #: templates/summarizer/history_list.html:13 templates/summarizer/home.html:38
@@ -565,7 +573,7 @@ msgid "Sample Summary Output"
 msgstr ""
 
 #: templates/summarizer/summarize.html:3
-msgid "Summarize Studio — IndoGist"
+msgid "IndoGist — Summarizer Smart"
 msgstr ""
 
 #: templates/summarizer/summarize.html:9
@@ -682,10 +690,6 @@ msgstr ""
 
 #: templates/summarizer/summarize.html:83
 msgid "POS/NER + TF-IDF"
-msgstr ""
-
-#: templates/summarizer/summarize.html:87
-msgid "Traditional"
 msgstr ""
 
 #: templates/summarizer/summarize.html:87
