@@ -389,8 +389,11 @@ def history_get(
     return render_template(request, "summarizer/history.html", context)
 
 
-@router.get("/charts/", response_class=HTMLResponse)
-def charts_get(request: Request, user: Optional[User] = Depends(get_current_user)):
+from functools import lru_cache
+
+
+@lru_cache(maxsize=1)
+def _load_chart_metrics_cache():
     import base64
     from pathlib import Path
 
@@ -496,6 +499,12 @@ def charts_get(request: Request, user: Optional[User] = Depends(get_current_user
             },
         ]
 
+    return chart_image_b64, report_table
+
+
+@router.get("/charts/", response_class=HTMLResponse)
+def charts_get(request: Request, user: Optional[User] = Depends(get_current_user)):
+    chart_image_b64, report_table = _load_chart_metrics_cache()
     return render_template(
         request,
         "summarizer/charts.html",
@@ -505,7 +514,7 @@ def charts_get(request: Request, user: Optional[User] = Depends(get_current_user
 
 @router.get("/comparison/", response_class=HTMLResponse)
 @router.post("/comparison/", response_class=HTMLResponse)
-def comparison(
+async def comparison(
     request: Request,
     text: Optional[str] = Form(""),
     model_a: Optional[str] = Form("traditional"),
@@ -519,23 +528,19 @@ def comparison(
     summary_a = ""
     summary_b = ""
     if text:
-        if model_a == "traditional":
-            res_a = summarize_traditional(
-                text, title="", compression_ratio=0.3, stream=False
-            )
-            summary_a = res_a.get("summary", "") if isinstance(res_a, dict) else res_a
-        else:
-            res_a = predict_and_summarize(text, title="", compression_ratio=0.3)
-            summary_a = res_a.get("summary", "") if isinstance(res_a, dict) else res_a
+        def _run_model(model_name: str):
+            if model_name == "traditional":
+                res = summarize_traditional(
+                    text, title="", compression_ratio=0.3, stream=False
+                )
+                return res.get("summary", "") if isinstance(res, dict) else res
+            else:
+                res = predict_and_summarize(text, title="", compression_ratio=0.3)
+                return res.get("summary", "") if isinstance(res, dict) else res
 
-        if model_b == "traditional":
-            res_b = summarize_traditional(
-                text, title="", compression_ratio=0.3, stream=False
-            )
-            summary_b = res_b.get("summary", "") if isinstance(res_b, dict) else res_b
-        else:
-            res_b = predict_and_summarize(text, title="", compression_ratio=0.3)
-            summary_b = res_b.get("summary", "") if isinstance(res_b, dict) else res_b
+        res_a_task = asyncio.to_thread(_run_model, model_a)
+        res_b_task = asyncio.to_thread(_run_model, model_b)
+        summary_a, summary_b = await asyncio.gather(res_a_task, res_b_task)
 
     context = {
         "source_text": text,

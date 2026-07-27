@@ -3,7 +3,23 @@ from typing import Generator
 from sqlmodel import SQLModel, create_engine, Session
 from app.config import settings
 
+from sqlalchemy import event
+from sqlalchemy.engine import Engine
+
 logger = logging.getLogger("indogist.database")
+
+
+@event.listens_for(Engine, "connect")
+def set_sqlite_pragma(dbapi_connection, connection_record):
+    if "sqlite" in settings.DATABASE_URL or type(dbapi_connection).__module__.startswith("sqlite3"):
+        try:
+            cursor = dbapi_connection.cursor()
+            cursor.execute("PRAGMA journal_mode=WAL")
+            cursor.execute("PRAGMA synchronous=NORMAL")
+            cursor.execute("PRAGMA busy_timeout=5000")
+            cursor.close()
+        except Exception:
+            pass
 
 
 def init_engine():

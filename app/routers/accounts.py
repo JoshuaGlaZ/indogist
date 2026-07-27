@@ -188,21 +188,47 @@ def profile_post(
     current_user: User = Depends(require_current_user),
     session: Session = Depends(get_session),
 ):
-    existing_email = session.exec(
-        select(User).where(User.email == email, User.id != current_user.id)
+    clean_username = username.strip()
+    clean_email = email.strip().lower()
+
+    existing_username = session.exec(
+        select(User).where(
+            func.lower(User.username) == clean_username.lower(),
+            User.id != current_user.id,
+        )
     ).first()
 
-    if existing_email:
-        add_flash_message(request, lang(request, "Email is already in use."), "danger")
-    else:
-        current_user.username = username.strip()
-        current_user.email = email.strip().lower()
-        session.add(current_user)
-        session.commit()
-        session.refresh(current_user)
-        add_flash_message(
-            request, lang(request, "Your profile has been updated!"), "success"
+    existing_email = session.exec(
+        select(User).where(
+            func.lower(User.email) == clean_email.lower(),
+            User.id != current_user.id,
         )
+    ).first()
+
+    if existing_username:
+        add_flash_message(
+            request, lang(request, "Username is already taken."), "danger"
+        )
+    elif existing_email:
+        add_flash_message(
+            request, lang(request, "Email is already in use."), "danger"
+        )
+    else:
+        try:
+            current_user.username = clean_username
+            current_user.email = clean_email
+            session.add(current_user)
+            session.commit()
+            session.refresh(current_user)
+            add_flash_message(
+                request, lang(request, "Your profile has been updated!"), "success"
+            )
+        except IntegrityError:
+            session.rollback()
+            add_flash_message(
+                request, lang(request, "Username or email is already taken."), "danger"
+            )
+
 
     try:
         res = session.exec(

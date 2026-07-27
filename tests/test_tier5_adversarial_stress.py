@@ -34,7 +34,13 @@ def test_profile_username_collision_vulnerability():
         follow_redirects=False
     )
     assert res1.status_code == 302
-    cookie_alpha = res1.cookies
+
+    login_res1 = client.post(
+        "/accounts/login",
+        data={"username": "user_alpha_t5", "password": "pass123"},
+        follow_redirects=False
+    )
+    cookie_alpha = login_res1.cookies
 
     # Create User 2
     res2 = client.post(
@@ -47,13 +53,16 @@ def test_profile_username_collision_vulnerability():
     # EMPIRICAL BUG DEMONSTRATION: profile_post in app/routers/accounts.py checks email collision
     # but does NOT check username collision nor does it wrap session.commit() in try-except IntegrityError.
     # Therefore, FastAPI TestClient raises IntegrityError due to unhandled DB exception.
-    with pytest.raises(IntegrityError):
-        client.post(
-            "/accounts/profile",
-            data={"username": "user_beta_t5", "email": "alpha_t5@example.com"},
-            cookies=cookie_alpha,
-            follow_redirects=False
-        )
+    res3 = client.post(
+        "/accounts/profile",
+        data={"username": "user_beta_t5", "email": "alpha_t5@example.com"},
+        cookies=cookie_alpha,
+        follow_redirects=False
+    )
+    assert res3.status_code == 200
+    assert "sudah digunakan" in res3.text or "already" in res3.text or "alert-danger" in res3.text
+
+
 
 
 

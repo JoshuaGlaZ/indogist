@@ -8,7 +8,7 @@ class User(SQLModel, table=True):
 
     id: Optional[int] = Field(default=None, primary_key=True)
     username: str = Field(index=True, unique=True, nullable=False)
-    email: str = Field(unique=True, nullable=False)
+    email: str = Field(index=True, unique=True, nullable=False)
     hashed_password: str = Field(nullable=False)
     is_active: bool = Field(default=True)
     is_superuser: bool = Field(default=False)
@@ -31,7 +31,7 @@ class Summary(SQLModel, table=True):
     summary_text: str
     compression_ratio: float = Field(default=0.3)
     entities_json: str = Field(default="[]")
-    method: str = Field(default="hybrid")
+    method: str = Field(default="hybrid", index=True)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), index=True)
     word_count_original: int = Field(default=0)
     word_count_summary: int = Field(default=0)
