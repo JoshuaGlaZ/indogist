@@ -1,27 +1,27 @@
 {% extends 'summarizer/base.html' %}
 
-{% block title %}{{ lang("Home — IndoGist Studio") }}{% endblock %}
+{% block title %}{{ _("Home — IndoGist Studio") }}{% endblock %}
 
 {% block content %}
 <section class="view active">
   <div class="page-head">
-    <h1>INDOGIST STUDIO — {{ lang("TEXT SUMMARIZER") }}</h1>
-    <p>{{ lang("Hybrid, extractive, or abstractive — pick a method and run it on Indonesian text.") }}</p>
+    <h1>INDOGIST STUDIO — {{ _("TEXT SUMMARIZER") }}</h1>
+    <p>{{ _("Hybrid, extractive, or abstractive — pick a method and run it on Indonesian text.") }}</p>
   </div>
 
   {% if request.user and request.user.is_authenticated %}
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
       <div>
-        <h2 style="font-family: 'Space Grotesk', sans-serif; margin: 0;">{{ lang("Welcome") }}, {{ request.user.username }}</h2>
-        <p style="color: var(--text-muted); margin: 4px 0 0;">{{ lang("Manage your saved summaries and run real-time document analysis.") }}</p>
+        <h2 style="font-family: 'Space Grotesk', sans-serif; margin: 0;">{{ _("Welcome") }}, {{ request.user.username }}</h2>
+        <p style="color: var(--text-muted); margin: 4px 0 0;">{{ _("Manage your saved summaries and run real-time document analysis.") }}</p>
       </div>
-      <a href="/summarize/" class="btn btn-amber">{{ lang("New Summary") }} &rarr;</a>
+      <a href="/summarize/" class="btn btn-amber">{{ _("New Summary") }} &rarr;</a>
     </div>
 
     <div class="card mb-4">
       <div class="card-head">
-        <p class="card-title">{{ lang("Recent Activity") }}</p>
-        <span class="count-badge">{{ recent_summaries|length if recent_summaries else 0 }} {{ lang("entries") }}</span>
+        <p class="card-title">{{ _("Recent Activity") }}</p>
+        <span class="count-badge">{{ recent_summaries|length if recent_summaries else 0 }} {{ _("entries") }}</span>
       </div>
       <div class="card-body">
         {% if recent_summaries %}
@@ -35,13 +35,13 @@
                 </div>
                 <p class="history-snippet">{{ summary.summary_text|truncatewords(24) }}</p>
                 <div class="history-bottom">
-                  <a href="/summary/{{ summary.id }}/" class="btn">{{ lang("View detail") }}</a>
+                  <a href="/summary/{{ summary.id }}/" class="btn">{{ _("View detail") }}</a>
                 </div>
               </div>
             {% endfor %}
           </div>
         {% else %}
-          <p class="output-placeholder">{{ lang("No summaries yet. Create your first summary in the studio.") }}</p>
+          <p class="output-placeholder">{{ _("No summaries yet. Create your first summary in the studio.") }}</p>
         {% endif %}
       </div>
     </div>
@@ -50,30 +50,31 @@
     <div class="grid-2">
       <div class="card">
         <div class="card-head">
-          <p class="card-title">{{ lang("Getting Started") }}</p>
+          <p class="card-title">{{ _("Getting Started") }}</p>
         </div>
         <div class="card-body">
-          <h2 style="font-family: 'Space Grotesk', sans-serif; margin-top: 0;">{{ lang("Summarize Text Instantly") }}</h2>
+          <h2 style="font-family: 'Space Grotesk', sans-serif; margin-top: 0;">{{ _("Summarize Text Instantly") }}</h2>
           <p style="color: var(--text-muted); line-height: 1.7;">
-            {{ lang("Efficiently condense your documents while retaining full context using our advanced NLP models.") }}
+            {{ _("Efficiently condense your documents while retaining full context using our advanced NLP models.") }}
           </p>
           <a href="/summarize/" class="btn btn-amber btn-block" style="text-align: center; text-decoration: none;">
-            {{ lang("Start Summarizing") }} &rarr;
+            {{ _("Start Summarizing") }} &rarr;
           </a>
         </div>
       </div>
 
       <div class="card">
         <div class="card-head">
-          <p class="card-title">{{ lang("Sample Summary Output") }}</p>
-          <span class="badge hybrid">Hybrid</span>
+          <p class="card-title">{{ _("Sample Summary Output") }}</p>
+          <span class="badge hybrid">{{ _("Hybrid") }}</span>
         </div>
+
         <div class="card-body">
           <div class="output-area">
             Indonesia adalah negara kepulauan terbesar dan berpenduduk terbanyak keempat di dunia dengan mayoritas Muslim.
           </div>
           <div class="entity-section">
-            <p class="field-label" style="margin-bottom:0;">{{ lang("Detected entities") }}</p>
+            <p class="field-label" style="margin-bottom:0;">{{ _("Detected entities") }}</p>
             <div class="entity-wrap">
               <span class="entity-chip show"><span>Indonesia</span><span class="e-type">LOC</span><span class="e-score">98%</span></span>
               <span class="entity-chip show"><span>Nusantara</span><span class="e-type">LOC</span><span class="e-score">95%</span></span>

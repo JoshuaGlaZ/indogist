@@ -1,38 +1,39 @@
 {% extends 'summarizer/base.html' %}
 
-{% block title %}{{ lang("History — IndoGist Studio") }}{% endblock %}
+{% block title %}{{ _("History — IndoGist Studio") }}{% endblock %}
 
 {% block content %}
 <section class="view active" id="view-history">
   <div class="page-head left" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
     <div>
-      <h1 style="margin-bottom:2px;">{{ lang("Summary history archive") }}</h1>
-      <p>{{ lang("Every document you've summarized, searchable and filterable.") }}</p>
+      <h1 style="margin-bottom:2px;">{{ _("Summary history archive") }}</h1>
+      <p>{{ _("Every document you've summarized, searchable and filterable.") }}</p>
     </div>
-    <span class="count-badge">{{ summaries|length if summaries is defined and summaries else 0 }} {{ lang("entries") }}</span>
+    <span class="count-badge">{{ summaries|length if summaries is defined and summaries else 0 }} {{ _("entries") }}</span>
   </div>
 
   <!-- Live HTMX Toolbar -->
   <form method="get" action="/history/" hx-get="/history/" hx-target="#historyListContainer" hx-trigger="change, keyup changed delay:300ms from:find input[name='q']" class="toolbar">
     <div class="search-field">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-      <input type="text" name="q" placeholder="{{ lang("Search by title or keyword") }}" value="{{ search_query or '' }}" aria-label="{{ lang("Search history") }}">
+      <input type="text" name="q" placeholder="{{ _("Search by title or keyword") }}" value="{{ search_query or '' }}" aria-label="{{ _("Search history") }}">
     </div>
     
     <div style="min-width: 140px;">
-      <select name="method" class="field-select" aria-label="{{ lang("Filter by method") }}">
-        <option value="">{{ lang("All methods") }}</option>
-        <option value="hybrid" {% if method_filter == 'hybrid' %}selected{% endif %}>Hybrid</option>
-        <option value="traditional" {% if method_filter == 'traditional' %}selected{% endif %}>Extractive</option>
-        <option value="abstractive" {% if method_filter == 'abstractive' %}selected{% endif %}>Abstractive</option>
+      <select name="method" class="field-select" aria-label="{{ _("Filter by method") }}">
+        <option value="">{{ _("All methods") }}</option>
+        <option value="hybrid" {% if method_filter == 'hybrid' %}selected{% endif %}>{{ _("Hybrid") }}</option>
+        <option value="traditional" {% if method_filter == 'traditional' %}selected{% endif %}>{{ _("Extractive") }}</option>
+        <option value="abstractive" {% if method_filter == 'abstractive' %}selected{% endif %}>{{ _("Abstractive") }}</option>
       </select>
+
     </div>
     
     <div style="min-width: 140px;">
-      <select name="sort" class="field-select" aria-label="{{ lang("Sort order") }}">
-        <option value="-created_at" {% if sort_by == '-created_at' %}selected{% endif %}>{{ lang("Newest first") }}</option>
-        <option value="created_at" {% if sort_by == 'created_at' %}selected{% endif %}>{{ lang("Oldest first") }}</option>
-        <option value="title" {% if sort_by == 'title' %}selected{% endif %}>{{ lang("Title A-Z") }}</option>
+      <select name="sort" class="field-select" aria-label="{{ _("Sort order") }}">
+        <option value="-created_at" {% if sort_by == '-created_at' %}selected{% endif %}>{{ _("Newest first") }}</option>
+        <option value="created_at" {% if sort_by == 'created_at' %}selected{% endif %}>{{ _("Oldest first") }}</option>
+        <option value="title" {% if sort_by == 'title' %}selected{% endif %}>{{ _("Title A-Z") }}</option>
       </select>
     </div>
   </form>

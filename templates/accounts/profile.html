@@ -1,12 +1,12 @@
 {% extends 'summarizer/base.html' %}
 
-{% block title %}{{ lang("Profile — IndoGist Studio") }}{% endblock %}
+{% block title %}{{ _("Profile — IndoGist Studio") }}{% endblock %}
 
 {% block content %}
 <section class="view active" style="max-width: 580px; margin: 30px auto 0;">
   <div class="card">
     <div class="card-head">
-      <p class="card-title">{{ lang("Edit Account Profile") }}</p>
+      <p class="card-title">{{ _("Edit Account Profile") }}</p>
     </div>
     <div class="card-body">
       <div style="display: flex; gap: 16px; margin-bottom: 20px; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 16px;">
@@ -15,7 +15,7 @@
         </div>
         <div>
           <h3 style="font-family: 'Space Grotesk', sans-serif; margin: 0; font-size: 18px;">{{ request.user.username }}</h3>
-          <p style="color: var(--text-muted); font-size: 13px; margin: 2px 0 0;">{{ request.user.email }} &bull; {{ total_summaries }} {{ lang("summaries") }}</p>
+          <p style="color: var(--text-muted); font-size: 13px; margin: 2px 0 0;">{{ request.user.email }} &bull; {{ total_summaries }} {{ _("summaries") }}</p>
         </div>
       </div>
 
@@ -23,16 +23,16 @@
         {{ csrf_field(request) }}
         
         <div style="margin-bottom: 14px;">
-          <label class="field-label" for="username">{{ lang("Username") }}</label>
+          <label class="field-label" for="username">{{ _("Username") }}</label>
           <input type="text" name="username" id="username" class="field" style="min-height: 42px;" value="{{ request.user.username }}" required>
         </div>
 
         <div style="margin-bottom: 20px;">
-          <label class="field-label" for="email">{{ lang("Email Address") }}</label>
+          <label class="field-label" for="email">{{ _("Email Address") }}</label>
           <input type="email" name="email" id="email" class="field" style="min-height: 42px;" value="{{ request.user.email }}" required>
         </div>
 
-        <button type="submit" class="btn btn-amber" style="width: 100%; justify-content: center;">{{ lang("Save Profile Changes") }}</button>
+        <button type="submit" class="btn btn-amber" style="width: 100%; justify-content: center;">{{ _("Save Profile Changes") }}</button>
       </form>
     </div>
   </div>

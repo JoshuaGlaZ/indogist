@@ -1,43 +1,43 @@
 {% extends 'summarizer/base.html' %}
 
-{% block title %}{{ lang("Register — IndoGist Studio") }}{% endblock %}
+{% block title %}{{ _("Register — IndoGist Studio") }}{% endblock %}
 
 {% block content %}
 <section class="view active" style="max-width: 480px; margin: 30px auto 0;">
   <div class="card">
     <div class="card-head">
-      <p class="card-title">{{ lang("Create Account") }}</p>
+      <p class="card-title">{{ _("Create Account") }}</p>
     </div>
     <div class="card-body">
       <form method="post" action="/accounts/register">
         {{ csrf_field(request) }}
         
         <div style="margin-bottom: 14px;">
-          <label class="field-label" for="username">{{ lang("Username") }}</label>
-          <input type="text" name="username" id="username" class="field" style="min-height: 42px;" placeholder="{{ lang("Choose a username") }}" value="{{ form.get('username', '') if hasattr(form, 'get') else '' }}" required autofocus>
+          <label class="field-label" for="username">{{ _("Username") }}</label>
+          <input type="text" name="username" id="username" class="field" style="min-height: 42px;" placeholder="{{ _("Choose a username") }}" value="{{ form.get('username', '') if hasattr(form, 'get') else '' }}" required autofocus>
         </div>
 
         <div style="margin-bottom: 14px;">
-          <label class="field-label" for="email">{{ lang("Email Address") }}</label>
-          <input type="email" name="email" id="email" class="field" style="min-height: 42px;" placeholder="{{ lang("Enter your email address") }}" value="{{ form.get('email', '') if hasattr(form, 'get') else '' }}" required>
+          <label class="field-label" for="email">{{ _("Email Address") }}</label>
+          <input type="email" name="email" id="email" class="field" style="min-height: 42px;" placeholder="{{ _("Enter your email address") }}" value="{{ form.get('email', '') if hasattr(form, 'get') else '' }}" required>
         </div>
 
         <div style="margin-bottom: 14px;">
-          <label class="field-label" for="password1">{{ lang("Password") }}</label>
-          <input type="password" name="password1" id="password1" class="field" style="min-height: 42px;" placeholder="{{ lang("Enter password") }}" required>
+          <label class="field-label" for="password1">{{ _("Password") }}</label>
+          <input type="password" name="password1" id="password1" class="field" style="min-height: 42px;" placeholder="{{ _("Enter password") }}" required>
         </div>
 
         <div style="margin-bottom: 20px;">
-          <label class="field-label" for="password2">{{ lang("Confirm Password") }}</label>
-          <input type="password" name="password2" id="password2" class="field" style="min-height: 42px;" placeholder="{{ lang("Confirm password") }}" required>
+          <label class="field-label" for="password2">{{ _("Confirm Password") }}</label>
+          <input type="password" name="password2" id="password2" class="field" style="min-height: 42px;" placeholder="{{ _("Confirm password") }}" required>
         </div>
 
-        <button type="submit" class="btn btn-amber btn-block">{{ lang("Register Account") }}</button>
+        <button type="submit" class="btn btn-amber btn-block">{{ _("Register Account") }}</button>
       </form>
 
       <p style="text-align: center; font-size: 13px; color: var(--text-muted); margin-top: 16px; margin-bottom: 0;">
-        {{ lang("Already have an account?") }}
-        <a href="/accounts/login/" style="color: var(--accent-amber); text-decoration: none; font-weight: 600;">{{ lang("Login here") }}</a>
+        {{ _("Already have an account?") }}
+        <a href="/accounts/login/" style="color: var(--accent-amber); text-decoration: none; font-weight: 600;">{{ _("Login here") }}</a>
       </p>
     </div>
   </div>

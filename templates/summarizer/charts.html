@@ -1,34 +1,34 @@
 {% extends 'summarizer/base.html' %}
 
-{% block title %}{{ lang("Metrics Dashboard — IndoGist Studio") }}{% endblock %}
+{% block title %}{{ _("Metrics Dashboard — IndoGist Studio") }}{% endblock %}
 
 {% block content %}
 <section class="view active" id="view-metrics">
   <div class="page-head">
-    <h1>{{ lang("Model Performance Metrics") }}</h1>
-    <p>{{ lang("ROUGE and BLEU evaluation suite results for Indonesian text summarization.") }}</p>
+    <h1>{{ _("Model Performance Metrics") }}</h1>
+    <p>{{ _("ROUGE and BLEU evaluation suite results for Indonesian text summarization.") }}</p>
   </div>
 
   <div class="card mb-4">
     <div class="card-head">
-      <p class="card-title">{{ lang("Evaluation Suite Summary") }}</p>
+      <p class="card-title">{{ _("Evaluation Suite Summary") }}</p>
     </div>
     <div class="card-body">
       <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr);">
         <div class="stat-card accent">
-          <span class="s-label">{{ lang("ROUGE-1 Score") }}</span>
+          <span class="s-label">{{ _("ROUGE-1 Score") }}</span>
           <span class="s-value">0.428</span>
         </div>
         <div class="stat-card">
-          <span class="s-label">{{ lang("ROUGE-2 Score") }}</span>
+          <span class="s-label">{{ _("ROUGE-2 Score") }}</span>
           <span class="s-value">0.215</span>
         </div>
         <div class="stat-card accent">
-          <span class="s-label">{{ lang("ROUGE-L Score") }}</span>
+          <span class="s-label">{{ _("ROUGE-L Score") }}</span>
           <span class="s-value">0.389</span>
         </div>
         <div class="stat-card">
-          <span class="s-label">{{ lang("BLEU Score") }}</span>
+          <span class="s-label">{{ _("BLEU Score") }}</span>
           <span class="s-value">0.342</span>
         </div>
       </div>
@@ -38,10 +38,10 @@
   {% if chart_image %}
     <div class="card mb-4">
       <div class="card-head">
-        <p class="card-title">{{ lang("Model Training Convergence") }}</p>
+        <p class="card-title">{{ _("Model Training Convergence") }}</p>
       </div>
       <div class="card-body text-center">
-        <img src="data:image/png;base64,{{ chart_image }}" style="max-width: 100%; height: auto; border-radius: 8px; border: 1px solid var(--border-color);" alt="Training History" />
+        <img src="data:image/png;base64,{{ chart_image }}" style="max-width: 100%; height: auto; border-radius: 8px; border: 1px solid var(--border-color);" alt="{{ _('Training History') }}" />
       </div>
     </div>
   {% endif %}
@@ -49,18 +49,18 @@
   {% if report_table %}
     <div class="card mb-4">
       <div class="card-head">
-        <p class="card-title">{{ lang("Detailed Performance Classification") }}</p>
+        <p class="card-title">{{ _("Detailed Performance Classification") }}</p>
       </div>
       <div class="card-body" style="padding: 0;">
         <div style="overflow-x: auto;">
           <table style="width: 100%; border-collapse: collapse; font-family: 'JetBrains Mono', monospace; font-size: 13px;">
             <thead>
               <tr style="border-bottom: 1px solid var(--border-color); background: var(--bg-field);">
-                <th style="padding: 12px 16px;">{{ lang("Metric Class") }}</th>
-                <th style="padding: 12px 16px;">{{ lang("Precision") }}</th>
-                <th style="padding: 12px 16px;">{{ lang("Recall") }}</th>
-                <th style="padding: 12px 16px;">{{ lang("F1-Score") }}</th>
-                <th style="padding: 12px 16px;">{{ lang("Support") }}</th>
+                <th style="padding: 12px 16px;">{{ _("Metric Class") }}</th>
+                <th style="padding: 12px 16px;">{{ _("Precision") }}</th>
+                <th style="padding: 12px 16px;">{{ _("Recall") }}</th>
+                <th style="padding: 12px 16px;">{{ _("F1-Score") }}</th>
+                <th style="padding: 12px 16px;">{{ _("Support") }}</th>
               </tr>
             </thead>
             <tbody>

@@ -1,122 +1,123 @@
 {% extends 'summarizer/base.html' %}
 
-{% block title %}{{ lang("Summarize Studio — IndoGist") }}{% endblock %}
+{% block title %}{{ _("Summarize Studio — IndoGist") }}{% endblock %}
 
 {% block content %}
 <section class="view active" id="view-summarize">
   <div class="page-head">
-    <h1>INDOGIST STUDIO — {{ lang("TEXT SUMMARIZER") }}</h1>
-    <p>{{ lang("Hybrid, traditional extractive, or abstractive — pick a method and run it on Indonesian text.") }}</p>
+    <h1>INDOGIST STUDIO — {{ _("TEXT SUMMARIZER") }}</h1>
+    <p>{{ _("Hybrid, traditional extractive, or abstractive — pick a method and run it on Indonesian text.") }}</p>
   </div>
 
   <div class="grid-2">
     <!-- Left Column: Input Workspace -->
     <div class="card">
       <div class="card-head">
-        <p class="card-title">{{ lang("Input workspace") }}</p>
-        <span class="count-badge"><span id="wordCount">0</span> {{ lang("words") }}</span>
+        <p class="card-title">{{ _("Input workspace") }}</p>
+        <span class="count-badge"><span id="wordCount">0</span> {{ _("words") }}</span>
       </div>
       <div class="card-body">
         <form id="summarizeForm" method="post" action="/summarize/" hx-post="/summarize/" hx-target="#outputArea" hx-indicator="#loadingIndicator">
           {{ csrf_field(request) }}
 
           <div class="tabs" role="tablist">
-            <button type="button" class="tab active" data-tab="raw">{{ lang("Raw text") }}</button>
-            <button type="button" class="tab" data-tab="upload">{{ lang("File upload") }}</button>
-            <button type="button" class="tab" data-tab="presets">{{ lang("Presets") }}</button>
+            <button type="button" class="tab active" data-tab="raw">{{ _("Raw text") }}</button>
+            <button type="button" class="tab" data-tab="upload">{{ _("File upload") }}</button>
+            <button type="button" class="tab" data-tab="presets">{{ _("Presets") }}</button>
           </div>
 
           <div class="tab-pane active" data-pane="raw">
             <!-- Optional Title Input / Toggle Button -->
-            <button type="button" class="btn btn-ghost" id="addTitleBtn" style="margin-bottom: 12px; font-size: 12.5px;" onclick="toggleTitleInput(true)">+ {{ lang("Add optional title") }}</button>
+            <button type="button" class="btn btn-ghost" id="addTitleBtn" style="margin-bottom: 12px; font-size: 12.5px;" onclick="toggleTitleInput(true)">+ {{ _("Add optional title") }}</button>
             
             <div id="titleInputWrapper" style="display: none; margin-bottom: 14px;">
               <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
-                <label class="field-label" for="docTitle" style="margin-bottom: 0;">{{ lang("Document title") }} ({{ lang("optional") }})</label>
-                <button type="button" class="btn btn-ghost" style="padding: 2px 6px; font-size: 12px; color: var(--text-muted);" onclick="toggleTitleInput(false)" title="{{ lang("Remove title input") }}">&times; {{ lang("Remove") }}</button>
+                <label class="field-label" for="docTitle" style="margin-bottom: 0;">{{ _("Document title") }} ({{ _("optional") }})</label>
+                <button type="button" class="btn btn-ghost" style="padding: 2px 6px; font-size: 12px; color: var(--text-muted);" onclick="toggleTitleInput(false)" title="{{ _("Remove title input") }}">&times; {{ _("Remove") }}</button>
               </div>
-              <input type="text" name="title" id="docTitle" class="field" placeholder="{{ lang("Enter document title...") }}" style="min-height: 38px;">
+              <input type="text" name="title" id="docTitle" class="field" placeholder="{{ _("Enter document title...") }}" style="min-height: 38px;">
             </div>
 
-            <label class="field-label" for="rawText">{{ lang("Document text") }}</label>
-            <textarea class="field" id="rawText" name="text" lang="id" placeholder="{{ lang("Paste your Indonesian text here...") }}">{{ (text or '')|trim }}</textarea>
+            <label class="field-label" for="rawText">{{ _("Document text") }}</label>
+            <textarea class="field" id="rawText" name="text" lang="id" placeholder="{{ _("Paste your Indonesian text here...") }}">{{ (text or '')|trim }}</textarea>
             
             <!-- Editor Footer Telemetry & Expand Trigger -->
             <div class="editor-footer">
               <div>
-                <span id="charCount">0</span> {{ lang("chars") }} &middot; 
-                <span id="tokenCount">0</span> {{ lang("tokens") }}
+                <span id="charCount">0</span> {{ _("chars") }} &middot; 
+                <span id="tokenCount">0</span> {{ _("tokens") }}
               </div>
               <div style="display: flex; gap: 8px; align-items: center;">
-                <button type="button" class="btn btn-ghost" style="padding: 2px 6px; font-size: 11.5px;" onclick="document.getElementById('rawText').value=''; updateEditorTelemetry();">{{ lang("Clear") }}</button>
-                <button type="button" class="btn btn-ghost" style="padding: 2px 6px; font-size: 11.5px;" onclick="openFullscreenEditor()">{{ lang("Expand editor") }} &#x21F1;</button>
-                <span id="limitMessage" style="margin-left: 6px;">{{ lang("Limit: 8,000 words") }}</span>
+                <button type="button" class="btn btn-ghost" style="padding: 2px 6px; font-size: 11.5px;" onclick="document.getElementById('rawText').value=''; updateEditorTelemetry();">{{ _("Clear") }}</button>
+                <button type="button" class="btn btn-ghost" style="padding: 2px 6px; font-size: 11.5px;" onclick="openFullscreenEditor()">{{ _("Expand editor") }} &#x21F1;</button>
+                <span id="limitMessage" style="margin-left: 6px;">{{ _("Limit: 8,000 words") }}</span>
               </div>
             </div>
           </div>
 
           <div class="tab-pane" data-pane="upload">
-            <label class="field-label">{{ lang("File attachment") }}</label>
+            <label class="field-label">{{ _("File attachment") }}</label>
             <div class="dropzone">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2M7 9l5-5 5 5M12 4v13"/></svg>
-              <div>{{ lang("Drag a .txt, .pdf, or .docx file here") }}</div>
+              <div>{{ _("Drag a .txt, .pdf, or .docx file here") }}</div>
               <input type="file" id="fileInput" name="file" class="d-none" accept=".txt,.pdf,.docx" style="display:none;" />
-              <button class="btn" type="button" onclick="document.getElementById('fileInput').click()">{{ lang("Browse files") }}</button>
+              <button class="btn" type="button" onclick="document.getElementById('fileInput').click()">{{ _("Browse files") }}</button>
             </div>
           </div>
 
           <div class="tab-pane" data-pane="presets">
-            <label class="field-label">{{ lang("Sample document presets") }}</label>
+            <label class="field-label">{{ _("Sample document presets") }}</label>
             <div class="preset-row">
-              <button class="btn" type="button" onclick="loadPreset('news')">{{ lang("News article") }}</button>
-              <button class="btn" type="button" onclick="loadPreset('tech')">{{ lang("Tech spec") }}</button>
-              <button class="btn" type="button" onclick="loadPreset('academic')">{{ lang("Academic paper") }}</button>
+              <button class="btn" type="button" onclick="loadPreset('news')">{{ _("News article") }}</button>
+              <button class="btn" type="button" onclick="loadPreset('tech')">{{ _("Tech spec") }}</button>
+              <button class="btn" type="button" onclick="loadPreset('academic')">{{ _("Academic paper") }}</button>
             </div>
           </div>
 
           <!-- Method Selection Cards (3 Core Paradigms) -->
           <div style="margin-top: 16px;">
-            <p class="field-label">{{ lang("Summarization method") }}</p>
+            <p class="field-label">{{ _("Summarization method") }}</p>
             <div class="method-grid">
               <label class="method-opt">
                 <input type="radio" name="method" value="hybrid" checked onclick="document.getElementById('hybridVariantRow').style.display='block'; document.getElementById('traditionalVariantRow').style.display='none';">
-                <span class="method-card hybrid"><span class="m-name">Hybrid</span><span class="m-sub">POS/NER + TF-IDF</span></span>
+                <span class="method-card hybrid"><span class="m-name">{{ _("Hybrid") }}</span><span class="m-sub">{{ _("POS/NER + TF-IDF") }}</span></span>
               </label>
               <label class="method-opt">
                 <input type="radio" name="method" value="traditional" onclick="document.getElementById('hybridVariantRow').style.display='none'; document.getElementById('traditionalVariantRow').style.display='block';">
-                <span class="method-card extractive"><span class="m-name">Traditional</span><span class="m-sub">Extractive Sentence Rank</span></span>
+                <span class="method-card extractive"><span class="m-name">{{ _("Traditional") }}</span><span class="m-sub">{{ _("Extractive Sentence Rank") }}</span></span>
               </label>
               <label class="method-opt" style="opacity: 0.5; cursor: not-allowed;">
                 <input type="radio" name="method" value="abstractive" disabled>
-                <span class="method-card abstractive"><span class="m-name">Abstractive</span><span class="m-sub">(Coming Soon)</span></span>
+                <span class="method-card abstractive"><span class="m-name">{{ _("Abstractive") }}</span><span class="m-sub">({{ _("Coming Soon") }})</span></span>
               </label>
             </div>
           </div>
 
           <!-- Hybrid Variant Selector -->
           <div id="hybridVariantRow" style="margin-top: 12px;">
-            <label class="field-label" for="hybridVariantSelect">{{ lang("Hybrid Model Architecture") }}</label>
+            <label class="field-label" for="hybridVariantSelect">{{ _("Hybrid Model Architecture") }}</label>
             <select name="hybrid_variant" id="hybridVariantSelect" class="field-select" style="width: 100%;">
-              <option value="pos_ner" selected>1. TF-IDF + NER + POS (BiLSTM POS-NER)</option>
-              <option value="tfidf_ner">2. TF-IDF + NER (Baseline NER)</option>
-              <option value="pos_ner_crf">3. TF-IDF + NER + POS + CRF (BiLSTM-CRF Architecture)</option>
+              <option value="pos_ner" selected>1. {{ _("TF-IDF + NER + POS (BiLSTM POS-NER)") }}</option>
+              <option value="tfidf_ner">2. {{ _("TF-IDF + NER (Baseline NER)") }}</option>
+              <option value="pos_ner_crf">3. {{ _("TF-IDF + NER + POS + CRF (BiLSTM-CRF Architecture)") }}</option>
             </select>
           </div>
 
           <!-- Traditional Extractive Variant Selector -->
           <div id="traditionalVariantRow" style="margin-top: 12px; display: none;">
-            <label class="field-label" for="traditionalVariantSelect">{{ lang("Traditional Extractive Variant") }}</label>
+            <label class="field-label" for="traditionalVariantSelect">{{ _("Traditional Extractive Variant") }}</label>
             <select name="traditional_variant" id="traditionalVariantSelect" class="field-select" style="width: 100%;">
-              <option value="sentence_rank" selected>1. TF-IDF + Sentence Position Rank (Baseline)</option>
-              <option value="mmr_diversity">2. MMR Relevance & Diversity Ranking</option>
-              <option value="textrank">3. TextRank Graph Centrality</option>
+              <option value="sentence_rank" selected>1. {{ _("TF-IDF + Sentence Position Rank (Baseline)") }}</option>
+              <option value="mmr_diversity">2. {{ _("MMR Relevance & Diversity Ranking") }}</option>
+              <option value="textrank">3. {{ _("TextRank Graph Centrality") }}</option>
             </select>
           </div>
+
 
           <!-- Clean Output Parameters & Range Slider Panel -->
           <div class="slider-panel">
             <div class="slider-header">
-              <span>{{ lang("Target Compression Ratio") }}</span>
+              <span>{{ _("Target Compression Ratio") }}</span>
               <span class="val" id="ratioDisplay">30%</span>
             </div>
             <input type="range" class="field-range" name="compression_ratio" id="compressionRatio" min="0.1" max="0.6" step="0.05" value="0.3" />
@@ -130,7 +131,7 @@
             </div>
           </div>
 
-          <button class="btn btn-amber btn-block" id="generateBtn" type="submit" style="margin-top: 16px;">{{ lang("Generate summary") }}</button>
+          <button class="btn btn-amber btn-block" id="generateBtn" type="submit" style="margin-top: 16px;">{{ _("Generate summary") }}</button>
         </form>
       </div>
     </div>
@@ -138,29 +139,29 @@
     <!-- Right Column: Summary Output -->
     <div class="card">
       <div class="card-head">
-        <p class="card-title">{{ lang("Summary output") }}</p>
+        <p class="card-title">{{ _("Summary output") }}</p>
         <div class="card-actions">
-          <button class="btn" id="copyBtn" type="button" onclick="copySummaryOutput('outputArea', this)">{{ lang("Copy") }}</button>
-          <button class="btn" id="saveBtn" type="button" onclick="saveSummaryOutput('outputArea')">{{ lang("Save") }}</button>
+          <button class="btn" id="copyBtn" type="button" onclick="copySummaryOutput('outputArea', this)">{{ _("Copy") }}</button>
+          <button class="btn" id="saveBtn" type="button" onclick="saveSummaryOutput('outputArea')">{{ _("Save") }}</button>
         </div>
       </div>
       <div class="card-body">
         <div id="loadingIndicator" class="htmx-indicator loading-row">
-          <span class="spinner"></span> {{ lang("Running summarization engine...") }}
+          <span class="spinner"></span> {{ _("Running summarization engine...") }}
         </div>
         
         <!-- View Mode Toggle Bar (buttons dynamically updated via OOB swap) -->
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-          <span class="field-label" style="margin-bottom: 0;">{{ lang("Output View") }}</span>
+          <span class="field-label" style="margin-bottom: 0;">{{ _("Output View") }}</span>
           <div class="view-mode-toggle" id="viewModeToggle" style="display: flex; gap: 4px;">
-            <button type="button" class="btn btn-ghost active" style="padding: 2px 8px; font-size: 11.5px;" onclick="switchOutputMode(this, 'outputArea', 'plain')">{{ lang("Plain") }}</button>
+            <button type="button" class="btn btn-ghost active" style="padding: 2px 8px; font-size: 11.5px;" onclick="switchOutputMode(this, 'outputArea', 'plain')">{{ _("Plain") }}</button>
           </div>
         </div>
 
-        <div class="output-area" id="outputArea">{% if summary %}{{ summary.summary_text|trim }}{% else %}<span class="output-placeholder">{{ lang("Waiting for input — select a method and generate a summary.") }}</span>{% endif %}</div>
+        <div class="output-area" id="outputArea">{% if summary %}{{ summary.summary_text|trim }}{% else %}<span class="output-placeholder">{{ _("Waiting for input — select a method and generate a summary.") }}</span>{% endif %}</div>
         
         <div class="entity-section" id="entitySection" style="display: none;">
-          <p class="field-label" style="margin-bottom:0;">{{ lang("Detected entities") }}</p>
+          <p class="field-label" style="margin-bottom:0;">{{ _("Detected entities") }}</p>
           <div class="entity-wrap" id="entityWrap">
             {% if entities_list %}
               {% for entity in entities_list %}
@@ -171,7 +172,7 @@
                 </span>
               {% endfor %}
             {% else %}
-              <span class="output-placeholder">{{ lang("No named entities detected in this text.") }}</span>
+              <span class="output-placeholder">{{ _("No named entities detected in this text.") }}</span>
             {% endif %}
           </div>
         </div>
@@ -184,12 +185,12 @@
 <div class="editor-modal" id="editorModal">
   <div class="editor-modal-content">
     <div class="editor-modal-header">
-      <span class="card-title">{{ lang("Full Document Editor") }}</span>
-      <span class="count-badge"><span id="modalWordCount">0</span> {{ lang("words") }}</span>
-      <button type="button" class="btn btn-ghost" onclick="closeFullscreenEditor()">&times; {{ lang("Close editor") }}</button>
+      <span class="card-title">{{ _("Full Document Editor") }}</span>
+      <span class="count-badge"><span id="modalWordCount">0</span> {{ _("words") }}</span>
+      <button type="button" class="btn btn-ghost" onclick="closeFullscreenEditor()">&times; {{ _("Close editor") }}</button>
     </div>
     <div class="editor-modal-body">
-      <textarea id="modalRawText" class="field modal-textarea" placeholder="{{ lang("Paste your long document text here...") }}"></textarea>
+      <textarea id="modalRawText" class="field modal-textarea" placeholder="{{ _("Paste your long document text here...") }}"></textarea>
     </div>
   </div>
 </div>

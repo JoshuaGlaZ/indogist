@@ -1,12 +1,13 @@
 {% extends 'summarizer/base.html' %}
 
-{% block title %}{{ summary.title }} — IndoGist Detail{% endblock %}
+{% block title %}{{ summary.title }} — {{ _("IndoGist Detail") }}{% endblock %}
+
 
 {% block content %}
 <section class="view active" id="view-detail">
   <a href="/history/" class="back-link">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-    {{ lang("Back to history") }}
+    {{ _("Back to history") }}
   </a>
 
   <div class="detail-head">
@@ -20,9 +21,9 @@
       <!-- Original Text Card -->
       <div class="card">
         <div class="card-head">
-          <p class="card-title">{{ lang("Original text") }}</p>
+          <p class="card-title">{{ _("Original text") }}</p>
           <div class="card-actions">
-            <button class="btn" type="button" onclick="copySummaryOutput('detailOriginal', this)">{{ lang("Copy") }}</button>
+            <button class="btn" type="button" onclick="copySummaryOutput('detailOriginal', this)">{{ _("Copy") }}</button>
           </div>
         </div>
         <div class="card-body">
@@ -33,21 +34,21 @@
       <!-- Summary Output Card -->
       <div class="card">
         <div class="card-head">
-          <p class="card-title">{{ lang("Summary output") }}</p>
+          <p class="card-title">{{ _("Summary output") }}</p>
           <div class="card-actions">
-            <button class="btn" type="button" onclick="copySummaryOutput('detailSummary', this)">{{ lang("Copy") }}</button>
-            <button class="btn" type="button" onclick="saveSummaryOutput('detailSummary')">{{ lang("Save") }}</button>
+            <button class="btn" type="button" onclick="copySummaryOutput('detailSummary', this)">{{ _("Copy") }}</button>
+            <button class="btn" type="button" onclick="saveSummaryOutput('detailSummary')">{{ _("Save") }}</button>
           </div>
         </div>
         <div class="card-body">
           <!-- View Mode Toggle Bar -->
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-            <span class="field-label" style="margin-bottom: 0;">{{ lang("Output View") }}</span>
+            <span class="field-label" style="margin-bottom: 0;">{{ _("Output View") }}</span>
             <div class="view-mode-toggle" style="display: flex; gap: 4px;">
-              <button type="button" class="btn btn-ghost active" style="padding: 2px 8px; font-size: 11.5px;" onclick="switchOutputMode(this, 'detailSummary', 'plain')">{{ lang("Plain") }}</button>
+              <button type="button" class="btn btn-ghost active" style="padding: 2px 8px; font-size: 11.5px;" onclick="switchOutputMode(this, 'detailSummary', 'plain')">{{ _("Plain") }}</button>
               {% if summary.method == 'hybrid' %}
-              <button type="button" class="btn btn-ghost" style="padding: 2px 8px; font-size: 11.5px;" onclick="switchOutputMode(this, 'detailSummary', 'ner')">{{ lang("NER Highlights") }}</button>
-              <button type="button" class="btn btn-ghost" style="padding: 2px 8px; font-size: 11.5px;" onclick="switchOutputMode(this, 'detailSummary', 'pos')">{{ lang("POS Tagging") }}</button>
+              <button type="button" class="btn btn-ghost" style="padding: 2px 8px; font-size: 11.5px;" onclick="switchOutputMode(this, 'detailSummary', 'ner')">{{ _("NER Highlights") }}</button>
+              <button type="button" class="btn btn-ghost" style="padding: 2px 8px; font-size: 11.5px;" onclick="switchOutputMode(this, 'detailSummary', 'pos')">{{ _("POS Tagging") }}</button>
               {% endif %}
             </div>
           </div>
@@ -60,7 +61,7 @@
       <!-- Detected Named Entities Card -->
       <div class="card">
         <div class="card-head">
-          <p class="card-title">{{ lang("Detected named entities") }}</p>
+          <p class="card-title">{{ _("Detected named entities") }}</p>
         </div>
         <div class="card-body">
           <div class="entity-wrap" id="entityWrap">
@@ -73,7 +74,7 @@
                 </span>
               {% endfor %}
             {% else %}
-              <span class="output-placeholder">{{ lang("No named entities detected in this text.") }}</span>
+              <span class="output-placeholder">{{ _("No named entities detected in this text.") }}</span>
             {% endif %}
           </div>
         </div>
@@ -85,28 +86,29 @@
       <!-- Statistics & Visual Compression Gauge Card -->
       <div class="card">
         <div class="card-head">
-          <p class="card-title">{{ lang("Summary statistics") }}</p>
+          <p class="card-title">{{ _("Summary statistics") }}</p>
         </div>
         <div class="card-body">
           <div class="stats-grid">
             <div class="stat-card">
-              <span class="s-label">{{ lang("Original words") }}</span>
+              <span class="s-label">{{ _("Original words") }}</span>
               <span class="s-value">{{ summary.word_count_original }}</span>
             </div>
             <div class="stat-card">
-              <span class="s-label">{{ lang("Summary words") }}</span>
+              <span class="s-label">{{ _("Summary words") }}</span>
               <span class="s-value">{{ summary.word_count_summary }}</span>
             </div>
             <div class="stat-card accent" style="grid-column: span 2;">
-              <span class="s-label">{{ lang("Compression Ratio") }}</span>
-              <span class="s-value">{{ (summary.actual_compression * 100)|floatformat(0) if summary.actual_compression is defined else 0 }}% {{ lang("shorter") }}</span>
+              <span class="s-label">{{ _("Compression Ratio") }}</span>
+              <span class="s-value">{{ (summary.actual_compression * 100)|floatformat(0) if summary.actual_compression is defined else 0 }}% {{ _("shorter") }}</span>
               <div class="compression-bar-wrap">
                 <div class="compression-bar">
                   <div class="compression-fill" style="width: {{ (summary.actual_compression * 100)|floatformat(0) if summary.actual_compression is defined else 0 }}%;"></div>
                 </div>
                 <div class="compression-stat-text">
-                  <span>{{ summary.word_count_original }} words &rarr; {{ summary.word_count_summary }} words</span>
+                  <span>{{ summary.word_count_original }} {{ _("words") }} &rarr; {{ summary.word_count_summary }} {{ _("words") }}</span>
                 </div>
+
               </div>
             </div>
           </div>

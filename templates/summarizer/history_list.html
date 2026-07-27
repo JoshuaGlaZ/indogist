@@ -10,16 +10,16 @@
         </div>
         <p class="history-snippet">{{ summary.summary_text|truncatewords(24) }}</p>
         <div class="history-bottom">
-          <a href="/summary/{{ summary.id if hasattr(summary, 'id') else summary.pk }}/" class="btn" style="text-decoration: none;">{{ lang("View detail") }}</a>
+          <a href="/summary/{{ summary.id if hasattr(summary, 'id') else summary.pk }}/" class="btn" style="text-decoration: none;">{{ _("View detail") }}</a>
         </div>
       </div>
     {% endfor %}
   </div>
 {% else %}
   <div class="card" style="text-align: center; padding: 48px 20px;">
-    <p class="output-placeholder">{{ lang("No summary history entries found.") }}</p>
+    <p class="output-placeholder">{{ _("No summary history entries found.") }}</p>
     <div>
-      <a href="/summarize/" class="btn btn-amber">{{ lang("Create new summary") }}</a>
+      <a href="/summarize/" class="btn btn-amber">{{ _("Create new summary") }}</a>
     </div>
   </div>
 {% endif %}

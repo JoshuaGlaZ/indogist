@@ -68,7 +68,8 @@ async def summarize_post(
             content_bytes = await file.read()
             file_content_str = content_bytes.decode("utf-8")
         except UnicodeDecodeError:
-            err_msg = lang("Unable to read file. Please ensure it is a valid UTF-8 text file.")
+            err_msg = lang(request, "Unable to read file. Please ensure it is a valid UTF-8 text file.")
+
             if is_ajax:
                 return JSONResponse({"success": False, "error": err_msg}, status_code=400)
             add_flash_message(request, err_msg, "danger")
@@ -78,7 +79,8 @@ async def summarize_post(
         title=title or "",
         text=raw_input,
         has_file=bool(file and file.filename),
-        file_content=file_content_str
+        file_content=file_content_str,
+        request=request
     )
     if not is_valid:
         if is_ajax:
@@ -91,7 +93,7 @@ async def summarize_post(
 
     if file and file.filename and file_content_str:
         try:
-            parsed_title, parsed_text = parse_uploaded_file_content(file_content_str)
+            parsed_title, parsed_text = parse_uploaded_file_content(file_content_str, request=request)
             final_title = parsed_title
             final_text = parsed_text
         except ValueError as e:
@@ -101,7 +103,7 @@ async def summarize_post(
             return render_template(request, "summarizer/summarize.html", {"form": {"title": title or "", "original_text": raw_input}, "user": user})
 
     try:
-        validate_text_content(final_text)
+        validate_text_content(final_text, request=request)
     except ValueError as e:
         if is_ajax:
             return HTMLResponse(f'<div class="alert alert-danger mb-0">{str(e)}</div>', status_code=400)
@@ -172,9 +174,9 @@ async def summarize_post(
                 chips.append(f'<span class="entity-chip show"><span>{text}</span><span class="e-type">{label}</span><span class="e-score">{score}%</span></span>')
             entity_chips_html = "".join(chips)
         elif has_ner:
-            entity_chips_html = f'<span class="output-placeholder">{lang("No named entities detected in this text.")}</span>'
+            entity_chips_html = f'<span class="output-placeholder">{lang(request, "No named entities detected in this text.")}</span>'
         else:
-            entity_chips_html = f'<span class="output-placeholder">{lang("This method does not perform entity detection.")}</span>'
+            entity_chips_html = f'<span class="output-placeholder">{lang(request, "This method does not perform entity detection.")}</span>'
 
         # Build NER + POS data as JSON for client-side rendering
         import json as _json
@@ -184,23 +186,24 @@ async def summarize_post(
         summary_html = summary_result.strip()
 
         # Build dynamic toggle bar via OOB swap
-        toggle_btns = '<button type="button" class="btn btn-ghost active" style="padding:2px 8px;font-size:11.5px;" onclick="switchOutputMode(this,\'outputArea\',\'plain\')">' + lang("Plain") + '</button>'
+        toggle_btns = '<button type="button" class="btn btn-ghost active" style="padding:2px 8px;font-size:11.5px;" onclick="switchOutputMode(this,\'outputArea\',\'plain\')">' + lang(request, "Plain") + '</button>'
         if has_ner:
-            toggle_btns += '<button type="button" class="btn btn-ghost" style="padding:2px 8px;font-size:11.5px;" onclick="switchOutputMode(this,\'outputArea\',\'ner\')">' + lang("NER Highlights") + '</button>'
+            toggle_btns += '<button type="button" class="btn btn-ghost" style="padding:2px 8px;font-size:11.5px;" onclick="switchOutputMode(this,\'outputArea\',\'ner\')">' + lang(request, "NER Highlights") + '</button>'
         if has_pos:
-            toggle_btns += '<button type="button" class="btn btn-ghost" style="padding:2px 8px;font-size:11.5px;" onclick="switchOutputMode(this,\'outputArea\',\'pos\')">' + lang("POS Tagging") + '</button>'
+            toggle_btns += '<button type="button" class="btn btn-ghost" style="padding:2px 8px;font-size:11.5px;" onclick="switchOutputMode(this,\'outputArea\',\'pos\')">' + lang(request, "POS Tagging") + '</button>'
 
         return HTMLResponse(
             f'{summary_html}'
             f'<div id="entityWrap" hx-swap-oob="true">{entity_chips_html}</div>'
             f'<div id="viewModeToggle" hx-swap-oob="true" class="view-mode-toggle" style="display:flex;gap:4px;">{toggle_btns}</div>'
             f'<div id="entitySection" hx-swap-oob="true" class="entity-section" style="display:{"block" if has_ner else "none"}">'
-            f'<p class="field-label" style="margin-bottom:0;">{lang("Detected entities")}</p>'
+            f'<p class="field-label" style="margin-bottom:0;">{lang(request, "Detected entities")}</p>'
             f'<div class="entity-wrap" id="entityWrap">{entity_chips_html}</div></div>'
             f'<script>window.__nerEntities={entities_json};window.__posData={pos_json};window.__posActiveFilters=null;'
             f'window.__hasNer={"true" if has_ner else "false"};window.__hasPos={"true" if has_pos else "false"};'
             f'if(window.OUTPUT_TEXT_CACHE)delete window.OUTPUT_TEXT_CACHE["outputArea"];</script>'
         )
+
 
     context = {"summary": {"summary_text": summary_result}, "entities_list": entities_list, "user": user}
     return render_template(request, "summarizer/summarize.html", context)
@@ -347,51 +350,57 @@ def comparison(
         has_ner_b = (model_b == "hybrid")
         has_pos_b = (model_b == "hybrid")
 
-        toggle_a = '<button type="button" class="btn btn-ghost active" style="padding:2px 8px;font-size:11.5px;" onclick="switchOutputMode(this,\'compareOutputA\',\'plain\')">Plain</button>'
-        if has_ner_a:
-            toggle_a += '<button type="button" class="btn btn-ghost" style="padding:2px 8px;font-size:11.5px;" onclick="switchOutputMode(this,\'compareOutputA\',\'ner\')">NER Highlights</button>'
-        if has_pos_a:
-            toggle_a += '<button type="button" class="btn btn-ghost" style="padding:2px 8px;font-size:11.5px;" onclick="switchOutputMode(this,\'compareOutputA\',\'pos\')">POS Tagging</button>'
+        _t = lambda msg: lang(request, msg)
 
-        toggle_b = '<button type="button" class="btn btn-ghost active" style="padding:2px 8px;font-size:11.5px;" onclick="switchOutputMode(this,\'compareOutputB\',\'plain\')">Plain</button>'
+        toggle_a = '<button type="button" class="btn btn-ghost active" style="padding:2px 8px;font-size:11.5px;" onclick="switchOutputMode(this,\'compareOutputA\',\'plain\')">' + _t("Plain") + '</button>'
+        if has_ner_a:
+            toggle_a += '<button type="button" class="btn btn-ghost" style="padding:2px 8px;font-size:11.5px;" onclick="switchOutputMode(this,\'compareOutputA\',\'ner\')">' + _t("NER Highlights") + '</button>'
+        if has_pos_a:
+            toggle_a += '<button type="button" class="btn btn-ghost" style="padding:2px 8px;font-size:11.5px;" onclick="switchOutputMode(this,\'compareOutputA\',\'pos\')">' + _t("POS Tagging") + '</button>'
+
+        toggle_b = '<button type="button" class="btn btn-ghost active" style="padding:2px 8px;font-size:11.5px;" onclick="switchOutputMode(this,\'compareOutputB\',\'plain\')">' + _t("Plain") + '</button>'
         if has_ner_b:
-            toggle_b += '<button type="button" class="btn btn-ghost" style="padding:2px 8px;font-size:11.5px;" onclick="switchOutputMode(this,\'compareOutputB\',\'ner\')">NER Highlights</button>'
+            toggle_b += '<button type="button" class="btn btn-ghost" style="padding:2px 8px;font-size:11.5px;" onclick="switchOutputMode(this,\'compareOutputB\',\'ner\')">' + _t("NER Highlights") + '</button>'
         if has_pos_b:
-            toggle_b += '<button type="button" class="btn btn-ghost" style="padding:2px 8px;font-size:11.5px;" onclick="switchOutputMode(this,\'compareOutputB\',\'pos\')">POS Tagging</button>'
+            toggle_b += '<button type="button" class="btn btn-ghost" style="padding:2px 8px;font-size:11.5px;" onclick="switchOutputMode(this,\'compareOutputB\',\'pos\')">' + _t("POS Tagging") + '</button>'
+
+        lbl_output = _t("Output View")
+        lbl_words = _t("Words")
+        lbl_sentences = _t("Sentences")
 
         return HTMLResponse(f'''
         <div class="card">
           <div class="card-head">
-            <p class="card-title">Model A ({model_a.upper()})</p>
+            <p class="card-title">{_t("Model A")} ({model_a.upper()})</p>
             <span class="badge {model_a}">{model_a}</span>
           </div>
           <div class="card-body">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-              <span class="field-label" style="margin-bottom: 0;">Output View</span>
+              <span class="field-label" style="margin-bottom: 0;">{lbl_output}</span>
               <div class="view-mode-toggle" style="display: flex; gap: 4px;">{toggle_a}</div>
             </div>
             <div class="output-area" id="compareOutputA">{summary_a.strip()}</div>
             <div class="stats-grid" style="margin-top: 12px;">
-              <div class="stat-card"><span class="s-label">Words</span><span class="s-value">{len(summary_a.split()) if summary_a else 0}</span></div>
-              <div class="stat-card accent"><span class="s-label">Sentences</span><span class="s-value">{len(summary_a.split('.')) if summary_a else 0}</span></div>
+              <div class="stat-card"><span class="s-label">{lbl_words}</span><span class="s-value">{len(summary_a.split()) if summary_a else 0}</span></div>
+              <div class="stat-card accent"><span class="s-label">{lbl_sentences}</span><span class="s-value">{len(summary_a.split('.')) if summary_a else 0}</span></div>
             </div>
           </div>
         </div>
 
         <div class="card">
           <div class="card-head">
-            <p class="card-title">Model B ({model_b.upper()})</p>
+            <p class="card-title">{_t("Model B")} ({model_b.upper()})</p>
             <span class="badge {model_b}">{model_b}</span>
           </div>
           <div class="card-body">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-              <span class="field-label" style="margin-bottom: 0;">Output View</span>
+              <span class="field-label" style="margin-bottom: 0;">{lbl_output}</span>
               <div class="view-mode-toggle" style="display: flex; gap: 4px;">{toggle_b}</div>
             </div>
             <div class="output-area" id="compareOutputB">{summary_b.strip()}</div>
             <div class="stats-grid" style="margin-top: 12px;">
-              <div class="stat-card"><span class="s-label">Words</span><span class="s-value">{len(summary_b.split()) if summary_b else 0}</span></div>
-              <div class="stat-card accent"><span class="s-label">Sentences</span><span class="s-value">{len(summary_b.split('.')) if summary_b else 0}</span></div>
+              <div class="stat-card"><span class="s-label">{lbl_words}</span><span class="s-value">{len(summary_b.split()) if summary_b else 0}</span></div>
+              <div class="stat-card accent"><span class="s-label">{lbl_sentences}</span><span class="s-value">{len(summary_b.split('.')) if summary_b else 0}</span></div>
             </div>
           </div>
         </div>
@@ -410,9 +419,9 @@ def summary_detail(
 ):
     summary = session.get(Summary, pk)
     if not summary:
-        return HTMLResponse(content="Summary not found", status_code=404)
+        return HTMLResponse(content=lang(request, "Summary not found"), status_code=404)
     if not user or summary.user_id != user.id:
-        return HTMLResponse(content="Not authorized", status_code=403)
+        return HTMLResponse(content=lang(request, "Not authorized"), status_code=403)
     entities_list = summary.entities
     return render_template(request, "summarizer/summary_detail.html", {
         "summary": summary,
@@ -424,15 +433,16 @@ def summary_detail(
 @router.get("/export/{pk}")
 @router.get("/export/{pk}/")
 def export_summary(
+    request: Request,
     pk: int,
     user: Optional[User] = Depends(get_current_user),
     session: Session = Depends(get_session)
 ):
     summary = session.get(Summary, pk)
     if not summary:
-        return HTMLResponse(content="Summary not found", status_code=404)
+        return HTMLResponse(content=lang(request, "Summary not found"), status_code=404)
     if not user or summary.user_id != user.id:
-        return HTMLResponse(content="Not authorized", status_code=403)
+        return HTMLResponse(content=lang(request, "Not authorized"), status_code=403)
     
     content = f"Title: {summary.title}\nDate: {summary.created_at}\nMethod: {summary.method}\n\nSummary:\n{summary.summary_text}\n\nOriginal Text:\n{summary.original_text}"
     headers = {
@@ -451,9 +461,9 @@ def add_dataset_post(
 ):
     summary = session.get(Summary, summary_id)
     if not summary:
-        return JSONResponse({"success": False, "error": "Summary not found"}, status_code=404)
+        return JSONResponse({"success": False, "error": lang(request, "Summary not found")}, status_code=404)
     if not user or summary.user_id != user.id:
-        return JSONResponse({"success": False, "error": "Not authorized"}, status_code=403)
+        return JSONResponse({"success": False, "error": lang(request, "Not authorized")}, status_code=403)
     username = user.username
     try:
         success = add_to_indosum_dataset(summary.title, summary.original_text, summary.summary_text, username)
@@ -461,10 +471,10 @@ def add_dataset_post(
             summary.added_to_dataset = True
             session.add(summary)
             session.commit()
-            return JSONResponse({"success": True, "message": "Added to dataset successfully"})
+            return JSONResponse({"success": True, "message": lang(request, "Added to dataset successfully")})
     except Exception as e:
         return JSONResponse({"success": False, "error": str(e)}, status_code=500)
-    return JSONResponse({"success": False, "error": "Failed to add to dataset"}, status_code=500)
+    return JSONResponse({"success": False, "error": lang(request, "Failed to add to dataset")}, status_code=500)
 
 
 @router.get("/download-template")

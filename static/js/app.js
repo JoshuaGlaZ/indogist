@@ -66,7 +66,7 @@ function initCustomSelects() {
 
     const labelSpan = document.createElement('span');
     const selectedOption = select.options[select.selectedIndex];
-    labelSpan.innerText = selectedOption ? selectedOption.text : 'Select option';
+    labelSpan.innerText = selectedOption ? selectedOption.text : t('Select option');
 
     const chevron = document.createElement('span');
     chevron.className = 'chevron';
@@ -147,6 +147,42 @@ function initEditorTelemetry() {
   updateEditorTelemetry();
 }
 
+// Client-Side i18n Helper
+window.I18N_DICT = {
+  id: {
+    'Exceeds limit (Max 8,000 words)': 'Melebihi batas (Maks 8.000 kata)',
+    'Approaching limit (Max 8,000 words)': 'Mendekati batas (Maks 8.000 kata)',
+    'Limit: 8,000 words': 'Batas: 8.000 kata',
+    'No summary text to copy.': 'Tidak ada teks ringkasan untuk disalin.',
+    'Summary copied to clipboard!': 'Ringkasan berhasil disalin ke papan klip!',
+    'Failed to copy text.': 'Gagal menyalin teks.',
+    'No summary text to save.': 'Tidak ada teks ringkasan untuk disimpan.',
+    'Summary downloaded as file.': 'Ringkasan diunduh sebagai file.',
+    'No detected entities available for this summary.': 'Tidak ada entitas terdeteksi untuk ringkasan ini.',
+    'No POS data available — Stanza tagger may not be loaded.': 'Tidak ada data POS — tagger Stanza mungkin belum dimuat.',
+    'Select option': 'Pilih opsi'
+  },
+  en: {
+    'Exceeds limit (Max 8,000 words)': 'Exceeds limit (Max 8,000 words)',
+    'Approaching limit (Max 8,000 words)': 'Approaching limit (Max 8,000 words)',
+    'Limit: 8,000 words': 'Limit: 8,000 words',
+    'No summary text to copy.': 'No summary text to copy.',
+    'Summary copied to clipboard!': 'Summary copied to clipboard!',
+    'Failed to copy text.': 'Failed to copy text.',
+    'No summary text to save.': 'No summary text to save.',
+    'Summary downloaded as file.': 'Summary downloaded as file.',
+    'No detected entities available for this summary.': 'No detected entities available for this summary.',
+    'No POS data available — Stanza tagger may not be loaded.': 'No POS data available — Stanza tagger may not be loaded.',
+    'Select option': 'Select option'
+  }
+};
+
+function t(msg) {
+  const lang = document.documentElement.lang || 'id';
+  const dict = window.I18N_DICT[lang] || window.I18N_DICT['id'];
+  return dict[msg] || msg;
+}
+
 function updateEditorTelemetry() {
   const rawText = document.getElementById('rawText');
   if (!rawText) return;
@@ -161,20 +197,21 @@ function updateEditorTelemetry() {
   const tokenCount = document.getElementById('tokenCount');
   const limitMsg = document.getElementById('limitMessage');
 
-  if (wordCount) wordCount.innerText = words.toLocaleString();
-  if (charCount) charCount.innerText = chars.toLocaleString();
-  if (tokenCount) tokenCount.innerText = tokens.toLocaleString();
+  const loc = document.documentElement.lang || 'id';
+  if (wordCount) wordCount.innerText = words.toLocaleString(loc);
+  if (charCount) charCount.innerText = chars.toLocaleString(loc);
+  if (tokenCount) tokenCount.innerText = tokens.toLocaleString(loc);
 
   if (limitMsg) {
     if (words > 8000) {
       limitMsg.className = 'limit-danger';
-      limitMsg.innerText = 'Exceeds limit (Max 8,000 words)';
+      limitMsg.innerText = t('Exceeds limit (Max 8,000 words)');
     } else if (words > 6000) {
       limitMsg.className = 'limit-warning';
-      limitMsg.innerText = 'Approaching limit (Max 8,000 words)';
+      limitMsg.innerText = t('Approaching limit (Max 8,000 words)');
     } else {
       limitMsg.className = '';
-      limitMsg.innerText = 'Limit: 8,000 words';
+      limitMsg.innerText = t('Limit: 8,000 words');
     }
   }
 
@@ -183,7 +220,7 @@ function updateEditorTelemetry() {
   if (modalText && modalText.value !== val) {
     modalText.value = val;
     const modalWordCount = document.getElementById('modalWordCount');
-    if (modalWordCount) modalWordCount.innerText = words.toLocaleString();
+    if (modalWordCount) modalWordCount.innerText = words.toLocaleString(loc);
   }
 }
 
@@ -244,14 +281,14 @@ function copySummaryOutput(targetId, btnEl) {
   const textEl = document.getElementById(targetId);
   if (!textEl) return;
   const text = textEl.innerText.trim();
-  if (!text || text.includes('Waiting for input')) {
-    showToast('No summary text to copy.', 'error');
+  if (!text || textEl.querySelector('.output-placeholder')) {
+    showToast(t('No summary text to copy.'), 'error');
     return;
   }
   navigator.clipboard.writeText(text).then(() => {
-    showToast('Summary copied to clipboard!', 'success');
+    showToast(t('Summary copied to clipboard!'), 'success');
   }).catch(() => {
-    showToast('Failed to copy text.', 'error');
+    showToast(t('Failed to copy text.'), 'error');
   });
 }
 
@@ -259,8 +296,8 @@ function saveSummaryOutput(targetId) {
   const textEl = document.getElementById(targetId);
   if (!textEl) return;
   const text = textEl.innerText.trim();
-  if (!text || text.includes('Waiting for input')) {
-    showToast('No summary text to save.', 'error');
+  if (!text || textEl.querySelector('.output-placeholder')) {
+    showToast(t('No summary text to save.'), 'error');
     return;
   }
   const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
@@ -270,8 +307,9 @@ function saveSummaryOutput(targetId) {
   a.download = `indogist_summary_${Date.now()}.txt`;
   a.click();
   URL.revokeObjectURL(url);
-  showToast('Summary downloaded as file.', 'success');
+  showToast(t('Summary downloaded as file.'), 'success');
 }
+
 
 // Interactive NER & POS Output View Mode Switcher
 function switchOutputMode(btnEl, targetId, mode) {
@@ -290,7 +328,7 @@ function switchOutputMode(btnEl, targetId, mode) {
     window.OUTPUT_TEXT_CACHE[targetId] = (targetEl.innerText || targetEl.textContent || '').trim();
   }
   const plainText = window.OUTPUT_TEXT_CACHE[targetId];
-  if (!plainText || plainText.includes('Waiting for input') || plainText.includes('No ')) return;
+  if (!plainText || targetEl.querySelector('.output-placeholder')) return;
 
   if (mode === 'plain') {
     targetEl.textContent = plainText;
@@ -321,7 +359,7 @@ function switchOutputMode(btnEl, targetId, mode) {
     }
 
     if (entities.length === 0) {
-      showToast('No detected entities available for this summary.', 'info');
+      showToast(t('No detected entities available for this summary.'), 'info');
       targetEl.textContent = plainText;
       return;
     }
@@ -356,7 +394,7 @@ function switchOutputMode(btnEl, targetId, mode) {
   if (mode === 'pos') {
     const posData = window.__posData || [];
     if (!posData.length) {
-      showToast('No POS data available — Stanza tagger may not be loaded.', 'info');
+      showToast(t('No POS data available — Stanza tagger may not be loaded.'), 'info');
       targetEl.textContent = plainText;
       return;
     }

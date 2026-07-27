@@ -1,33 +1,33 @@
 {% extends 'summarizer/base.html' %}
 
-{% block title %}{{ lang("Login — IndoGist Studio") }}{% endblock %}
+{% block title %}{{ _("Login — IndoGist Studio") }}{% endblock %}
 
 {% block content %}
 <section class="view active" style="max-width: 440px; margin: 40px auto 0;">
   <div class="card">
     <div class="card-head">
-      <p class="card-title">{{ lang("User Login") }}</p>
+      <p class="card-title">{{ _("User Login") }}</p>
     </div>
     <div class="card-body">
       <form method="post" action="/accounts/login">
         {{ csrf_field(request) }}
         
         <div style="margin-bottom: 16px;">
-          <label class="field-label" for="username">{{ lang("Username") }}</label>
-          <input type="text" name="username" id="username" class="field" style="min-height: 42px;" placeholder="{{ lang("Enter your username") }}" value="{{ form.get('username', '') if hasattr(form, 'get') else '' }}" required autofocus>
+          <label class="field-label" for="username">{{ _("Username") }}</label>
+          <input type="text" name="username" id="username" class="field" style="min-height: 42px;" placeholder="{{ _("Enter your username") }}" value="{{ form.get('username', '') if hasattr(form, 'get') else '' }}" required autofocus>
         </div>
 
         <div style="margin-bottom: 20px;">
-          <label class="field-label" for="password">{{ lang("Password") }}</label>
-          <input type="password" name="password" id="password" class="field" style="min-height: 42px;" placeholder="{{ lang("Enter your password") }}" required>
+          <label class="field-label" for="password">{{ _("Password") }}</label>
+          <input type="password" name="password" id="password" class="field" style="min-height: 42px;" placeholder="{{ _("Enter your password") }}" required>
         </div>
 
-        <button type="submit" class="btn btn-amber btn-block">{{ lang("Sign In") }}</button>
+        <button type="submit" class="btn btn-amber btn-block">{{ _("Sign In") }}</button>
       </form>
 
       <p style="text-align: center; font-size: 13px; color: var(--text-muted); margin-top: 16px; margin-bottom: 0;">
-        {{ lang("Don't have an account?") }}
-        <a href="/accounts/register/" style="color: var(--accent-amber); text-decoration: none; font-weight: 600;">{{ lang("Register here") }}</a>
+        {{ _("Don't have an account?") }}
+        <a href="/accounts/register/" style="color: var(--accent-amber); text-decoration: none; font-weight: 600;">{{ _("Register here") }}</a>
       </p>
     </div>
   </div>

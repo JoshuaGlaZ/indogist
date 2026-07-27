@@ -115,6 +115,13 @@ body[data-theme="light"] .theme-toggle .icon-sun,
 body[data-theme="light"] .theme-toggle .icon-moon,
 .app[data-theme="light"] .theme-toggle .icon-moon { display: block; }
 
+/* Language Switcher */
+.lang-switcher { display: flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 600; }
+.lang-link { text-decoration: none; color: var(--text-muted); padding: 4px 6px; border-radius: 4px; }
+.lang-link:hover { color: var(--text-main); }
+.lang-link.active { color: var(--accent-amber); }
+.lang-sep { color: var(--border-color); font-weight: 300; }
+
 /* Buttons */
 .btn {
   font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 600; font-size: 13.5px;

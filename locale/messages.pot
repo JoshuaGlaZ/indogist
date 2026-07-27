@@ -1,0 +1,810 @@
+# Translations template for PROJECT.
+# Copyright (C) 2026 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2026-07-27 09:48+0700\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.16.0\n"
+
+#: app/schemas.py:35
+msgid ""
+"File format invalid. Please ensure:\n"
+"1. TITLE= is present with a title\n"
+"2. TEXT= is present with text content\n"
+"Use the official template."
+msgstr ""
+
+#: app/schemas.py:53
+msgid ""
+"Please provide content to summarize. You must either:\n"
+"• Enter a title and text manually, OR\n"
+"• Upload a file using the template format"
+msgstr ""
+
+#: app/schemas.py:56
+msgid ""
+"Title provided but no text content found. Please either:\n"
+"• Enter text in the 'Original Text' field, OR\n"
+"• Upload a file using the template format"
+msgstr ""
+
+#: app/schemas.py:60
+msgid ""
+"Uploaded file does not follow the template format. Please:\n"
+"• Download the template file\n"
+"• Fill it with TITLE= and TEXT= markers\n"
+"• Upload the completed template"
+msgstr ""
+
+#: app/schemas.py:67
+msgid "Text content is empty."
+msgstr ""
+
+#: app/schemas.py:72
+#, python-format
+msgid ""
+"Text is too short for summarization. Please provide at least "
+"%(min_words)d words (currently: %(word_count)d words)."
+msgstr ""
+
+#: app/schemas.py:78
+msgid ""
+"Text contains insufficient meaningful content. Please provide more "
+"substantial text for summarization."
+msgstr ""
+
+#: app/routers/accounts.py:41
+msgid "Passwords do not match."
+msgstr ""
+
+#: app/routers/accounts.py:46 app/routers/accounts.py:65
+msgid "Username is already taken."
+msgstr ""
+
+#: app/routers/accounts.py:51
+msgid "Email address is already registered."
+msgstr ""
+
+#: app/routers/accounts.py:69
+#, python-format
+msgid "Account created for %(username)s! You are now logged in."
+msgstr ""
+
+#: app/routers/accounts.py:88
+msgid "Invalid username or password."
+msgstr ""
+
+#: app/routers/accounts.py:92
+#, python-format
+msgid "Welcome back, %(username)s!"
+msgstr ""
+
+#: app/routers/accounts.py:98
+msgid "You have been logged out."
+msgstr ""
+
+#: app/routers/accounts.py:148
+msgid "Email is already in use."
+msgstr ""
+
+#: app/routers/accounts.py:155
+msgid "Your profile has been updated!"
+msgstr ""
+
+#: app/routers/summarizer.py:71
+msgid "Unable to read file. Please ensure it is a valid UTF-8 text file."
+msgstr ""
+
+#: app/routers/summarizer.py:177 templates/summarizer/summarize.html:175
+#: templates/summarizer/summary_detail.html:77
+msgid "No named entities detected in this text."
+msgstr ""
+
+#: app/routers/summarizer.py:179
+msgid "This method does not perform entity detection."
+msgstr ""
+
+#: app/routers/summarizer.py:189 templates/summarizer/comparison.html:61
+#: templates/summarizer/comparison.html:93
+#: templates/summarizer/summarize.html:157
+#: templates/summarizer/summary_detail.html:48
+msgid "Plain"
+msgstr ""
+
+#: app/routers/summarizer.py:191 templates/summarizer/comparison.html:63
+#: templates/summarizer/comparison.html:95
+#: templates/summarizer/summary_detail.html:50
+msgid "NER Highlights"
+msgstr ""
+
+#: app/routers/summarizer.py:193 templates/summarizer/comparison.html:64
+#: templates/summarizer/comparison.html:96
+#: templates/summarizer/summary_detail.html:51
+msgid "POS Tagging"
+msgstr ""
+
+#: app/routers/summarizer.py:200 templates/summarizer/home.html:77
+#: templates/summarizer/summarize.html:164
+msgid "Detected entities"
+msgstr ""
+
+#: app/routers/summarizer.py:422 app/routers/summarizer.py:443
+#: app/routers/summarizer.py:464
+msgid "Summary not found"
+msgstr ""
+
+#: app/routers/summarizer.py:424 app/routers/summarizer.py:445
+#: app/routers/summarizer.py:466
+msgid "Not authorized"
+msgstr ""
+
+#: app/routers/summarizer.py:474
+msgid "Added to dataset successfully"
+msgstr ""
+
+#: app/routers/summarizer.py:477
+msgid "Failed to add to dataset"
+msgstr ""
+
+#: templates/accounts/login.html:3
+msgid "Login — IndoGist Studio"
+msgstr ""
+
+#: templates/accounts/login.html:9
+msgid "User Login"
+msgstr ""
+
+#: templates/accounts/login.html:16 templates/accounts/profile.html:26
+#: templates/accounts/register.html:16
+msgid "Username"
+msgstr ""
+
+#: templates/accounts/login.html:17
+msgid "Enter your username"
+msgstr ""
+
+#: templates/accounts/login.html:21 templates/accounts/register.html:26
+msgid "Password"
+msgstr ""
+
+#: templates/accounts/login.html:22
+msgid "Enter your password"
+msgstr ""
+
+#: templates/accounts/login.html:25
+msgid "Sign In"
+msgstr ""
+
+#: templates/accounts/login.html:29
+msgid "Don't have an account?"
+msgstr ""
+
+#: templates/accounts/login.html:30
+msgid "Register here"
+msgstr ""
+
+#: templates/accounts/profile.html:3
+msgid "Profile — IndoGist Studio"
+msgstr ""
+
+#: templates/accounts/profile.html:9
+msgid "Edit Account Profile"
+msgstr ""
+
+#: templates/accounts/profile.html:18
+msgid "summaries"
+msgstr ""
+
+#: templates/accounts/profile.html:31 templates/accounts/register.html:21
+msgid "Email Address"
+msgstr ""
+
+#: templates/accounts/profile.html:35
+msgid "Save Profile Changes"
+msgstr ""
+
+#: templates/accounts/register.html:3
+msgid "Register — IndoGist Studio"
+msgstr ""
+
+#: templates/accounts/register.html:9
+msgid "Create Account"
+msgstr ""
+
+#: templates/accounts/register.html:17
+msgid "Choose a username"
+msgstr ""
+
+#: templates/accounts/register.html:22
+msgid "Enter your email address"
+msgstr ""
+
+#: templates/accounts/register.html:27
+msgid "Enter password"
+msgstr ""
+
+#: templates/accounts/register.html:31
+msgid "Confirm Password"
+msgstr ""
+
+#: templates/accounts/register.html:32
+msgid "Confirm password"
+msgstr ""
+
+#: templates/accounts/register.html:35
+msgid "Register Account"
+msgstr ""
+
+#: templates/accounts/register.html:39
+msgid "Already have an account?"
+msgstr ""
+
+#: templates/accounts/register.html:40
+msgid "Login here"
+msgstr ""
+
+#: templates/summarizer/base.html:7
+msgid "IndoGist — Precision Studio"
+msgstr ""
+
+#: templates/summarizer/base.html:29
+msgid "Summarize studio"
+msgstr ""
+
+#: templates/summarizer/base.html:30
+msgid "History"
+msgstr ""
+
+#: templates/summarizer/base.html:31
+msgid "Metrics"
+msgstr ""
+
+#: templates/summarizer/base.html:32
+msgid "Compare"
+msgstr ""
+
+#: templates/summarizer/base.html:48
+msgid "Logout"
+msgstr ""
+
+#: templates/summarizer/base.html:51
+msgid "Login"
+msgstr ""
+
+#: templates/summarizer/base.html:71
+msgid "Text Summarization Engine"
+msgstr ""
+
+#: templates/summarizer/charts.html:3
+msgid "Metrics Dashboard — IndoGist Studio"
+msgstr ""
+
+#: templates/summarizer/charts.html:8
+msgid "Model Performance Metrics"
+msgstr ""
+
+#: templates/summarizer/charts.html:9
+msgid "ROUGE and BLEU evaluation suite results for Indonesian text summarization."
+msgstr ""
+
+#: templates/summarizer/charts.html:14
+msgid "Evaluation Suite Summary"
+msgstr ""
+
+#: templates/summarizer/charts.html:19
+msgid "ROUGE-1 Score"
+msgstr ""
+
+#: templates/summarizer/charts.html:23
+msgid "ROUGE-2 Score"
+msgstr ""
+
+#: templates/summarizer/charts.html:27
+msgid "ROUGE-L Score"
+msgstr ""
+
+#: templates/summarizer/charts.html:31
+msgid "BLEU Score"
+msgstr ""
+
+#: templates/summarizer/charts.html:41
+msgid "Model Training Convergence"
+msgstr ""
+
+#: templates/summarizer/charts.html:44
+msgid "Training History"
+msgstr ""
+
+#: templates/summarizer/charts.html:52
+msgid "Detailed Performance Classification"
+msgstr ""
+
+#: templates/summarizer/charts.html:59
+msgid "Metric Class"
+msgstr ""
+
+#: templates/summarizer/charts.html:60
+msgid "Precision"
+msgstr ""
+
+#: templates/summarizer/charts.html:61
+msgid "Recall"
+msgstr ""
+
+#: templates/summarizer/charts.html:62
+msgid "F1-Score"
+msgstr ""
+
+#: templates/summarizer/charts.html:63
+msgid "Support"
+msgstr ""
+
+#: templates/summarizer/comparison.html:3
+msgid "Compare Methods — IndoGist Studio"
+msgstr ""
+
+#: templates/summarizer/comparison.html:8
+msgid "Model comparison studio"
+msgstr ""
+
+#: templates/summarizer/comparison.html:9
+msgid "Run the same text through two methods and compare results side by side."
+msgstr ""
+
+#: templates/summarizer/comparison.html:16
+msgid "Input text for side-by-side evaluation"
+msgstr ""
+
+#: templates/summarizer/comparison.html:17
+msgid "Paste text to compare..."
+msgstr ""
+
+#: templates/summarizer/comparison.html:21
+msgid "Model A"
+msgstr ""
+
+#: templates/summarizer/comparison.html:23
+#: templates/summarizer/comparison.html:32
+msgid "Traditional Extractive (Sentence Rank)"
+msgstr ""
+
+#: templates/summarizer/comparison.html:24
+#: templates/summarizer/comparison.html:31
+msgid "Hybrid (POS/NER + TF-IDF)"
+msgstr ""
+
+#: templates/summarizer/comparison.html:25
+#: templates/summarizer/comparison.html:33
+msgid "Abstractive (Coming Soon)"
+msgstr ""
+
+#: templates/summarizer/comparison.html:29
+#: templates/summarizer/comparison.html:86
+msgid "Model B"
+msgstr ""
+
+#: templates/summarizer/comparison.html:38
+msgid "Run side-by-side comparison"
+msgstr ""
+
+#: templates/summarizer/comparison.html:45
+msgid "Running parallel models for comparison..."
+msgstr ""
+
+#: templates/summarizer/comparison.html:53
+msgid "Model A: Traditional Extractive"
+msgstr ""
+
+#: templates/summarizer/comparison.html:54
+msgid "Sentence rank"
+msgstr ""
+
+#: templates/summarizer/comparison.html:59
+#: templates/summarizer/comparison.html:91
+#: templates/summarizer/summarize.html:155
+#: templates/summarizer/summary_detail.html:46
+msgid "Output View"
+msgstr ""
+
+#: templates/summarizer/comparison.html:69
+msgid "No extractive summary generated."
+msgstr ""
+
+#: templates/summarizer/comparison.html:73
+#: templates/summarizer/comparison.html:105
+msgid "Words"
+msgstr ""
+
+#: templates/summarizer/comparison.html:77
+#: templates/summarizer/comparison.html:109
+msgid "Sentences"
+msgstr ""
+
+#: templates/summarizer/comparison.html:101
+msgid "No hybrid summary generated."
+msgstr ""
+
+#: templates/summarizer/history.html:3
+msgid "History — IndoGist Studio"
+msgstr ""
+
+#: templates/summarizer/history.html:9
+msgid "Summary history archive"
+msgstr ""
+
+#: templates/summarizer/history.html:10
+msgid "Every document you've summarized, searchable and filterable."
+msgstr ""
+
+#: templates/summarizer/history.html:12 templates/summarizer/home.html:24
+msgid "entries"
+msgstr ""
+
+#: templates/summarizer/history.html:19
+msgid "Search by title or keyword"
+msgstr ""
+
+#: templates/summarizer/history.html:19
+msgid "Search history"
+msgstr ""
+
+#: templates/summarizer/history.html:23
+msgid "Filter by method"
+msgstr ""
+
+#: templates/summarizer/history.html:24
+msgid "All methods"
+msgstr ""
+
+#: templates/summarizer/history.html:25 templates/summarizer/home.html:69
+#: templates/summarizer/summarize.html:83
+msgid "Hybrid"
+msgstr ""
+
+#: templates/summarizer/history.html:26
+msgid "Extractive"
+msgstr ""
+
+#: templates/summarizer/history.html:27 templates/summarizer/summarize.html:91
+msgid "Abstractive"
+msgstr ""
+
+#: templates/summarizer/history.html:33
+msgid "Sort order"
+msgstr ""
+
+#: templates/summarizer/history.html:34
+msgid "Newest first"
+msgstr ""
+
+#: templates/summarizer/history.html:35
+msgid "Oldest first"
+msgstr ""
+
+#: templates/summarizer/history.html:36
+msgid "Title A-Z"
+msgstr ""
+
+#: templates/summarizer/history_list.html:13 templates/summarizer/home.html:38
+msgid "View detail"
+msgstr ""
+
+#: templates/summarizer/history_list.html:20
+msgid "No summary history entries found."
+msgstr ""
+
+#: templates/summarizer/history_list.html:22
+msgid "Create new summary"
+msgstr ""
+
+#: templates/summarizer/home.html:3
+msgid "Home — IndoGist Studio"
+msgstr ""
+
+#: templates/summarizer/home.html:8 templates/summarizer/summarize.html:8
+msgid "TEXT SUMMARIZER"
+msgstr ""
+
+#: templates/summarizer/home.html:9
+msgid ""
+"Hybrid, extractive, or abstractive — pick a method and run it on "
+"Indonesian text."
+msgstr ""
+
+#: templates/summarizer/home.html:15
+msgid "Welcome"
+msgstr ""
+
+#: templates/summarizer/home.html:16
+msgid "Manage your saved summaries and run real-time document analysis."
+msgstr ""
+
+#: templates/summarizer/home.html:18
+msgid "New Summary"
+msgstr ""
+
+#: templates/summarizer/home.html:23
+msgid "Recent Activity"
+msgstr ""
+
+#: templates/summarizer/home.html:44
+msgid "No summaries yet. Create your first summary in the studio."
+msgstr ""
+
+#: templates/summarizer/home.html:53
+msgid "Getting Started"
+msgstr ""
+
+#: templates/summarizer/home.html:56
+msgid "Summarize Text Instantly"
+msgstr ""
+
+#: templates/summarizer/home.html:58
+msgid ""
+"Efficiently condense your documents while retaining full context using "
+"our advanced NLP models."
+msgstr ""
+
+#: templates/summarizer/home.html:61
+msgid "Start Summarizing"
+msgstr ""
+
+#: templates/summarizer/home.html:68
+msgid "Sample Summary Output"
+msgstr ""
+
+#: templates/summarizer/summarize.html:3
+msgid "Summarize Studio — IndoGist"
+msgstr ""
+
+#: templates/summarizer/summarize.html:9
+msgid ""
+"Hybrid, traditional extractive, or abstractive — pick a method and run it"
+" on Indonesian text."
+msgstr ""
+
+#: templates/summarizer/summarize.html:16
+msgid "Input workspace"
+msgstr ""
+
+#: templates/summarizer/summarize.html:17
+#: templates/summarizer/summarize.html:189
+#: templates/summarizer/summary_detail.html:109
+msgid "words"
+msgstr ""
+
+#: templates/summarizer/summarize.html:24
+msgid "Raw text"
+msgstr ""
+
+#: templates/summarizer/summarize.html:25
+msgid "File upload"
+msgstr ""
+
+#: templates/summarizer/summarize.html:26
+msgid "Presets"
+msgstr ""
+
+#: templates/summarizer/summarize.html:31
+msgid "Add optional title"
+msgstr ""
+
+#: templates/summarizer/summarize.html:35
+msgid "Document title"
+msgstr ""
+
+#: templates/summarizer/summarize.html:35
+msgid "optional"
+msgstr ""
+
+#: templates/summarizer/summarize.html:36
+msgid "Remove title input"
+msgstr ""
+
+#: templates/summarizer/summarize.html:36
+msgid "Remove"
+msgstr ""
+
+#: templates/summarizer/summarize.html:38
+msgid "Enter document title..."
+msgstr ""
+
+#: templates/summarizer/summarize.html:41
+msgid "Document text"
+msgstr ""
+
+#: templates/summarizer/summarize.html:42
+msgid "Paste your Indonesian text here..."
+msgstr ""
+
+#: templates/summarizer/summarize.html:47
+msgid "chars"
+msgstr ""
+
+#: templates/summarizer/summarize.html:48
+msgid "tokens"
+msgstr ""
+
+#: templates/summarizer/summarize.html:51
+msgid "Clear"
+msgstr ""
+
+#: templates/summarizer/summarize.html:52
+msgid "Expand editor"
+msgstr ""
+
+#: templates/summarizer/summarize.html:53
+msgid "Limit: 8,000 words"
+msgstr ""
+
+#: templates/summarizer/summarize.html:59
+msgid "File attachment"
+msgstr ""
+
+#: templates/summarizer/summarize.html:62
+msgid "Drag a .txt, .pdf, or .docx file here"
+msgstr ""
+
+#: templates/summarizer/summarize.html:64
+msgid "Browse files"
+msgstr ""
+
+#: templates/summarizer/summarize.html:69
+msgid "Sample document presets"
+msgstr ""
+
+#: templates/summarizer/summarize.html:71
+msgid "News article"
+msgstr ""
+
+#: templates/summarizer/summarize.html:72
+msgid "Tech spec"
+msgstr ""
+
+#: templates/summarizer/summarize.html:73
+msgid "Academic paper"
+msgstr ""
+
+#: templates/summarizer/summarize.html:79
+msgid "Summarization method"
+msgstr ""
+
+#: templates/summarizer/summarize.html:83
+msgid "POS/NER + TF-IDF"
+msgstr ""
+
+#: templates/summarizer/summarize.html:87
+msgid "Traditional"
+msgstr ""
+
+#: templates/summarizer/summarize.html:87
+msgid "Extractive Sentence Rank"
+msgstr ""
+
+#: templates/summarizer/summarize.html:91
+msgid "Coming Soon"
+msgstr ""
+
+#: templates/summarizer/summarize.html:98
+msgid "Hybrid Model Architecture"
+msgstr ""
+
+#: templates/summarizer/summarize.html:100
+msgid "TF-IDF + NER + POS (BiLSTM POS-NER)"
+msgstr ""
+
+#: templates/summarizer/summarize.html:101
+msgid "TF-IDF + NER (Baseline NER)"
+msgstr ""
+
+#: templates/summarizer/summarize.html:102
+msgid "TF-IDF + NER + POS + CRF (BiLSTM-CRF Architecture)"
+msgstr ""
+
+#: templates/summarizer/summarize.html:108
+msgid "Traditional Extractive Variant"
+msgstr ""
+
+#: templates/summarizer/summarize.html:110
+msgid "TF-IDF + Sentence Position Rank (Baseline)"
+msgstr ""
+
+#: templates/summarizer/summarize.html:111
+msgid "MMR Relevance & Diversity Ranking"
+msgstr ""
+
+#: templates/summarizer/summarize.html:112
+msgid "TextRank Graph Centrality"
+msgstr ""
+
+#: templates/summarizer/summarize.html:120
+msgid "Target Compression Ratio"
+msgstr ""
+
+#: templates/summarizer/summarize.html:134
+msgid "Generate summary"
+msgstr ""
+
+#: templates/summarizer/summarize.html:142
+#: templates/summarizer/summary_detail.html:37
+msgid "Summary output"
+msgstr ""
+
+#: templates/summarizer/summarize.html:144
+#: templates/summarizer/summary_detail.html:26
+#: templates/summarizer/summary_detail.html:39
+msgid "Copy"
+msgstr ""
+
+#: templates/summarizer/summarize.html:145
+#: templates/summarizer/summary_detail.html:40
+msgid "Save"
+msgstr ""
+
+#: templates/summarizer/summarize.html:150
+msgid "Running summarization engine..."
+msgstr ""
+
+#: templates/summarizer/summarize.html:161
+msgid "Waiting for input — select a method and generate a summary."
+msgstr ""
+
+#: templates/summarizer/summarize.html:188
+msgid "Full Document Editor"
+msgstr ""
+
+#: templates/summarizer/summarize.html:190
+msgid "Close editor"
+msgstr ""
+
+#: templates/summarizer/summarize.html:193
+msgid "Paste your long document text here..."
+msgstr ""
+
+#: templates/summarizer/summary_detail.html:3
+msgid "IndoGist Detail"
+msgstr ""
+
+#: templates/summarizer/summary_detail.html:10
+msgid "Back to history"
+msgstr ""
+
+#: templates/summarizer/summary_detail.html:24
+msgid "Original text"
+msgstr ""
+
+#: templates/summarizer/summary_detail.html:64
+msgid "Detected named entities"
+msgstr ""
+
+#: templates/summarizer/summary_detail.html:89
+msgid "Summary statistics"
+msgstr ""
+
+#: templates/summarizer/summary_detail.html:94
+msgid "Original words"
+msgstr ""
+
+#: templates/summarizer/summary_detail.html:98
+msgid "Summary words"
+msgstr ""
+
+#: templates/summarizer/summary_detail.html:102
+msgid "Compression Ratio"
+msgstr ""
+
+#: templates/summarizer/summary_detail.html:103
+msgid "shorter"
+msgstr ""
+

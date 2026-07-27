@@ -116,7 +116,8 @@ def test_login_invalid_credentials(client: TestClient, test_user: User):
     }
     response = client.post("/accounts/login", data=login_data)
     assert response.status_code == 200
-    assert "Invalid username or password" in response.text or "salah" in response.text.lower()
+    assert "Invalid username or password" in response.text or "salah" in response.text.lower() or "tidak valid" in response.text.lower()
+
 
 
 def test_profile_unauthenticated_redirect(client: TestClient):

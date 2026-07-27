@@ -1,0 +1,839 @@
+# Indonesian translations for PROJECT.
+# Copyright (C) 2026 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2026-07-27 09:48+0700\n"
+"PO-Revision-Date: 2026-07-24 16:00+0700\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: id\n"
+"Language-Team: id <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.16.0\n"
+
+#: app/schemas.py:35
+msgid ""
+"File format invalid. Please ensure:\n"
+"1. TITLE= is present with a title\n"
+"2. TEXT= is present with text content\n"
+"Use the official template."
+msgstr ""
+"Format file tidak valid. Harap pastikan:\n"
+"1. TITLE= ada beserta judul\n"
+"2. TEXT= ada beserta konten teks\n"
+"Gunakan template resmi."
+
+#: app/schemas.py:53
+msgid ""
+"Please provide content to summarize. You must either:\n"
+"• Enter a title and text manually, OR\n"
+"• Upload a file using the template format"
+msgstr ""
+"Please provide content to summarize. You must either:\n"
+"• Enter a title and text manually, OR\n"
+"• Upload a file using the template format"
+
+#: app/schemas.py:56
+msgid ""
+"Title provided but no text content found. Please either:\n"
+"• Enter text in the 'Original Text' field, OR\n"
+"• Upload a file using the template format"
+msgstr ""
+"Title provided but no text content found. Please either:\n"
+"• Enter text in the 'Original Text' field, OR\n"
+"• Upload a file using the template format"
+
+#: app/schemas.py:60
+msgid ""
+"Uploaded file does not follow the template format. Please:\n"
+"• Download the template file\n"
+"• Fill it with TITLE= and TEXT= markers\n"
+"• Upload the completed template"
+msgstr ""
+"Uploaded file does not follow the template format. Please:\n"
+"• Download the template file\n"
+"• Fill it with TITLE= and TEXT= markers\n"
+"• Upload the completed template"
+
+#: app/schemas.py:67
+msgid "Text content is empty."
+msgstr "Konten teks kosong."
+
+#: app/schemas.py:72
+#, python-format
+msgid ""
+"Text is too short for summarization. Please provide at least "
+"%(min_words)d words (currently: %(word_count)d words)."
+msgstr ""
+"Teks terlalu pendek untuk diringkas. Harap berikan minimal %(min_words)d "
+"kata (saat ini: %(word_count)d kata)."
+
+#: app/schemas.py:78
+msgid ""
+"Text contains insufficient meaningful content. Please provide more "
+"substantial text for summarization."
+msgstr ""
+"Teks mengandung konten bermakna yang tidak mencukupi. Harap berikan teks "
+"yang lebih substansial untuk diringkas."
+
+#: app/routers/accounts.py:41
+msgid "Passwords do not match."
+msgstr "Kata sandi tidak cocok."
+
+#: app/routers/accounts.py:46 app/routers/accounts.py:65
+msgid "Username is already taken."
+msgstr "Nama pengguna sudah digunakan."
+
+#: app/routers/accounts.py:51
+msgid "Email address is already registered."
+msgstr "Alamat email sudah terdaftar."
+
+#: app/routers/accounts.py:69
+#, python-format
+msgid "Account created for %(username)s! You are now logged in."
+msgstr "Akun berhasil dibuat untuk %(username)s! Anda sekarang sudah masuk."
+
+#: app/routers/accounts.py:88
+msgid "Invalid username or password."
+msgstr "Nama pengguna atau kata sandi tidak valid."
+
+#: app/routers/accounts.py:92
+#, python-format
+msgid "Welcome back, %(username)s!"
+msgstr "Selamat datang kembali, %(username)s!"
+
+#: app/routers/accounts.py:98
+msgid "You have been logged out."
+msgstr "Anda telah keluar."
+
+#: app/routers/accounts.py:148
+msgid "Email is already in use."
+msgstr "Email sudah digunakan."
+
+#: app/routers/accounts.py:155
+msgid "Your profile has been updated!"
+msgstr "Profil Anda telah diperbarui!"
+
+#: app/routers/summarizer.py:71
+msgid "Unable to read file. Please ensure it is a valid UTF-8 text file."
+msgstr ""
+"Tidak dapat membaca file. Harap pastikan ini adalah file teks UTF-8 yang "
+"valid."
+
+#: app/routers/summarizer.py:177 templates/summarizer/summarize.html:175
+#: templates/summarizer/summary_detail.html:77
+msgid "No named entities detected in this text."
+msgstr "Tidak ada entitas bernama yang terdeteksi dalam teks ini."
+
+#: app/routers/summarizer.py:179
+msgid "This method does not perform entity detection."
+msgstr "Metode ini tidak melakukan deteksi entitas."
+
+#: app/routers/summarizer.py:189 templates/summarizer/comparison.html:61
+#: templates/summarizer/comparison.html:93
+#: templates/summarizer/summarize.html:157
+#: templates/summarizer/summary_detail.html:48
+msgid "Plain"
+msgstr "Polos"
+
+#: app/routers/summarizer.py:191 templates/summarizer/comparison.html:63
+#: templates/summarizer/comparison.html:95
+#: templates/summarizer/summary_detail.html:50
+msgid "NER Highlights"
+msgstr "Sorotan NER"
+
+#: app/routers/summarizer.py:193 templates/summarizer/comparison.html:64
+#: templates/summarizer/comparison.html:96
+#: templates/summarizer/summary_detail.html:51
+msgid "POS Tagging"
+msgstr "Penandaan POS"
+
+#: app/routers/summarizer.py:200 templates/summarizer/home.html:77
+#: templates/summarizer/summarize.html:164
+msgid "Detected entities"
+msgstr "Entitas terdeteksi"
+
+#: app/routers/summarizer.py:422 app/routers/summarizer.py:443
+#: app/routers/summarizer.py:464
+msgid "Summary not found"
+msgstr "Ringkasan tidak ditemukan"
+
+#: app/routers/summarizer.py:424 app/routers/summarizer.py:445
+#: app/routers/summarizer.py:466
+msgid "Not authorized"
+msgstr "Tidak memiliki akses"
+
+#: app/routers/summarizer.py:474
+msgid "Added to dataset successfully"
+msgstr "Berhasil ditambahkan ke dataset"
+
+#: app/routers/summarizer.py:477
+msgid "Failed to add to dataset"
+msgstr "Gagal menambahkan ke dataset"
+
+#: templates/accounts/login.html:3
+msgid "Login — IndoGist Studio"
+msgstr "Masuk — IndoGist Studio"
+
+#: templates/accounts/login.html:9
+msgid "User Login"
+msgstr "Masuk Pengguna"
+
+#: templates/accounts/login.html:16 templates/accounts/profile.html:26
+#: templates/accounts/register.html:16
+msgid "Username"
+msgstr "Nama Pengguna"
+
+#: templates/accounts/login.html:17
+msgid "Enter your username"
+msgstr "Masukkan nama pengguna Anda"
+
+#: templates/accounts/login.html:21 templates/accounts/register.html:26
+msgid "Password"
+msgstr "Kata Sandi"
+
+#: templates/accounts/login.html:22
+msgid "Enter your password"
+msgstr "Masukkan kata sandi Anda"
+
+#: templates/accounts/login.html:25
+msgid "Sign In"
+msgstr "Masuk"
+
+#: templates/accounts/login.html:29
+msgid "Don't have an account?"
+msgstr "Belum punya akun?"
+
+#: templates/accounts/login.html:30
+msgid "Register here"
+msgstr "Daftar di sini"
+
+#: templates/accounts/profile.html:3
+msgid "Profile — IndoGist Studio"
+msgstr "Profil — IndoGist Studio"
+
+#: templates/accounts/profile.html:9
+msgid "Edit Account Profile"
+msgstr "Edit Profil Akun"
+
+#: templates/accounts/profile.html:18
+msgid "summaries"
+msgstr "ringkasan"
+
+#: templates/accounts/profile.html:31 templates/accounts/register.html:21
+msgid "Email Address"
+msgstr "Alamat Email"
+
+#: templates/accounts/profile.html:35
+msgid "Save Profile Changes"
+msgstr "Simpan Perubahan Profil"
+
+#: templates/accounts/register.html:3
+msgid "Register — IndoGist Studio"
+msgstr "Daftar — IndoGist Studio"
+
+#: templates/accounts/register.html:9
+msgid "Create Account"
+msgstr "Buat Akun"
+
+#: templates/accounts/register.html:17
+msgid "Choose a username"
+msgstr "Pilih nama pengguna"
+
+#: templates/accounts/register.html:22
+msgid "Enter your email address"
+msgstr "Masukkan alamat email Anda"
+
+#: templates/accounts/register.html:27
+msgid "Enter password"
+msgstr "Masukkan kata sandi"
+
+#: templates/accounts/register.html:31
+msgid "Confirm Password"
+msgstr "Konfirmasi Kata Sandi"
+
+#: templates/accounts/register.html:32
+msgid "Confirm password"
+msgstr "Konfirmasi kata sandi"
+
+#: templates/accounts/register.html:35
+msgid "Register Account"
+msgstr "Daftar Akun"
+
+#: templates/accounts/register.html:39
+msgid "Already have an account?"
+msgstr "Sudah punya akun?"
+
+#: templates/accounts/register.html:40
+msgid "Login here"
+msgstr "Masuk di sini"
+
+#: templates/summarizer/base.html:7
+msgid "IndoGist — Precision Studio"
+msgstr "IndoGist — Studio Presisi"
+
+#: templates/summarizer/base.html:29
+msgid "Summarize studio"
+msgstr "Studio Peringkas"
+
+#: templates/summarizer/base.html:30
+msgid "History"
+msgstr "Riwayat"
+
+#: templates/summarizer/base.html:31
+msgid "Metrics"
+msgstr "Metrik"
+
+#: templates/summarizer/base.html:32
+msgid "Compare"
+msgstr "Bandingkan"
+
+#: templates/summarizer/base.html:48
+msgid "Logout"
+msgstr "Keluar"
+
+#: templates/summarizer/base.html:51
+msgid "Login"
+msgstr "Masuk"
+
+#: templates/summarizer/base.html:71
+msgid "Text Summarization Engine"
+msgstr "Mesin Peringkas Teks"
+
+#: templates/summarizer/charts.html:3
+msgid "Metrics Dashboard — IndoGist Studio"
+msgstr "Dasbor Metrik — IndoGist Studio"
+
+#: templates/summarizer/charts.html:8
+msgid "Model Performance Metrics"
+msgstr "Metrik Performa Model"
+
+#: templates/summarizer/charts.html:9
+msgid "ROUGE and BLEU evaluation suite results for Indonesian text summarization."
+msgstr "Hasil evaluasi ROUGE dan BLEU untuk peringkasan teks bahasa Indonesia."
+
+#: templates/summarizer/charts.html:14
+msgid "Evaluation Suite Summary"
+msgstr "Ringkasan Paket Evaluasi"
+
+#: templates/summarizer/charts.html:19
+msgid "ROUGE-1 Score"
+msgstr "Skor ROUGE-1"
+
+#: templates/summarizer/charts.html:23
+msgid "ROUGE-2 Score"
+msgstr "Skor ROUGE-2"
+
+#: templates/summarizer/charts.html:27
+msgid "ROUGE-L Score"
+msgstr "Skor ROUGE-L"
+
+#: templates/summarizer/charts.html:31
+msgid "BLEU Score"
+msgstr "Skor BLEU"
+
+#: templates/summarizer/charts.html:41
+msgid "Model Training Convergence"
+msgstr "Konvergensi Pelatihan Model"
+
+#: templates/summarizer/charts.html:44
+msgid "Training History"
+msgstr "Riwayat Pelatihan"
+
+#: templates/summarizer/charts.html:52
+msgid "Detailed Performance Classification"
+msgstr "Klasifikasi Performa Detail"
+
+#: templates/summarizer/charts.html:59
+msgid "Metric Class"
+msgstr "Kelas Metrik"
+
+#: templates/summarizer/charts.html:60
+msgid "Precision"
+msgstr "Presisi"
+
+#: templates/summarizer/charts.html:61
+msgid "Recall"
+msgstr "Recall"
+
+#: templates/summarizer/charts.html:62
+msgid "F1-Score"
+msgstr "Skor F1"
+
+#: templates/summarizer/charts.html:63
+msgid "Support"
+msgstr "Dukungan"
+
+#: templates/summarizer/comparison.html:3
+msgid "Compare Methods — IndoGist Studio"
+msgstr "Bandingkan Metode — IndoGist Studio"
+
+#: templates/summarizer/comparison.html:8
+msgid "Model comparison studio"
+msgstr "Studio Perbandingan Model"
+
+#: templates/summarizer/comparison.html:9
+msgid "Run the same text through two methods and compare results side by side."
+msgstr ""
+"Jalankan teks yang sama melalui dua metode dan bandingkan hasilnya "
+"berdampingan."
+
+#: templates/summarizer/comparison.html:16
+msgid "Input text for side-by-side evaluation"
+msgstr "Teks input untuk evaluasi berdampingan"
+
+#: templates/summarizer/comparison.html:17
+msgid "Paste text to compare..."
+msgstr "Tempel teks untuk membandingkan..."
+
+#: templates/summarizer/comparison.html:21
+msgid "Model A"
+msgstr "Model A"
+
+#: templates/summarizer/comparison.html:23
+#: templates/summarizer/comparison.html:32
+msgid "Traditional Extractive (Sentence Rank)"
+msgstr "Ekstraktif Tradisional (Peringkat Kalimat)"
+
+#: templates/summarizer/comparison.html:24
+#: templates/summarizer/comparison.html:31
+msgid "Hybrid (POS/NER + TF-IDF)"
+msgstr "Hibrida (POS/NER + TF-IDF)"
+
+#: templates/summarizer/comparison.html:25
+#: templates/summarizer/comparison.html:33
+msgid "Abstractive (Coming Soon)"
+msgstr "Abstraktif (Segera Hadir)"
+
+#: templates/summarizer/comparison.html:29
+#: templates/summarizer/comparison.html:86
+msgid "Model B"
+msgstr "Model B"
+
+#: templates/summarizer/comparison.html:38
+msgid "Run side-by-side comparison"
+msgstr "Jalankan perbandingan berdampingan"
+
+#: templates/summarizer/comparison.html:45
+msgid "Running parallel models for comparison..."
+msgstr "Menjalankan model paralel untuk perbandingan..."
+
+#: templates/summarizer/comparison.html:53
+msgid "Model A: Traditional Extractive"
+msgstr "Model A: Ekstraktif Tradisional"
+
+#: templates/summarizer/comparison.html:54
+msgid "Sentence rank"
+msgstr "Peringkat kalimat"
+
+#: templates/summarizer/comparison.html:59
+#: templates/summarizer/comparison.html:91
+#: templates/summarizer/summarize.html:155
+#: templates/summarizer/summary_detail.html:46
+msgid "Output View"
+msgstr "Tampilan Hasil"
+
+#: templates/summarizer/comparison.html:69
+msgid "No extractive summary generated."
+msgstr "Tidak ada ringkasan ekstraktif yang dibuat."
+
+#: templates/summarizer/comparison.html:73
+#: templates/summarizer/comparison.html:105
+msgid "Words"
+msgstr "Kata"
+
+#: templates/summarizer/comparison.html:77
+#: templates/summarizer/comparison.html:109
+msgid "Sentences"
+msgstr "Kalimat"
+
+#: templates/summarizer/comparison.html:101
+msgid "No hybrid summary generated."
+msgstr "Tidak ada ringkasan hibrida yang dibuat."
+
+#: templates/summarizer/history.html:3
+msgid "History — IndoGist Studio"
+msgstr "Riwayat — IndoGist Studio"
+
+#: templates/summarizer/history.html:9
+msgid "Summary history archive"
+msgstr "Arsip riwayat ringkasan"
+
+#: templates/summarizer/history.html:10
+msgid "Every document you've summarized, searchable and filterable."
+msgstr "Setiap dokumen yang Anda ringkas, dapat dicari dan difilter."
+
+#: templates/summarizer/history.html:12 templates/summarizer/home.html:24
+msgid "entries"
+msgstr "entri"
+
+#: templates/summarizer/history.html:19
+msgid "Search by title or keyword"
+msgstr "Cari berdasarkan judul atau kata kunci"
+
+#: templates/summarizer/history.html:19
+msgid "Search history"
+msgstr "Cari riwayat"
+
+#: templates/summarizer/history.html:23
+msgid "Filter by method"
+msgstr "Filter berdasarkan metode"
+
+#: templates/summarizer/history.html:24
+msgid "All methods"
+msgstr "Semua metode"
+
+#: templates/summarizer/history.html:25 templates/summarizer/home.html:69
+#: templates/summarizer/summarize.html:83
+msgid "Hybrid"
+msgstr "Hibrida"
+
+#: templates/summarizer/history.html:26
+msgid "Extractive"
+msgstr "Ekstraktif"
+
+#: templates/summarizer/history.html:27 templates/summarizer/summarize.html:91
+msgid "Abstractive"
+msgstr "Abstraktif"
+
+#: templates/summarizer/history.html:33
+msgid "Sort order"
+msgstr "Urutan pengurutan"
+
+#: templates/summarizer/history.html:34
+msgid "Newest first"
+msgstr "Terbaru pertama"
+
+#: templates/summarizer/history.html:35
+msgid "Oldest first"
+msgstr "Terlama pertama"
+
+#: templates/summarizer/history.html:36
+msgid "Title A-Z"
+msgstr "Judul A-Z"
+
+#: templates/summarizer/history_list.html:13 templates/summarizer/home.html:38
+msgid "View detail"
+msgstr "Lihat detail"
+
+#: templates/summarizer/history_list.html:20
+msgid "No summary history entries found."
+msgstr "Tidak ada entri riwayat ringkasan ditemukan."
+
+#: templates/summarizer/history_list.html:22
+msgid "Create new summary"
+msgstr "Buat ringkasan baru"
+
+#: templates/summarizer/home.html:3
+msgid "Home — IndoGist Studio"
+msgstr "Beranda — IndoGist Studio"
+
+#: templates/summarizer/home.html:8 templates/summarizer/summarize.html:8
+msgid "TEXT SUMMARIZER"
+msgstr "PERINGKAS TEKS"
+
+#: templates/summarizer/home.html:9
+msgid ""
+"Hybrid, extractive, or abstractive — pick a method and run it on "
+"Indonesian text."
+msgstr ""
+"Hibrida, ekstraktif, atau abstraktif — pilih metode dan jalankan pada "
+"teks bahasa Indonesia."
+
+#: templates/summarizer/home.html:15
+msgid "Welcome"
+msgstr "Selamat Datang"
+
+#: templates/summarizer/home.html:16
+msgid "Manage your saved summaries and run real-time document analysis."
+msgstr "Kelola ringkasan tersimpan Anda dan jalankan analisis dokumen langsung."
+
+#: templates/summarizer/home.html:18
+msgid "New Summary"
+msgstr "Ringkasan Baru"
+
+#: templates/summarizer/home.html:23
+msgid "Recent Activity"
+msgstr "Aktivitas Terkini"
+
+#: templates/summarizer/home.html:44
+msgid "No summaries yet. Create your first summary in the studio."
+msgstr "Belum ada ringkasan. Buat ringkasan pertama Anda di studio."
+
+#: templates/summarizer/home.html:53
+msgid "Getting Started"
+msgstr "Mulai Sekarang"
+
+#: templates/summarizer/home.html:56
+msgid "Summarize Text Instantly"
+msgstr "Ringkas Teks Secara Instan"
+
+#: templates/summarizer/home.html:58
+msgid ""
+"Efficiently condense your documents while retaining full context using "
+"our advanced NLP models."
+msgstr ""
+"Ringkas dokumen Anda secara efisien dengan tetap mempertahankan konteks "
+"penuh menggunakan model NLP kami."
+
+#: templates/summarizer/home.html:61
+msgid "Start Summarizing"
+msgstr "Mulai Meringkas"
+
+#: templates/summarizer/home.html:68
+msgid "Sample Summary Output"
+msgstr "Contoh Hasil Ringkasan"
+
+#: templates/summarizer/summarize.html:3
+msgid "Summarize Studio — IndoGist"
+msgstr "Studio Peringkas — IndoGist"
+
+#: templates/summarizer/summarize.html:9
+msgid ""
+"Hybrid, traditional extractive, or abstractive — pick a method and run it"
+" on Indonesian text."
+msgstr ""
+"Hibrida, tradisional ekstraktif, atau abstraktif — pilih metode dan "
+"jalankan pada teks bahasa Indonesia."
+
+#: templates/summarizer/summarize.html:16
+msgid "Input workspace"
+msgstr "Area Kerja Input"
+
+#: templates/summarizer/summarize.html:17
+#: templates/summarizer/summarize.html:189
+#: templates/summarizer/summary_detail.html:109
+msgid "words"
+msgstr "kata"
+
+#: templates/summarizer/summarize.html:24
+msgid "Raw text"
+msgstr "Teks mentah"
+
+#: templates/summarizer/summarize.html:25
+msgid "File upload"
+msgstr "Unggah file"
+
+#: templates/summarizer/summarize.html:26
+msgid "Presets"
+msgstr "Preset"
+
+#: templates/summarizer/summarize.html:31
+msgid "Add optional title"
+msgstr "Tambah judul opsional"
+
+#: templates/summarizer/summarize.html:35
+msgid "Document title"
+msgstr "Judul dokumen"
+
+#: templates/summarizer/summarize.html:35
+msgid "optional"
+msgstr "opsional"
+
+#: templates/summarizer/summarize.html:36
+msgid "Remove title input"
+msgstr "Hapus input judul"
+
+#: templates/summarizer/summarize.html:36
+msgid "Remove"
+msgstr "Hapus"
+
+#: templates/summarizer/summarize.html:38
+msgid "Enter document title..."
+msgstr "Masukkan judul dokumen..."
+
+#: templates/summarizer/summarize.html:41
+msgid "Document text"
+msgstr "Teks dokumen"
+
+#: templates/summarizer/summarize.html:42
+msgid "Paste your Indonesian text here..."
+msgstr "Tempel teks bahasa Indonesia Anda di sini..."
+
+#: templates/summarizer/summarize.html:47
+msgid "chars"
+msgstr "karakter"
+
+#: templates/summarizer/summarize.html:48
+msgid "tokens"
+msgstr "token"
+
+#: templates/summarizer/summarize.html:51
+msgid "Clear"
+msgstr "Bersihkan"
+
+#: templates/summarizer/summarize.html:52
+msgid "Expand editor"
+msgstr "Perluas editor"
+
+#: templates/summarizer/summarize.html:53
+msgid "Limit: 8,000 words"
+msgstr "Batas: 8.000 kata"
+
+#: templates/summarizer/summarize.html:59
+msgid "File attachment"
+msgstr "Lampiran file"
+
+#: templates/summarizer/summarize.html:62
+msgid "Drag a .txt, .pdf, or .docx file here"
+msgstr "Tarik dan lepas file .txt, .pdf, atau .docx di sini"
+
+#: templates/summarizer/summarize.html:64
+msgid "Browse files"
+msgstr "Pilih file"
+
+#: templates/summarizer/summarize.html:69
+msgid "Sample document presets"
+msgstr "Preset contoh dokumen"
+
+#: templates/summarizer/summarize.html:71
+msgid "News article"
+msgstr "Artikel berita"
+
+#: templates/summarizer/summarize.html:72
+msgid "Tech spec"
+msgstr "Spesifikasi teknologi"
+
+#: templates/summarizer/summarize.html:73
+msgid "Academic paper"
+msgstr "Makalah akademik"
+
+#: templates/summarizer/summarize.html:79
+msgid "Summarization method"
+msgstr "Metode peringkasan"
+
+#: templates/summarizer/summarize.html:83
+msgid "POS/NER + TF-IDF"
+msgstr "POS/NER + TF-IDF"
+
+#: templates/summarizer/summarize.html:87
+msgid "Traditional"
+msgstr "Tradisional"
+
+#: templates/summarizer/summarize.html:87
+msgid "Extractive Sentence Rank"
+msgstr "Peringkat Kalimat Ekstraktif"
+
+#: templates/summarizer/summarize.html:91
+msgid "Coming Soon"
+msgstr "Segera Hadir"
+
+#: templates/summarizer/summarize.html:98
+msgid "Hybrid Model Architecture"
+msgstr "Arsitektur Model Hibrida"
+
+#: templates/summarizer/summarize.html:100
+msgid "TF-IDF + NER + POS (BiLSTM POS-NER)"
+msgstr "TF-IDF + NER + POS (BiLSTM POS-NER)"
+
+#: templates/summarizer/summarize.html:101
+msgid "TF-IDF + NER (Baseline NER)"
+msgstr "TF-IDF + NER (NER Baseline)"
+
+#: templates/summarizer/summarize.html:102
+msgid "TF-IDF + NER + POS + CRF (BiLSTM-CRF Architecture)"
+msgstr "TF-IDF + NER + POS + CRF (Arsitektur BiLSTM-CRF)"
+
+#: templates/summarizer/summarize.html:108
+msgid "Traditional Extractive Variant"
+msgstr "Varian Ekstraktif Tradisional"
+
+#: templates/summarizer/summarize.html:110
+msgid "TF-IDF + Sentence Position Rank (Baseline)"
+msgstr "TF-IDF + Peringkat Posisi Kalimat (Baseline)"
+
+#: templates/summarizer/summarize.html:111
+msgid "MMR Relevance & Diversity Ranking"
+msgstr "Peringkat Relevansi & Keberagaman MMR"
+
+#: templates/summarizer/summarize.html:112
+msgid "TextRank Graph Centrality"
+msgstr "Sentralitas Graf TextRank"
+
+#: templates/summarizer/summarize.html:120
+msgid "Target Compression Ratio"
+msgstr "Rasio Kompresi Target"
+
+#: templates/summarizer/summarize.html:134
+msgid "Generate summary"
+msgstr "Buat ringkasan"
+
+#: templates/summarizer/summarize.html:142
+#: templates/summarizer/summary_detail.html:37
+msgid "Summary output"
+msgstr "Hasil ringkasan"
+
+#: templates/summarizer/summarize.html:144
+#: templates/summarizer/summary_detail.html:26
+#: templates/summarizer/summary_detail.html:39
+msgid "Copy"
+msgstr "Salin"
+
+#: templates/summarizer/summarize.html:145
+#: templates/summarizer/summary_detail.html:40
+msgid "Save"
+msgstr "Simpan"
+
+#: templates/summarizer/summarize.html:150
+msgid "Running summarization engine..."
+msgstr "Menjalankan mesin peringkas..."
+
+#: templates/summarizer/summarize.html:161
+msgid "Waiting for input — select a method and generate a summary."
+msgstr "Menunggu input — pilih metode dan buat ringkasan."
+
+#: templates/summarizer/summarize.html:188
+msgid "Full Document Editor"
+msgstr "Editor Dokumen Lengkap"
+
+#: templates/summarizer/summarize.html:190
+msgid "Close editor"
+msgstr "Tutup editor"
+
+#: templates/summarizer/summarize.html:193
+msgid "Paste your long document text here..."
+msgstr "Tempel teks dokumen panjang Anda di sini..."
+
+#: templates/summarizer/summary_detail.html:3
+msgid "IndoGist Detail"
+msgstr "Detail IndoGist"
+
+#: templates/summarizer/summary_detail.html:10
+msgid "Back to history"
+msgstr "Kembali ke riwayat"
+
+#: templates/summarizer/summary_detail.html:24
+msgid "Original text"
+msgstr "Teks asli"
+
+#: templates/summarizer/summary_detail.html:64
+msgid "Detected named entities"
+msgstr "Entitas bernama terdeteksi"
+
+#: templates/summarizer/summary_detail.html:89
+msgid "Summary statistics"
+msgstr "Statistik ringkasan"
+
+#: templates/summarizer/summary_detail.html:94
+msgid "Original words"
+msgstr "Kata asli"
+
+#: templates/summarizer/summary_detail.html:98
+msgid "Summary words"
+msgstr "Kata ringkasan"
+
+#: templates/summarizer/summary_detail.html:102
+msgid "Compression Ratio"
+msgstr "Rasio Kompresi"
+
+#: templates/summarizer/summary_detail.html:103
+msgid "shorter"
+msgstr "lebih pendek"
+

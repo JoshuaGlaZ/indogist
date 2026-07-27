@@ -1,48 +1,48 @@
 {% extends 'summarizer/base.html' %}
 
-{% block title %}{{ lang("Compare Methods — IndoGist Studio") }}{% endblock %}
+{% block title %}{{ _("Compare Methods — IndoGist Studio") }}{% endblock %}
 
 {% block content %}
 <section class="view active" id="view-comparison">
   <div class="page-head">
-    <h1>{{ lang("Model comparison studio") }}</h1>
-    <p>{{ lang("Run the same text through two methods and compare results side by side.") }}</p>
+    <h1>{{ _("Model comparison studio") }}</h1>
+    <p>{{ _("Run the same text through two methods and compare results side by side.") }}</p>
   </div>
 
   <div class="card mb-4">
     <div class="card-body">
       <form id="comparisonForm" method="post" action="/comparison/" hx-post="/comparison/" hx-target="#compareGrid" hx-indicator="#loadingIndicator">
         {{ csrf_field(request) }}
-        <label class="field-label" for="compareText">{{ lang("Input text for side-by-side evaluation") }}</label>
-        <textarea class="field" name="text" id="compareText" lang="id" style="min-height:120px;" placeholder="{{ lang("Paste text to compare...") }}">{{ (source_text or '')|trim }}</textarea>
+        <label class="field-label" for="compareText">{{ _("Input text for side-by-side evaluation") }}</label>
+        <textarea class="field" name="text" id="compareText" lang="id" style="min-height:120px;" placeholder="{{ _("Paste text to compare...") }}">{{ (source_text or '')|trim }}</textarea>
         
         <div style="display: flex; gap: 16px; margin-top: 14px; flex-wrap: wrap;">
           <div style="flex: 1; min-width: 180px;">
-            <label class="field-label">{{ lang("Model A") }}</label>
+            <label class="field-label">{{ _("Model A") }}</label>
             <select name="model_a" class="field-select" style="width: 100%;">
-              <option value="traditional" selected>Traditional Extractive (Sentence Rank)</option>
-              <option value="hybrid">Hybrid (POS/NER + TF-IDF)</option>
-              <option value="abstractive" disabled>Abstractive (Coming Soon)</option>
+              <option value="traditional" selected>{{ _("Traditional Extractive (Sentence Rank)") }}</option>
+              <option value="hybrid">{{ _("Hybrid (POS/NER + TF-IDF)") }}</option>
+              <option value="abstractive" disabled>{{ _("Abstractive (Coming Soon)") }}</option>
             </select>
           </div>
           <div style="flex: 1; min-width: 180px;">
-            <label class="field-label">{{ lang("Model B") }}</label>
+            <label class="field-label">{{ _("Model B") }}</label>
             <select name="model_b" class="field-select" style="width: 100%;">
-              <option value="hybrid" selected>Hybrid (POS/NER + TF-IDF)</option>
-              <option value="traditional">Traditional Extractive (Sentence Rank)</option>
-              <option value="abstractive" disabled>Abstractive (Coming Soon)</option>
+              <option value="hybrid" selected>{{ _("Hybrid (POS/NER + TF-IDF)") }}</option>
+              <option value="traditional">{{ _("Traditional Extractive (Sentence Rank)") }}</option>
+              <option value="abstractive" disabled>{{ _("Abstractive (Coming Soon)") }}</option>
             </select>
           </div>
         </div>
 
-        <button class="btn btn-amber" type="submit" style="margin-top: 16px;">{{ lang("Run side-by-side comparison") }}</button>
+        <button class="btn btn-amber" type="submit" style="margin-top: 16px;">{{ _("Run side-by-side comparison") }}</button>
       </form>
     </div>
   </div>
 
   <!-- Loading Indicator -->
   <div id="loadingIndicator" class="htmx-indicator loading-row mb-4">
-    <span class="spinner"></span> {{ lang("Running parallel models for comparison...") }}
+    <span class="spinner"></span> {{ _("Running parallel models for comparison...") }}
   </div>
 
   <!-- Compare Grid Target Container -->
@@ -50,30 +50,31 @@
     {% if traditional_summary or hybrid_summary %}
       <div class="card">
         <div class="card-head">
-          <p class="card-title">{{ lang("Model A: Traditional Extractive") }}</p>
-          <span class="badge extractive">Sentence rank</span>
+          <p class="card-title">{{ _("Model A: Traditional Extractive") }}</p>
+          <span class="badge extractive">{{ _("Sentence rank") }}</span>
         </div>
+
         <div class="card-body">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-            <span class="field-label" style="margin-bottom: 0;">{{ lang("Output View") }}</span>
+            <span class="field-label" style="margin-bottom: 0;">{{ _("Output View") }}</span>
             <div class="view-mode-toggle" style="display: flex; gap: 4px;">
-              <button type="button" class="btn btn-ghost active" style="padding: 2px 8px; font-size: 11.5px;" onclick="switchOutputMode(this, 'compareOutputA', 'plain')">{{ lang("Plain") }}</button>
+              <button type="button" class="btn btn-ghost active" style="padding: 2px 8px; font-size: 11.5px;" onclick="switchOutputMode(this, 'compareOutputA', 'plain')">{{ _("Plain") }}</button>
               {% if model_a == 'hybrid' %}
-              <button type="button" class="btn btn-ghost" style="padding: 2px 8px; font-size: 11.5px;" onclick="switchOutputMode(this, 'compareOutputA', 'ner')">{{ lang("NER Highlights") }}</button>
-              <button type="button" class="btn btn-ghost" style="padding: 2px 8px; font-size: 11.5px;" onclick="switchOutputMode(this, 'compareOutputA', 'pos')">{{ lang("POS Tagging") }}</button>
+              <button type="button" class="btn btn-ghost" style="padding: 2px 8px; font-size: 11.5px;" onclick="switchOutputMode(this, 'compareOutputA', 'ner')">{{ _("NER Highlights") }}</button>
+              <button type="button" class="btn btn-ghost" style="padding: 2px 8px; font-size: 11.5px;" onclick="switchOutputMode(this, 'compareOutputA', 'pos')">{{ _("POS Tagging") }}</button>
               {% endif %}
             </div>
           </div>
 
-          <div class="output-area" id="compareOutputA">{% if traditional_summary %}{{ traditional_summary|trim }}{% else %}<span class="output-placeholder">{{ lang("No extractive summary generated.") }}</span>{% endif %}</div>
+          <div class="output-area" id="compareOutputA">{% if traditional_summary %}{{ traditional_summary|trim }}{% else %}<span class="output-placeholder">{{ _("No extractive summary generated.") }}</span>{% endif %}</div>
           
           <div class="stats-grid" style="margin-top: 12px;">
             <div class="stat-card">
-              <span class="s-label">{{ lang("Words") }}</span>
+              <span class="s-label">{{ _("Words") }}</span>
               <span class="s-value">{{ traditional_summary.split()|length if traditional_summary else 0 }}</span>
             </div>
             <div class="stat-card accent">
-              <span class="s-label">{{ lang("Sentences") }}</span>
+              <span class="s-label">{{ _("Sentences") }}</span>
               <span class="s-value">{{ traditional_summary.split('.')|length if traditional_summary else 0 }}</span>
             </div>
           </div>
@@ -82,30 +83,30 @@
 
       <div class="card">
         <div class="card-head">
-          <p class="card-title">{{ lang("Model B") }} ({{ model_b|upper }})</p>
+          <p class="card-title">{{ _("Model B") }} ({{ model_b|upper }})</p>
           <span class="badge {{ model_b }}">{{ model_b }}</span>
         </div>
         <div class="card-body">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-            <span class="field-label" style="margin-bottom: 0;">{{ lang("Output View") }}</span>
+            <span class="field-label" style="margin-bottom: 0;">{{ _("Output View") }}</span>
             <div class="view-mode-toggle" style="display: flex; gap: 4px;">
-              <button type="button" class="btn btn-ghost active" style="padding: 2px 8px; font-size: 11.5px;" onclick="switchOutputMode(this, 'compareOutputB', 'plain')">{{ lang("Plain") }}</button>
+              <button type="button" class="btn btn-ghost active" style="padding: 2px 8px; font-size: 11.5px;" onclick="switchOutputMode(this, 'compareOutputB', 'plain')">{{ _("Plain") }}</button>
               {% if model_b == 'hybrid' %}
-              <button type="button" class="btn btn-ghost" style="padding: 2px 8px; font-size: 11.5px;" onclick="switchOutputMode(this, 'compareOutputB', 'ner')">{{ lang("NER Highlights") }}</button>
-              <button type="button" class="btn btn-ghost" style="padding: 2px 8px; font-size: 11.5px;" onclick="switchOutputMode(this, 'compareOutputB', 'pos')">{{ lang("POS Tagging") }}</button>
+              <button type="button" class="btn btn-ghost" style="padding: 2px 8px; font-size: 11.5px;" onclick="switchOutputMode(this, 'compareOutputB', 'ner')">{{ _("NER Highlights") }}</button>
+              <button type="button" class="btn btn-ghost" style="padding: 2px 8px; font-size: 11.5px;" onclick="switchOutputMode(this, 'compareOutputB', 'pos')">{{ _("POS Tagging") }}</button>
               {% endif %}
             </div>
           </div>
 
-          <div class="output-area" id="compareOutputB">{% if hybrid_summary %}{{ hybrid_summary|trim }}{% else %}<span class="output-placeholder">{{ lang("No hybrid summary generated.") }}</span>{% endif %}</div>
+          <div class="output-area" id="compareOutputB">{% if hybrid_summary %}{{ hybrid_summary|trim }}{% else %}<span class="output-placeholder">{{ _("No hybrid summary generated.") }}</span>{% endif %}</div>
           
           <div class="stats-grid" style="margin-top: 12px;">
             <div class="stat-card">
-              <span class="s-label">{{ lang("Words") }}</span>
+              <span class="s-label">{{ _("Words") }}</span>
               <span class="s-value">{{ hybrid_summary.split()|length if hybrid_summary else 0 }}</span>
             </div>
             <div class="stat-card accent">
-              <span class="s-label">{{ lang("Sentences") }}</span>
+              <span class="s-label">{{ _("Sentences") }}</span>
               <span class="s-value">{{ hybrid_summary.split('.')|length if hybrid_summary else 0 }}</span>
             </div>
           </div>

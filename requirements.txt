@@ -11,6 +11,8 @@ starsessions>=2.1.0
 anyio>=4.3.0
 python-dotenv>=1.0.1
 psycopg2-binary>=2.9.9
+Babel>=2.14.0
+
 
 tensorflow-cpu
 numpy
