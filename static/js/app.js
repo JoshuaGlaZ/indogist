@@ -13,6 +13,8 @@ document.addEventListener('DOMContentLoaded', () => {
   initRangeSliders();
   initEditorTelemetry();
   initKeyboardShortcuts();
+  initCSRF();
+  initHamburger();
 });
 
 // Theme Management
@@ -90,6 +92,7 @@ function initCustomSelects() {
     Array.from(select.options).forEach((opt, idx) => {
       const optEl = document.createElement('div');
       optEl.className = `custom-select-option ${idx === select.selectedIndex ? 'selected' : ''}`;
+      optEl.tabIndex = 0;
       if (opt.disabled) optEl.style.opacity = '0.5';
       optEl.innerText = opt.text;
 
@@ -115,6 +118,38 @@ function initCustomSelects() {
         if (cs !== wrapper) cs.classList.remove('open');
       });
       wrapper.classList.toggle('open');
+    });
+
+    trigger.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        wrapper.classList.toggle('open');
+      }
+      if (e.key === 'Escape') {
+        wrapper.classList.remove('open');
+        trigger.focus();
+      }
+    });
+
+    optionsContainer.addEventListener('keydown', (e) => {
+      const options = Array.from(optionsContainer.querySelectorAll('.custom-select-option'));
+      const current = document.activeElement;
+      const idx = options.indexOf(current);
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        const next = options[idx + 1] || options[0];
+        next.focus();
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        const prev = options[idx - 1] || options[options.length - 1];
+        prev.focus();
+      }
+      if (e.key === 'Escape') {
+        wrapper.classList.remove('open');
+        trigger.focus();
+      }
     });
   });
 
@@ -522,5 +557,76 @@ function initKeyboardShortcuts() {
     if (e.key === 'Escape') {
       closeFullscreenEditor();
     }
+  });
+}
+
+function initHamburger() {
+  const btn = document.getElementById('hamburgerBtn');
+  const nav = document.getElementById('mainNav');
+  if (!btn || !nav) return;
+  btn.addEventListener('click', () => {
+    const open = nav.classList.toggle('open');
+    btn.classList.toggle('active', open);
+    btn.setAttribute('aria-expanded', open);
+  });
+  document.addEventListener('click', (e) => {
+    if (!btn.contains(e.target) && !nav.contains(e.target)) {
+      nav.classList.remove('open');
+      btn.classList.remove('active');
+      btn.setAttribute('aria-expanded', 'false');
+    }
+  });
+}
+
+function initCSRF() {
+  document.body.addEventListener('htmx:configRequest', (e) => {
+    const token = window.__CSRF_TOKEN;
+    if (token) {
+      e.detail.headers['X-CSRF-Token'] = token;
+    }
+  });
+
+  document.body.addEventListener('htmx:responseError', (e) => {
+    if (e.detail.xhr.status === 403) {
+      showToast('Session expired. Please refresh the page.', 'error');
+    }
+  });
+
+  document.querySelectorAll('form[method="post"], form[method="POST"]').forEach(form => {
+    form.addEventListener('submit', (e) => {
+      if (form.hasAttribute('hx-post')) return;
+      e.preventDefault();
+      const token = window.__CSRF_TOKEN;
+      if (!token) {
+        showToast('CSRF token missing. Please refresh.', 'error');
+        return;
+      }
+      const hiddenInput = document.createElement('input');
+      hiddenInput.type = 'hidden';
+      hiddenInput.name = '_csrf_header';
+      hiddenInput.value = token;
+      form.appendChild(hiddenInput);
+
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', form.action, true);
+      xhr.setRequestHeader('X-CSRF-Token', token);
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 400) {
+          const redirectUrl = xhr.getResponseHeader('Location');
+          if (redirectUrl) {
+            window.location.href = redirectUrl;
+          } else if (form.action.includes('login') || form.action.includes('register') || form.action.includes('profile')) {
+            window.location.reload();
+          }
+        } else {
+          document.open();
+          document.write(xhr.responseText);
+          document.close();
+        }
+      };
+      xhr.onerror = () => showToast('Network error. Please try again.', 'error');
+      const formData = new FormData(form);
+      xhr.send(formData);
+    });
   });
 }

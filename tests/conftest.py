@@ -1,8 +1,14 @@
+import os
 import pytest
 from datetime import datetime, timezone
 from fastapi.testclient import TestClient
 from sqlmodel import SQLModel, create_engine, Session
 from sqlmodel.pool import StaticPool
+
+os.environ["TESTING"] = "True"
+if not os.environ.get("SECRET_KEY"):
+    os.environ["SECRET_KEY"] = "test-secret-key-123456789-for-testing"
+
 
 import app.database as app_db
 import app.main as app_main

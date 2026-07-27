@@ -136,7 +136,17 @@ def lang(*args: Any, **kwargs: Any) -> str:
         else negotiate_locale(req)
     )
     catalog = get_translations(target_locale)
-    return catalog.gettext(msg)
+    translated = catalog.gettext(msg)
+    if kwargs:
+        try:
+            return translated % kwargs
+        except Exception:
+            try:
+                return translated.format(**kwargs)
+            except Exception:
+                return translated
+    return translated
+
 
 
 # Standard Gettext Shorthand Alias

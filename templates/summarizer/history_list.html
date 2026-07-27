@@ -15,11 +15,68 @@
       </div>
     {% endfor %}
   </div>
+
+  {% set _q = search_query if search_query is defined else '' %}
+  {% set _m = method_filter if method_filter is defined else '' %}
+  {% set _s = sort_by if sort_by is defined else '-created_at' %}
+  {% set _cp = current_page if current_page is defined else 1 %}
+  {% set _tp = total_pages if total_pages is defined else 1 %}
+  {% set _tc = total_count if total_count is defined else 0 %}
+
+  {% if _tp > 1 %}
+  <nav class="pagination" aria-label="{{ _('Page navigation') }}">
+    {% set _base = '/history/?q=' ~ _q ~ '&method=' ~ _m ~ '&sort=' ~ _s ~ '&page=' %}
+
+    <a class="page-btn{% if _cp == 1 %} disabled{% endif %}"
+       {% if _cp > 1 %}href="{{ _base ~ (_cp - 1) }}" hx-get="{{ _base ~ (_cp - 1) }}" hx-target="#historyListContainer"{% endif %}>
+      &lsaquo; {{ _('Previous') }}
+    </a>
+
+    {% set _pages = [] %}
+    {% if _tp <= 7 %}
+      {% for _p in range(1, _tp + 1) %}{% if _pages.append(_p) %}{% endif %}{% endfor %}
+    {% else %}
+      {% if _pages.append(1) %}{% endif %}
+      {% if _cp > 3 %}
+        {% if _pages.append('...') %}{% endif %}
+      {% endif %}
+      {% for _p in range([(_cp - 1), 1] | max, [(_cp + 1), _tp] | min + 1) %}
+        {% if _p != 1 and _p != _tp %}
+          {% if _pages.append(_p) %}{% endif %}
+        {% endif %}
+      {% endfor %}
+      {% if _cp < _tp - 2 %}
+        {% if _pages.append('...') %}{% endif %}
+      {% endif %}
+      {% if _pages.append(_tp) %}{% endif %}
+    {% endif %}
+
+    {% for _p in _pages %}
+      {% if _p == '...' %}
+        <span class="page-ellipsis">&hellip;</span>
+      {% else %}
+        <a class="page-btn{% if _p == _cp %} active{% endif %}"
+           href="{{ _base ~ _p }}"
+           hx-get="{{ _base ~ _p }}" hx-target="#historyListContainer"
+           {% if _p == _cp %}aria-current="page"{% endif %}>{{ _p }}</a>
+      {% endif %}
+    {% endfor %}
+
+    <a class="page-btn{% if _cp == _tp %} disabled{% endif %}"
+       {% if _cp < _tp %}href="{{ _base ~ (_cp + 1) }}" hx-get="{{ _base ~ (_cp + 1) }}" hx-target="#historyListContainer"{% endif %}>
+      {{ _('Next') }} &rsaquo;
+    </a>
+  </nav>
+  <p class="pagination-info">{{ _('Page %(page)s of %(total)s', page=_cp, total=_tp) }} &middot; {{ _tc }} {{ _('entries') }}</p>
+  {% endif %}
+
 {% else %}
-  <div class="card" style="text-align: center; padding: 48px 20px;">
-    <p class="output-placeholder">{{ _("No summary history entries found.") }}</p>
-    <div>
-      <a href="/summarize/" class="btn btn-amber">{{ _("Create new summary") }}</a>
-    </div>
+  <div class="empty-state" style="text-align: center; padding: 60px 20px;">
+    <svg width="80" height="80" viewBox="0 0 80 80" fill="none" style="margin-bottom: 20px; opacity: 0.4;">
+      <rect x="12" y="16" width="56" height="48" rx="6" stroke="currentColor" stroke-width="2"/>
+      <path d="M24 32h32M24 40h24M24 48h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+    <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;">{{ _("No summaries yet. Create your first one!") }}</p>
+    <a href="/summarize/" class="btn btn-amber">{{ _("Create summary") }}</a>
   </div>
 {% endif %}

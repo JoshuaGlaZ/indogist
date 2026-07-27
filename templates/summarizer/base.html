@@ -27,11 +27,15 @@
 <body data-theme="dark">
 <div class="app" data-theme="dark" id="app">
 <div class="shell">
+  <a href="#app-content" class="skip-link">Skip to content</a>
 
   <!-- Header Navigation Topbar (Single Global Header) -->
   <header class="topbar">
     <a href="/" class="brand">INDOGIST</a>
-    <nav class="nav" aria-label="Primary">
+    <button class="hamburger" id="hamburgerBtn" aria-label="Toggle navigation" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+    <nav class="nav" id="mainNav" aria-label="Primary">
       <a class="nav-link {% if request.url.path == '/summarize/' %}active{% endif %}" href="/summarize/">{{ _("Summarize") }}</a>
       <a class="nav-link {% if 'history' in request.url.path %}active{% endif %}" href="/history/">{{ _("History") }}</a>
       <a class="nav-link {% if 'charts' in request.url.path %}active{% endif %}" href="/charts/">{{ _("Metrics") }}</a>
@@ -54,7 +58,7 @@
       </div>
       {% if request.user and request.user.is_authenticated %}
         <a href="/accounts/profile/" class="btn btn-ghost">{{ request.user.username }}</a>
-        <form action="/accounts/logout/" method="post" style="display:inline;">
+        <form action="/accounts/logout/" method="post" style="display:inline;" hx-post="/accounts/logout/" hx-swap="none">
           {{ csrf_field(request) }}
           <button type="submit" class="btn btn-ghost" style="color: #ef4444;">{{ _("Logout") }}</button>
         </form>

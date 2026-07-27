@@ -1,4 +1,5 @@
 import os
+import logging
 
 os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
@@ -6,17 +7,22 @@ import datetime
 from pathlib import Path
 from typing import Optional
 from fastapi import FastAPI, Request, Depends
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from sqlmodel import Session
 
 from app.config import settings
+from app.csrf import CSRFMiddleware, generate_csrf_token
 from app.database import create_db_and_tables, engine
 from app.models import User
 from app.auth import get_flash_messages
+from app.security import SecurityHeadersMiddleware
 from app.i18n import (
     lang,
     negotiate_locale,
@@ -26,9 +32,48 @@ from app.i18n import (
 )
 from app.routers import accounts, summarizer
 
+logging.basicConfig(
+    level=logging.DEBUG
+    if os.getenv("DEBUG", "True").lower() == "true"
+    else logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+)
+logger = logging.getLogger("indogist")
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+_STATIC_HASHES: dict[str, str] = {}
+
+
+def _compute_static_hashes() -> dict[str, str]:
+    import hashlib as _hashlib
+
+    hashes = {}
+    static = BASE_DIR / "static"
+    if not static.exists():
+        return hashes
+    for file in static.rglob("*"):
+        if file.is_file():
+            rel = file.relative_to(static).as_posix()
+            try:
+                h = _hashlib.sha256(file.read_bytes()).hexdigest()[:12]
+                hashes[rel] = h
+            except OSError:
+                pass
+    return hashes
+
+
+_STATIC_HASHES = _compute_static_hashes()
+
 app = FastAPI(title="Indogist", version="1.0.0", debug=settings.DEBUG)
+
+limiter = Limiter(
+    key_func=get_remote_address,
+    enabled=os.getenv("TESTING", "False").lower() not in ("true", "1"),
+)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
 
 
 class AnonymousUser:
@@ -64,7 +109,8 @@ async def user_and_messages_middleware(request: Request, call_next):
     return response
 
 
-# Register User & Locale Middleware inside SessionMiddleware
+app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(CSRFMiddleware)
 app.add_middleware(BaseHTTPMiddleware, dispatch=locale_middleware)
 app.add_middleware(BaseHTTPMiddleware, dispatch=user_and_messages_middleware)
 
@@ -116,7 +162,9 @@ def _url_for(name: str, *args, **kwargs):
 
 
 def _static_url(path: str):
-    return f"/static/{path.lstrip('/')}"
+    clean = path.lstrip("/")
+    h = _STATIC_HASHES.get(clean)
+    return f"/static/{clean}?v={h}" if h else f"/static/{clean}"
 
 
 def _truncatechars(value: str, length: int) -> str:
@@ -160,11 +208,23 @@ def _escapejs(value: str) -> str:
 # Enable official Jinja2 i18n extension
 templates.env.add_extension("jinja2.ext.i18n")
 
+
+def _csrf_field(request: Request) -> str:
+    session_id = ""
+    if "session" in request.scope:
+        session_id = str(request.session.get("user_id", ""))
+    token = generate_csrf_token(session_id)
+    return (
+        f'<meta name="csrf-token" content="{token}">'
+        f'<script>window.__CSRF_TOKEN="{token}"</script>'
+    )
+
+
 templates.env.globals.update(
     {
         "url": _url_for,
         "static": _static_url,
-        "csrf_field": lambda request: "",
+        "csrf_field": _csrf_field,
         "now": datetime.datetime.now,
         "hasattr": hasattr,
         "getattr": getattr,
@@ -221,7 +281,8 @@ def render_template(
     curr_locale = getattr(request.state, "locale", negotiate_locale(request))
     ctx["current_locale"] = curr_locale
     # Helper to call standard gettext functions bound to current request
-    bound_t = lambda msg: lang(request, msg)
+    bound_t = lambda msg, *args, **kwargs: lang(request, msg, *args, **kwargs)
+
     ctx["_"] = bound_t
     ctx["gettext"] = bound_t
     ctx["lang"] = bound_t
@@ -239,20 +300,17 @@ app.state.render_template = render_template
 
 @app.on_event("startup")
 def on_startup():
-    try:
-        from alembic.config import Config
-        from alembic import command
-
-        alembic_cfg = Config(str(BASE_DIR / "alembic.ini"))
-        alembic_cfg.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
-        command.upgrade(alembic_cfg, "head")
-    except Exception:
-        create_db_and_tables()
+    create_db_and_tables()
 
 
 # Include Routers
 app.include_router(accounts.router)
 app.include_router(summarizer.router)
+
+
+@app.get("/health")
+def health_check():
+    return JSONResponse({"status": "healthy", "version": "1.0.0"})
 
 
 # Language Switcher Endpoint

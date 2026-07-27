@@ -9,11 +9,12 @@
       <h1 style="margin-bottom:2px;">{{ _("Summary history archive") }}</h1>
       <p>{{ _("Every document you've summarized, searchable and filterable.") }}</p>
     </div>
-    <span class="count-badge">{{ summaries|length if summaries is defined and summaries else 0 }} {{ _("entries") }}</span>
+    <span class="count-badge">{{ total_count if total_count is defined else (summaries|length if summaries is defined and summaries else 0) }} {{ _("entries") }}</span>
   </div>
 
   <!-- Live HTMX Toolbar -->
   <form method="get" action="/history/" hx-get="/history/" hx-target="#historyListContainer" hx-trigger="change, keyup changed delay:300ms from:find input[name='q']" class="toolbar">
+    <input type="hidden" name="page" value="1">
     <div class="search-field">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
       <input type="text" name="q" placeholder="{{ _("Search by title or keyword") }}" value="{{ search_query or '' }}" aria-label="{{ _("Search history") }}">
