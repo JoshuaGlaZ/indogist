@@ -21,9 +21,19 @@
 * , *::before, *::after { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; min-height: 100vh; }
 
+button, a, input, select, textarea, .btn, .nav-link, .tab, .page-btn, .theme-toggle, .hamburger, .custom-select-trigger, .custom-select-option, .dropzone, .pos-chip, .ner-mark {
+  touch-action: manipulation;
+}
+
+input[type="range"] {
+  touch-action: pan-y;
+}
+
 :root,
+:root[data-theme="dark"],
 body[data-theme="dark"],
 .app[data-theme="dark"] {
+  color-scheme: dark;
   --bg-canvas: #0b0f17;
   --bg-card: rgba(18, 24, 38, 0.85);
   --bg-card-solid: #121826;
@@ -48,8 +58,10 @@ body[data-theme="dark"],
   --dropdown-bg: #121826;
 }
 
+:root[data-theme="light"],
 body[data-theme="light"],
 .app[data-theme="light"] {
+  color-scheme: light;
   --bg-canvas: #f8fafc;
   --bg-card: #ffffff;
   --bg-card-solid: #ffffff;
@@ -74,12 +86,51 @@ body[data-theme="light"],
   --dropdown-bg: #ffffff;
 }
 
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    color-scheme: light;
+    --bg-canvas: #f8fafc;
+    --bg-card: #ffffff;
+    --bg-card-solid: #ffffff;
+    --bg-field: #f8fafc;
+    --border-color: rgba(15, 23, 42, 0.08);
+    --border-focus: rgba(217, 119, 6, 0.4);
+    --accent-amber: #d97706;
+    --accent-amber-strong: #b45309;
+    --on-amber: #fffaf0;
+    --accent-blue: #3b82f6;
+    --accent-blue-strong: #2563eb;
+    --badge-hybrid-bg: rgba(217, 119, 6, 0.12);
+    --badge-hybrid-fg: #b45309;
+    --badge-extractive-bg: rgba(59, 130, 246, 0.12);
+    --badge-extractive-fg: #1d4ed8;
+    --badge-abstractive-bg: rgba(16, 185, 129, 0.12);
+    --badge-abstractive-fg: #047857;
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+    --shadow: 0 8px 24px rgba(15,23,42,0.08);
+    --alert-bg: rgba(255, 255, 255, 0.98);
+    --dropdown-bg: #ffffff;
+  }
+}
+
 body, .app {
   background: var(--bg-canvas);
   color: var(--text-main);
   font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   min-height: 100vh;
   transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Image brightness adjustment for Dark Mode (CSS-Tricks Guide recommendation) */
+body[data-theme="dark"] img:not([src$=".svg"]),
+.app[data-theme="dark"] img:not([src$=".svg"]) {
+  filter: brightness(0.88) contrast(1.05);
+  transition: filter 0.2s ease;
+}
+body[data-theme="dark"] img:not([src$=".svg"]):hover,
+.app[data-theme="dark"] img:not([src$=".svg"]):hover {
+  filter: brightness(1);
 }
 
 .card, .btn, .nav-link, .field, .theme-toggle, .alert, .badge {
@@ -553,6 +604,10 @@ input[type="range"].field-range::-moz-range-thumb {
 @media (max-width: 860px) { .compare-grid { grid-template-columns: 1fr; } }
 
 /* Scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-color) var(--bg-canvas);
+}
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: var(--bg-canvas); }
 ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }

@@ -17,10 +17,13 @@
   <script src="https://unpkg.com/htmx.org@2.0.0/dist/htmx.min.js"></script>
 
   {% block extra_css %}{% endblock %}
+  <meta name="color-scheme" content="dark light">
   <script>
     (function() {
-      var saved = localStorage.getItem('theme') || 'dark';
-      document.documentElement.setAttribute('data-theme', saved);
+      var saved = localStorage.getItem('theme');
+      var prefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+      var theme = saved || (prefersLight ? 'light' : 'dark');
+      document.documentElement.setAttribute('data-theme', theme);
     })();
   </script>
 </head>

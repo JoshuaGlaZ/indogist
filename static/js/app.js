@@ -18,25 +18,42 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Theme Management
-function applyTheme(theme) {
+function getPreferredTheme() {
+  const saved = localStorage.getItem('theme');
+  if (saved) return saved;
+  return (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) ? 'light' : 'dark';
+}
+
+function applyTheme(theme, saveUserChoice = true) {
   document.documentElement.setAttribute('data-theme', theme);
   document.body.setAttribute('data-theme', theme);
   const appEl = document.getElementById('app');
   if (appEl) appEl.setAttribute('data-theme', theme);
-  localStorage.setItem('theme', theme);
+  if (saveUserChoice) {
+    localStorage.setItem('theme', theme);
+  }
 }
 
 function initThemeToggle() {
   const toggleBtn = document.querySelector('.theme-toggle');
   if (!toggleBtn) return;
-  const currentTheme = localStorage.getItem('theme') || 'dark';
-  applyTheme(currentTheme);
+
+  const currentTheme = getPreferredTheme();
+  applyTheme(currentTheme, false);
 
   toggleBtn.addEventListener('click', () => {
-    const activeTheme = document.body.getAttribute('data-theme') || 'dark';
+    const activeTheme = document.documentElement.getAttribute('data-theme') || 'dark';
     const nextTheme = activeTheme === 'dark' ? 'light' : 'dark';
-    applyTheme(nextTheme);
+    applyTheme(nextTheme, true);
   });
+
+  if (window.matchMedia) {
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+      if (!localStorage.getItem('theme')) {
+        applyTheme(e.matches ? 'dark' : 'light', false);
+      }
+    });
+  }
 }
 
 // Tab Switching
