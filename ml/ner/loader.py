@@ -118,6 +118,10 @@ class NLPService:
             nltk.data.find("tokenizers/punkt")
         except LookupError:
             nltk.download("punkt", quiet=True)
+        try:
+            nltk.data.find("tokenizers/punkt_tab")
+        except LookupError:
+            nltk.download("punkt_tab", quiet=True)
 
         # 2. Locate Best Model Directory (POS model prioritized over baseline)
         models_root = os.path.join(str(BASE_DIR), "ml", "models")

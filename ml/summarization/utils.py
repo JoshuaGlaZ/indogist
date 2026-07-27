@@ -19,7 +19,19 @@ def tokens_to_text(token_lists):
 
 
 def text_to_sentences(full_text):
-    return nltk.tokenize.sent_tokenize(full_text)
+    if not full_text or not isinstance(full_text, str):
+        return []
+    try:
+        return nltk.tokenize.sent_tokenize(full_text)
+    except LookupError:
+        try:
+            nltk.download("punkt_tab", quiet=True)
+            nltk.download("punkt", quiet=True)
+            return nltk.tokenize.sent_tokenize(full_text)
+        except Exception:
+            import re
+
+            return [s.strip() for s in re.split(r"(?<=[.!?])\s+", full_text) if s.strip()]
 
 
 def preprocess_tfidf(sentences):
