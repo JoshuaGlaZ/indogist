@@ -73,6 +73,19 @@ app.state.render_template = render_template
 @app.on_event("startup")
 def on_startup():
     create_db_and_tables()
+    try:
+        from ml.status import get_model_status
+        status = get_model_status()
+        singleton = status.get("singleton", {})
+        logger.info(
+            "ML Subsystem initialized: format=%s, vectorizer_vocab=%s, pipeline_ready=%s",
+            singleton.get("model_format"),
+            singleton.get("vocab_size"),
+            singleton.get("is_ready"),
+        )
+    except Exception as err:
+        logger.warning("Could not query ML model startup status: %s", err)
+
 
 
 app.include_router(accounts.router)

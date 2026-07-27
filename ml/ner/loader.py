@@ -58,6 +58,22 @@ def _safe_load_keras_model(keras_path, custom_objects=None):
         raise e
 
 
+def _log_service(msg: str, level: str = "info"):
+    try:
+        from rich.console import Console
+        console = Console()
+        if level == "info":
+            console.print(f"[bold cyan][NLPService][/bold cyan] {msg}")
+        elif level == "warning":
+            console.print(f"[bold yellow][NLPService Warning][/bold yellow] {msg}")
+        elif level == "error":
+            console.print(f"[bold red][NLPService Error][/bold red] {msg}")
+        elif level == "success":
+            console.print(f"[bold green][NLPService][/bold green] {msg}")
+    except Exception:
+        print(f"NLPService [{level.upper()}]: {msg}")
+
+
 class NLPService:
     """
     Singleton service to handle loading heavy NLP models once.
@@ -90,7 +106,7 @@ class NLPService:
         self.initialized = True
 
     def load_models(self):
-        print("NLPService: Initializing models...")
+        _log_service("Initializing ML models & text processing pipelines...")
         
         # 1. Initialize Lightweight Tools (Sastrawi/NLTK)
         self.stemmer = StemmerFactory().create_stemmer()
@@ -120,7 +136,7 @@ class NLPService:
             model_dir = os.path.join(models_root, 'ner_experiment_30-November-2025_13.35')
             
         tflite_path = os.path.join(model_dir, "optimized_model.tflite")
-        print(f"NLPService: Loading model from {model_dir}")
+        _log_service(f"Loading model artifacts from [cyan]{os.path.basename(model_dir)}[/cyan]")
 
         try:
             if os.path.exists(tflite_path):
@@ -137,15 +153,15 @@ class NLPService:
                         )
                         self.is_keras_model = True
                         model_loaded = True
-                        print("NLPService: Keras model loaded successfully.")
+                        _log_service("Keras model loaded successfully.", level="success")
                     except Exception as keras_err:
-                        print(f"NLPService Warning: Failed to load Keras model ({keras_err}). Falling back to TFLite.")
+                        _log_service(f"Failed to load Keras model ({keras_err}). Falling back to TFLite.", level="warning")
                 
                 if not model_loaded:
                     self.ner_model = tf.lite.Interpreter(model_path=tflite_path)
                     self.ner_model.allocate_tensors()
                     self.is_keras_model = False
-                    print("NLPService: TFLite model loaded successfully.")
+                    _log_service("TFLite model loaded successfully.", level="success")
             
                 vect_path = os.path.join(model_dir, "vectorizer.pkl")
                 if os.path.exists(vect_path):
@@ -164,10 +180,10 @@ class NLPService:
                     try:
                         import stanza
                         self.pos_tagger = stanza.Pipeline('id', processors='tokenize,pos', tokenize_pretokenized=True, download_method=None, verbose=False)
-                        print("NLPService: Stanza POS tagger initialized from local cache.")
+                        _log_service("Stanza POS tagger initialized from local cache.", level="success")
                     except Exception as e:
                         self.pos_tagger = None
-                        print(f"NLPService Info: Stanza POS tagger disabled ({e}). Using default zero-padded POS embeddings.")
+                        _log_service(f"Stanza POS tagger disabled ({e}). Using default zero-padded POS embeddings.", level="info")
 
                 # Load Config
                 try:
@@ -177,15 +193,59 @@ class NLPService:
                 except:
                     self.max_len = 256
                 
-                print("NLPService: Model initialization complete.")
+                _log_service("Model initialization complete.", level="success")
             else:
-                print(f" NLPService Error: TFLite model not found at {tflite_path}")
+                _log_service(f"TFLite model not found at {tflite_path}", level="error")
 
         except Exception as e:
-            print(f"NLPService Error: {e}")
+            _log_service(f"Error during model load: {e}", level="error")
+
 
     def is_ready(self):
         return self.ner_model is not None and self.vectorizer is not None
+
+    def get_status(self) -> dict:
+        """
+        Returns a dictionary representing the in-memory singleton state of loaded models and pipelines.
+        """
+        model_fmt = "Keras" if self.is_keras_model else ("TFLite" if self.ner_model is not None else "None")
+        
+        vocab_len = 0
+        if self.vectorizer is not None:
+            try:
+                vocab_len = len(self.vectorizer.get_vocabulary())
+            except Exception:
+                vocab_len = 0
+
+        pos_status = "Disabled"
+        if self.pos_tagger is not None:
+            pos_status = "Stanza (Local Cache)"
+        elif self.pos_to_idx is not None:
+            pos_status = "Zero-padded (Fallback)"
+
+        return {
+            "is_ready": self.is_ready(),
+            "model_format": model_fmt,
+            "is_keras_model": self.is_keras_model,
+            "has_ner_model": self.ner_model is not None,
+            "has_vectorizer": self.vectorizer is not None,
+            "vocab_size": vocab_len,
+            "max_len": self.max_len,
+            "tag_count": len(self.idx_to_tag),
+            "pos_tagger_status": pos_status,
+            "has_stemmer": self.stemmer is not None,
+            "has_stopword_remover": self.stopword_remover is not None,
+        }
+
+    def print_status(self) -> None:
+        """Prints rich formatted model availability status to terminal."""
+        try:
+            from ml.status import check_models
+            check_models(verbose=True)
+        except Exception as e:
+            st = self.get_status()
+            print(f"[NLPService] Readiness: {st['is_ready']} | Format: {st['model_format']} | Vocab: {st['vocab_size']}")
+
 
 nlp_service = NLPService()
 

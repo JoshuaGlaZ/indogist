@@ -135,3 +135,30 @@ def test_nlp_service_pre_initialization_and_pos_prefix():
     assert hasattr(nlp_service, "idx_to_tag")
     assert hasattr(nlp_service, "max_len")
     assert nlp_service.max_len == 256 or isinstance(nlp_service.max_len, int)
+
+    status = nlp_service.get_status()
+    assert isinstance(status, dict)
+    assert "is_ready" in status
+    assert "model_format" in status
+    assert "vocab_size" in status
+    assert "tag_count" in status
+    assert "pos_tagger_status" in status
+
+    # Ensure print_status executes without throwing exceptions
+    nlp_service.print_status()
+
+
+def test_ml_status_module_diagnostics():
+    """Tests the ml.status module get_model_status() and check_models() diagnostic helper functions."""
+    from ml.status import get_model_status, check_models
+    status = get_model_status()
+    assert isinstance(status, dict)
+    assert "models_root" in status
+    assert "active_dir_name" in status
+    assert "keras_available" in status
+    assert "tflite_available" in status
+    assert "singleton" in status
+
+    exit_code = check_models(verbose=False)
+    assert exit_code in (0, 1)
+
