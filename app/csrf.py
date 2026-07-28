@@ -46,7 +46,7 @@ class CSRFMiddleware(BaseHTTPMiddleware):
             ):
                 try:
                     form = await request.form()
-                    header_token = (
+                    header_token = str(
                         form.get("csrf_token") or form.get("_csrf_header") or form.get("csrf") or ""
                     )
                 except Exception:
