@@ -10,8 +10,6 @@
     </div>
     <div class="card-body">
       <form method="post" action="/accounts/register">
-        {{ csrf_input(request) }}
-        
         <div style="margin-bottom: 14px;">
           <label class="field-label" for="username">{{ _("Username") }}</label>
           <input type="text" name="username" id="username" class="field" style="min-height: 42px;" placeholder="{{ _("Choose a username") }}" value="{{ form.get('username', '') if hasattr(form, 'get') else '' }}" required autofocus>

@@ -628,9 +628,14 @@ function initHamburger() {
   });
 }
 
+function getCsrfToken() {
+  const match = document.cookie.match(new RegExp('(?:^|; )csrf_token=([^;]*)'));
+  return match ? decodeURIComponent(match[1]) : '';
+}
+
 function initCSRF() {
   document.body.addEventListener('htmx:configRequest', (e) => {
-    const token = window.__CSRF_TOKEN;
+    const token = getCsrfToken();
     if (token) {
       e.detail.headers['X-CSRF-Token'] = token;
     }
@@ -646,7 +651,7 @@ function initCSRF() {
     form.addEventListener('submit', (e) => {
       if (form.hasAttribute('hx-post')) return;
       e.preventDefault();
-      const token = window.__CSRF_TOKEN;
+      const token = getCsrfToken();
       if (!token) {
         showToast('CSRF token missing. Please refresh.', 'error');
         return;

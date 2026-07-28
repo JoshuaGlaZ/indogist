@@ -224,6 +224,7 @@ body[data-theme="light"] .theme-toggle .icon-moon,
   text-decoration: none;
   transition: all 0.2s ease;
   line-height: 1;
+  border: 1px solid transparent;
 }
 .lang-btn:hover {
   color: var(--text-main);
@@ -232,7 +233,17 @@ body[data-theme="light"] .theme-toggle .icon-moon,
 .lang-btn.active {
   color: var(--accent-amber);
   background: rgba(245, 158, 11, 0.12);
-  border: 1px solid rgba(245, 158, 11, 0.4);
+  border-color: rgba(245, 158, 11, 0.3);
+}
+.lang-btn-id.active {
+  color: #f97316;
+  background: rgba(249, 115, 22, 0.1);
+  border-color: rgba(249, 115, 22, 0.3);
+}
+.lang-btn-en.active {
+  color: #3b82f6;
+  background: rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.3);
 }
 .flag-icon {
   width: 16px;

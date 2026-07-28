@@ -20,8 +20,6 @@
       </div>
 
       <form method="post" action="/accounts/profile/">
-        {{ csrf_input(request) }}
-        
         <div style="margin-bottom: 14px;">
           <label class="field-label" for="username">{{ _("Username") }}</label>
           <input type="text" name="username" id="username" class="field" style="min-height: 42px;" value="{{ request.user.username }}" required>

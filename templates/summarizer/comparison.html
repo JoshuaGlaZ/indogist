@@ -12,7 +12,6 @@
   <div class="card mb-4">
     <div class="card-body">
       <form id="comparisonForm" method="post" action="/comparison/" hx-post="/comparison/" hx-target="#compareGrid" hx-indicator="#loadingIndicator">
-        {{ csrf_input(request) }}
         <label class="field-label" for="compareText">{{ _("Input text for side-by-side evaluation") }}</label>
         <textarea class="field" name="text" id="compareText" lang="id" style="min-height:120px;" placeholder="{{ _("Paste text to compare...") }}">{{ (source_text or '')|trim }}</textarea>
         

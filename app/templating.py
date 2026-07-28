@@ -7,7 +7,6 @@ from fastapi import Request
 from fastapi.templating import Jinja2Templates
 
 from app.auth import get_flash_messages
-from app.csrf import generate_csrf_token
 from app.i18n import (
     cldr_format_date,
     cldr_format_number,
@@ -103,18 +102,6 @@ def escapejs(value: str) -> str:
     )
 
 
-def csrf_field(request: Request) -> str:
-    token = generate_csrf_token(request)
-    return (
-        f'<meta name="csrf-token" content="{token}"><script>window.__CSRF_TOKEN="{token}"</script>'
-    )
-
-
-def csrf_input(request: Request) -> str:
-    token = generate_csrf_token(request)
-    return f'<input type="hidden" name="_csrf_header" value="{token}">'
-
-
 def floatformat(value, decimal_places=1):
     try:
         val = float(value)
@@ -142,8 +129,6 @@ templates.env.globals.update(
     {
         "url": url_for,
         "static": static_url,
-        "csrf_field": csrf_field,
-        "csrf_input": csrf_input,
         "now": datetime.datetime.now,
         "hasattr": hasattr,
         "getattr": getattr,

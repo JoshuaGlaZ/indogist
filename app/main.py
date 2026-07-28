@@ -24,9 +24,6 @@ from app.templating import (
     render_template,
 )
 from app.templating import (
-    csrf_field as _csrf_field,  # noqa: F401
-)
-from app.templating import (
     date_filter as _date_filter,  # noqa: F401
 )
 from app.templating import (
