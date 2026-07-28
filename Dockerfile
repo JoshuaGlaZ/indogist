@@ -4,15 +4,21 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
 WORKDIR /app
 
+# Layer 1: Dependencies (cached unless pyproject.toml / lock changes)
 COPY pyproject.toml README.md ./
+RUN uv pip install --system .
+
+# Layer 2: Application source (invalidates cache on code changes)
 COPY app ./app
 COPY ml ./ml
-COPY docker-entrypoint.sh ./
+COPY locale ./locale
+COPY templates ./templates
+COPY static ./static
+COPY --chmod=+x docker-entrypoint.sh ./
 
-RUN uv pip install --system --no-cache .
+# Download NLTK data for sentence tokenization
 RUN python -m nltk.downloader punkt punkt_tab
 
 EXPOSE 7860
-RUN chmod +x docker-entrypoint.sh
 
 CMD ["./docker-entrypoint.sh"]

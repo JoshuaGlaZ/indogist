@@ -1,5 +1,5 @@
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from sqlmodel import Field, Relationship, SQLModel
@@ -14,7 +14,7 @@ class User(SQLModel, table=True):
     hashed_password: str = Field(nullable=False)
     is_active: bool = Field(default=True)
     is_superuser: bool = Field(default=False)
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     summaries: list["Summary"] = Relationship(back_populates="user")
 
@@ -34,7 +34,7 @@ class Summary(SQLModel, table=True):
     compression_ratio: float = Field(default=0.3)
     entities_json: str = Field(default="[]")
     method: str = Field(default="hybrid", index=True)
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), index=True)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC), index=True)
 
     word_count_original: int = Field(default=0)
     word_count_summary: int = Field(default=0)

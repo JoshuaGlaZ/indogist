@@ -46,7 +46,7 @@ build-backend = "setuptools.build_meta"
 include = ["app*", "ml*"]
 
 [tool.ruff]
-target-version = "py310"
+target-version = "py312"
 line-length = 100
 
 
@@ -58,5 +58,9 @@ ignore = [
 ]
 
 
-
+[tool.pytest.ini_options]
+durations = 10
+markers = [
+    "slow: tests that run ML inference or stress tests, skip in CI",
+]
 

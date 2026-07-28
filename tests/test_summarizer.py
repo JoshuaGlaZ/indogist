@@ -1,9 +1,8 @@
-import pytest
 from fastapi.testclient import TestClient
-from sqlmodel import Session, select
+from sqlmodel import Session
+
 from app.models import Summary, User
 from app.routers.summarizer import SUMMARY_CACHE
-
 
 # Sample Indonesian news text for testing
 SAMPLE_INDONESIAN_NEWS = (
@@ -19,6 +18,7 @@ SAMPLE_INDONESIAN_NEWS = (
 # ==========================================
 # TIER 1: FEATURE COVERAGE (HAPPY PATHS)
 # ==========================================
+
 
 def test_home_get_guest(client: TestClient):
     """Tier 1: Accessing home page as guest returns 200 OK."""
@@ -47,7 +47,7 @@ def test_summarize_post_hybrid_happy_path(client: TestClient):
         "original_text": SAMPLE_INDONESIAN_NEWS,
         "compression_ratio": "0.3",
         "method": "hybrid",
-        "hybrid_variant": "pos_ner"
+        "hybrid_variant": "pos_ner",
     }
     response = client.post("/summarize/", data=payload)
     assert response.status_code == 200
@@ -61,7 +61,7 @@ def test_summarize_post_traditional_happy_path(client: TestClient):
         "original_text": SAMPLE_INDONESIAN_NEWS,
         "compression_ratio": "0.3",
         "method": "traditional",
-        "traditional_variant": "sentence_rank"
+        "traditional_variant": "sentence_rank",
     }
     response = client.post("/summarize/", data=payload)
     assert response.status_code == 200
@@ -72,38 +72,36 @@ def test_summarize_post_traditional_happy_path(client: TestClient):
 # TIER 2: BOUNDARY & CORNER CASES
 # ==========================================
 
+
 def test_summarize_empty_input(client: TestClient):
     """Tier 2: Empty text input returns 400 validation error without 500 server crash."""
-    payload = {
-        "title": "",
-        "original_text": "",
-        "method": "hybrid"
-    }
+    payload = {"title": "", "original_text": "", "method": "hybrid"}
     response = client.post("/summarize/", data=payload)
     assert response.status_code in (200, 400)
-    assert "Please provide content" in response.text or "Harap masukkan" in response.text or "alert" in response.text or "error" in response.text.lower()
+    assert (
+        "Please provide content" in response.text
+        or "Harap masukkan" in response.text
+        or "alert" in response.text
+        or "error" in response.text.lower()
+    )
 
 
 def test_summarize_whitespace_only(client: TestClient):
     """Tier 2: Whitespace-only text input returns validation error."""
-    payload = {
-        "title": "  ",
-        "original_text": "   \n\t   ",
-        "method": "hybrid"
-    }
+    payload = {"title": "  ", "original_text": "   \n\t   ", "method": "hybrid"}
     response = client.post("/summarize/", data=payload)
     assert response.status_code in (200, 400)
-    assert "Please provide content" in response.text or "Harap masukkan" in response.text or "alert" in response.text or "error" in response.text.lower()
-
+    assert (
+        "Please provide content" in response.text
+        or "Harap masukkan" in response.text
+        or "alert" in response.text
+        or "error" in response.text.lower()
+    )
 
 
 def test_summarize_short_text(client: TestClient):
     """Tier 2: Text input with fewer than 10 words triggers minimum length warning."""
-    payload = {
-        "title": "Pendek",
-        "original_text": "Teks terlalu pendek.",
-        "method": "hybrid"
-    }
+    payload = {"title": "Pendek", "original_text": "Teks terlalu pendek.", "method": "hybrid"}
     response = client.post("/summarize/", data=payload)
     assert response.status_code in (200, 400)
 
@@ -115,7 +113,7 @@ def test_summarize_max_len_text(client: TestClient):
         "title": "Large Text Test",
         "original_text": large_text,
         "compression_ratio": "0.2",
-        "method": "traditional"
+        "method": "traditional",
     }
     response = client.post("/summarize/", data=payload)
     assert response.status_code == 200
@@ -126,6 +124,7 @@ def test_summarize_max_len_text(client: TestClient):
 # TIER 3: CROSS-FEATURE COMBINATIONS
 # ==========================================
 
+
 def test_summarize_sha256_cache_hit(client: TestClient):
     """Tier 3: Identical input payloads utilize SHA-256 summary cache."""
     SUMMARY_CACHE.clear()
@@ -134,7 +133,7 @@ def test_summarize_sha256_cache_hit(client: TestClient):
         "original_text": SAMPLE_INDONESIAN_NEWS,
         "compression_ratio": "0.3",
         "method": "hybrid",
-        "hybrid_variant": "pos_ner"
+        "hybrid_variant": "pos_ner",
     }
 
     # First call: computes and stores in SUMMARY_CACHE
@@ -154,7 +153,7 @@ def test_summarize_htmx_oob_swaps(client: TestClient):
         "title": "HTMX OOB Test",
         "original_text": SAMPLE_INDONESIAN_NEWS,
         "compression_ratio": "0.3",
-        "method": "hybrid"
+        "method": "hybrid",
     }
     headers = {"HX-Request": "true"}
     response = client.post("/summarize/", data=payload, headers=headers)
@@ -163,22 +162,25 @@ def test_summarize_htmx_oob_swaps(client: TestClient):
     assert 'id="entityWrap"' in response.text or 'id="viewModeToggle"' in response.text
 
 
-def test_summarize_authenticated_saved_to_db(auth_client: TestClient, db_session: Session, test_user: User):
+def test_summarize_authenticated_saved_to_db(
+    auth_client: TestClient, db_session: Session, test_user: User
+):
     """Tier 3: Submitting a summary while logged in saves the Summary record to database."""
     unique_title = "Persistent Summary Title 99"
     payload = {
         "title": unique_title,
         "original_text": SAMPLE_INDONESIAN_NEWS,
         "compression_ratio": "0.3",
-        "method": "hybrid"
+        "method": "hybrid",
     }
     response = auth_client.post("/summarize/", data=payload)
     assert response.status_code == 200
 
-    summary_in_db = db_session.query(Summary).filter(
-        Summary.title == unique_title,
-        Summary.user_id == test_user.id
-    ).first()
+    summary_in_db = (
+        db_session.query(Summary)
+        .filter(Summary.title == unique_title, Summary.user_id == test_user.id)
+        .first()
+    )
     assert summary_in_db is not None
     assert summary_in_db.method == "hybrid"
 
@@ -186,6 +188,7 @@ def test_summarize_authenticated_saved_to_db(auth_client: TestClient, db_session
 # ==========================================
 # TIER 4: REAL-WORLD APPLICATION SCENARIOS
 # ==========================================
+
 
 def test_summarize_indonesian_news_realworld(client: TestClient):
     """Tier 4: End-to-end processing of a realistic multi-paragraph Indonesian news article."""
@@ -201,7 +204,7 @@ def test_summarize_indonesian_news_realworld(client: TestClient):
         "title": "Analisis Pasar Modal Indonesia",
         "original_text": real_article,
         "compression_ratio": "0.4",
-        "method": "hybrid"
+        "method": "hybrid",
     }
     response = client.post("/summarize/", data=payload)
     assert response.status_code == 200
@@ -214,16 +217,21 @@ def test_summarize_xss_injection_safety(client: TestClient):
         "title": "<script>alert('xss-title')</script>",
         "original_text": "Pemerintah indonesia merilis kebijakan baru untuk kesehatan masyarakat. <img src=x onerror=alert('xss-body')> Teks Berita Legitimat.",
         "compression_ratio": "0.3",
-        "method": "traditional"
+        "method": "traditional",
     }
     response = client.post("/summarize/", data=xss_payload)
     assert response.status_code == 200
-    assert "<script>alert" not in response.text or "&lt;script&gt;" in response.text or "alert" not in response.text
+    assert (
+        "<script>alert" not in response.text
+        or "&lt;script&gt;" in response.text
+        or "alert" not in response.text
+    )
 
 
 # ==========================================
 # ADVERSARIAL & BOUNDARY TESTS (CHALLENGER)
 # ==========================================
+
 
 def test_summary_detail_invalid_string_id(client: TestClient):
     """Adversarial: Non-integer string or UUID in /summary/{pk} returns 422 Unprocessable Entity, not 500."""
@@ -242,6 +250,7 @@ def test_export_summary_invalid_string_id(client: TestClient):
 def test_upload_malformed_json_file(client: TestClient):
     """Adversarial: Uploading malformed JSON file returns validation error or proper error status, not 500."""
     import io
+
     malformed_json = '{"title": "test", "original_text": "incomplete json...'
     files = {"file": ("data.json", io.BytesIO(malformed_json.encode("utf-8")), "application/json")}
     data = {"method": "hybrid"}
@@ -250,22 +259,25 @@ def test_upload_malformed_json_file(client: TestClient):
     assert response.status_code != 500
 
 
-def test_summarize_db_record_completeness(auth_client: TestClient, db_session: Session, test_user: User):
+def test_summarize_db_record_completeness(
+    auth_client: TestClient, db_session: Session, test_user: User
+):
     """M3 Task 4: Verify saved Summary DB record contains word counts, entities_json, and actual compression ratio."""
     unique_title = "Complete Summary Record Test 101"
     payload = {
         "title": unique_title,
         "original_text": SAMPLE_INDONESIAN_NEWS,
         "compression_ratio": "0.3",
-        "method": "hybrid"
+        "method": "hybrid",
     }
     response = auth_client.post("/summarize/", data=payload)
     assert response.status_code == 200
 
-    summary_obj = db_session.query(Summary).filter(
-        Summary.title == unique_title,
-        Summary.user_id == test_user.id
-    ).first()
+    summary_obj = (
+        db_session.query(Summary)
+        .filter(Summary.title == unique_title, Summary.user_id == test_user.id)
+        .first()
+    )
     assert summary_obj is not None
     assert summary_obj.word_count_original > 0
     assert summary_obj.word_count_summary > 0
@@ -279,7 +291,7 @@ def test_summarize_lang_call_signature_robustness(client: TestClient):
         "title": "Lang Signature Test",
         "original_text": SAMPLE_INDONESIAN_NEWS,
         "compression_ratio": "0.3",
-        "method": "traditional"
+        "method": "traditional",
     }
     headers = {"X-Requested-With": "XMLHttpRequest"}
     response = client.post("/summarize/", data=payload, headers=headers)
@@ -293,7 +305,7 @@ def test_history_empty_and_sqli_query_strings(client: TestClient):
         " ' OR 1=1 -- ",
         "'; DROP TABLE summaries; --",
         '" UNION SELECT 1,2,3--',
-        "admin'--"
+        "admin'--",
     ]
     for sqli in sqli_vectors:
         response = client.get(f"/history/?q={sqli}&method={sqli}&sort={sqli}")
@@ -303,4 +315,3 @@ def test_history_empty_and_sqli_query_strings(client: TestClient):
     # Empty query strings
     empty_resp = client.get("/history/?q=&method=&sort=")
     assert empty_resp.status_code == 200
-

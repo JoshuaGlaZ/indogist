@@ -1,12 +1,6 @@
-import pytest
 from ml.summarization.hybrid import predict_and_summarize
 from ml.summarization.traditional import summarize_traditional
-from ml.summarization.utils import (
-    text_to_sentences,
-    preprocess_tfidf,
-    pos_tag_summary
-)
-
+from ml.summarization.utils import pos_tag_summary, preprocess_tfidf, text_to_sentences
 
 SAMPLE_ML_TEXT = (
     "Presiden Republik Indonesia Joko Widodo meresmikan proyek infrastruktur baru di ibu kota nusantara. "
@@ -20,6 +14,7 @@ SAMPLE_ML_TEXT = (
 # TIER 1: FEATURE COVERAGE (HAPPY PATHS)
 # ==========================================
 
+
 def test_predict_and_summarize_hybrid():
     """Tier 1: Hybrid summarizer returns structured dict with summary text, entities, and POS tokens."""
     result = predict_and_summarize(SAMPLE_ML_TEXT, title="Resmedi Nusantara", compression_ratio=0.3)
@@ -32,7 +27,9 @@ def test_predict_and_summarize_hybrid():
 
 def test_summarize_traditional_extractive():
     """Tier 1: Traditional Extractive summarizer returns structured dict or string summary."""
-    result = summarize_traditional(SAMPLE_ML_TEXT, title="Extractive Test", compression_ratio=0.3, stream=False)
+    result = summarize_traditional(
+        SAMPLE_ML_TEXT, title="Extractive Test", compression_ratio=0.3, stream=False
+    )
     if isinstance(result, dict):
         assert "summary" in result
         assert len(result["summary"].strip()) > 0
@@ -50,6 +47,7 @@ def test_pos_tag_summary_utility():
 # ==========================================
 # TIER 2: BOUNDARY & CORNER CASES
 # ==========================================
+
 
 def test_preprocess_tfidf_stopwords():
     """Tier 2: Preprocess TFIDF removes Indonesian stopwords and stems terms correctly."""
@@ -72,6 +70,7 @@ def test_text_to_sentences_empty():
 # TIER 3: CROSS-FEATURE COMBINATIONS
 # ==========================================
 
+
 def test_hybrid_pipeline_integration():
     """Tier 3: Preprocessing -> Sentence Tokenization -> TF-IDF Ranking -> Hybrid Summary Output."""
     sentences = text_to_sentences(SAMPLE_ML_TEXT)
@@ -88,6 +87,7 @@ def test_hybrid_pipeline_integration():
 # ==========================================
 # TIER 4: REAL-WORLD APPLICATION SCENARIOS
 # ==========================================
+
 
 def test_ml_pipeline_performance_heavy_text():
     """Tier 4: Processes a 1,000+ word Indonesian news document without memory exception or failure."""
@@ -130,6 +130,7 @@ def test_predict_and_summarize_empty_and_non_string_inputs():
 def test_nlp_service_pre_initialization_and_pos_prefix():
     """M3 Task 2: NLPService pre-initializes attributes and discovers POS model directory correctly."""
     from ml.ner.loader import nlp_service
+
     assert hasattr(nlp_service, "ner_model")
     assert hasattr(nlp_service, "vectorizer")
     assert hasattr(nlp_service, "idx_to_tag")
@@ -150,7 +151,8 @@ def test_nlp_service_pre_initialization_and_pos_prefix():
 
 def test_ml_status_module_diagnostics():
     """Tests the ml.status module get_model_status() and check_models() diagnostic helper functions."""
-    from ml.status import get_model_status, check_models
+    from ml.status import check_models, get_model_status
+
     status = get_model_status()
     assert isinstance(status, dict)
     assert "models_root" in status
@@ -161,4 +163,3 @@ def test_ml_status_module_diagnostics():
 
     exit_code = check_models(verbose=False)
     assert exit_code in (0, 1)
-

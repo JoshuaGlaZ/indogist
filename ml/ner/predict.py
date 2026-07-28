@@ -1,11 +1,13 @@
 import hashlib
+from collections import OrderedDict
 
 import numpy as np
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 
 from ml.ner.loader import nlp_service
 
-_ner_cache = {}
+_MAX_CACHE_SIZE = 1000
+_ner_cache: OrderedDict = OrderedDict()
 
 
 def extract_entities_from_tags(tokens, tags, confidences):
@@ -196,9 +198,10 @@ def predict_entities(sentences):
             }
             results.append(result)
 
-            # Cache the new result in memory
             s_hash = f"ner_sent_{get_sentence_hash(uncached_sentences[i])}"
             _ner_cache[s_hash] = result
+            if len(_ner_cache) > _MAX_CACHE_SIZE:
+                _ner_cache.popitem(last=False)
 
         # Reconstruct final list in original order
         final_results = [None] * len(sentences)

@@ -1,13 +1,13 @@
-import pytest
 from fastapi.testclient import TestClient
 from sqlmodel import Session
-from app.models import Summary, User
-from app.auth import hash_password
 
+from app.auth import hash_password
+from app.models import Summary, User
 
 # ==========================================
 # TIER 1: FEATURE COVERAGE (HAPPY PATHS)
 # ==========================================
+
 
 def test_download_template_get(client: TestClient):
     """Tier 1: Downloading template file returns 200 OK text attachment with template structure."""
@@ -44,6 +44,7 @@ def test_add_to_dataset_post(auth_client: TestClient, db_session: Session, sampl
 # TIER 2: BOUNDARY & CORNER CASES
 # ==========================================
 
+
 def test_export_summary_not_found(client: TestClient):
     """Tier 2: Exporting non-existent summary ID returns 404 status."""
     response = client.get("/export/999999")
@@ -56,13 +57,15 @@ def test_add_to_dataset_not_found(client: TestClient):
     assert response.status_code == 404
 
 
-def test_export_summary_unauthorized(client: TestClient, db_session: Session, sample_summary: Summary):
+def test_export_summary_unauthorized(
+    client: TestClient, db_session: Session, sample_summary: Summary
+):
     """Tier 2: User B cannot export summary owned by User A."""
     # Create User B
     user_b = User(
         username="export_user_b",
         email="export_b@example.com",
-        hashed_password=hash_password("password123")
+        hashed_password=hash_password("password123"),
     )
     db_session.add(user_b)
     db_session.commit()
@@ -90,6 +93,7 @@ def test_add_to_dataset_guest_unauthorized(client: TestClient, sample_summary: S
 # TIER 3: CROSS-FEATURE COMBINATIONS
 # ==========================================
 
+
 def test_export_dataset_lifecycle(client: TestClient, db_session: Session):
     """Tier 3: Register -> Login -> Summarize -> Export -> Add to Dataset."""
     username = "exportflowuser"
@@ -97,9 +101,11 @@ def test_export_dataset_lifecycle(client: TestClient, db_session: Session):
     password = "FlowPass123!"
 
     # 1. Register & Login
-    client.post("/accounts/register", data={
-        "username": username, "email": email, "password1": password, "password2": password
-    }, follow_redirects=True)
+    client.post(
+        "/accounts/register",
+        data={"username": username, "email": email, "password1": password, "password2": password},
+        follow_redirects=True,
+    )
 
     # 2. Create Summary
     title = "Lifecycle Export Test Summary"
@@ -129,7 +135,10 @@ def test_export_dataset_lifecycle(client: TestClient, db_session: Session):
 # TIER 4: REAL-WORLD APPLICATION SCENARIOS
 # ==========================================
 
-def test_export_summary_special_characters(auth_client: TestClient, db_session: Session, test_user: User):
+
+def test_export_summary_special_characters(
+    auth_client: TestClient, db_session: Session, test_user: User
+):
     """Tier 4: Exporting summary containing newlines, quotes, and special characters maintains text fidelity."""
     special_title = "Judul 'Khusus' & \"Simbol\""
     special_original = "Baris 1: Teks Berita.\nBaris 2: RincianTambahan & Kuotasi.\nBaris 3: Karakter Khusus 100% Sesuai."
@@ -140,7 +149,7 @@ def test_export_summary_special_characters(auth_client: TestClient, db_session: 
         title=special_title,
         original_text=special_original,
         summary_text=special_summary,
-        method="traditional"
+        method="traditional",
     )
     db_session.add(summary)
     db_session.commit()

@@ -1,14 +1,13 @@
-import pytest
-from datetime import date, datetime
+from datetime import date
+
 from fastapi.testclient import TestClient
-from app.main import app
+
 from app.i18n import (
-    negotiate_locale,
-    get_translations,
-    lang,
     cldr_format_date,
     cldr_format_number,
+    get_translations,
 )
+from app.main import app
 
 client = TestClient(app)
 
@@ -73,8 +72,14 @@ def test_gettext_translation_catalogs():
     assert id_trans.gettext("Passwords do not match.") == "Kata sandi tidak cocok."
     assert en_trans.gettext("Passwords do not match.") == "Passwords do not match."
 
-    assert id_trans.gettext("Account created for %(username)s! You are now logged in.") == "Akun berhasil dibuat untuk %(username)s! Anda sekarang sudah masuk."
-    assert en_trans.gettext("Account created for %(username)s! You are now logged in.") == "Account created for %(username)s! You are now logged in."
+    assert (
+        id_trans.gettext("Account created for %(username)s! You are now logged in.")
+        == "Akun berhasil dibuat untuk %(username)s! Anda sekarang sudah masuk."
+    )
+    assert (
+        en_trans.gettext("Account created for %(username)s! You are now logged in.")
+        == "Account created for %(username)s! You are now logged in."
+    )
 
 
 def test_parameter_interpolation():
