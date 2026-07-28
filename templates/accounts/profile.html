@@ -20,7 +20,7 @@
       </div>
 
       <form method="post" action="/accounts/profile/">
-        {{ csrf_field(request) }}
+        {{ csrf_input(request) }}
         
         <div style="margin-bottom: 14px;">
           <label class="field-label" for="username">{{ _("Username") }}</label>

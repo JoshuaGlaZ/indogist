@@ -1,26 +1,41 @@
 import os
+import secrets
 
 from fastapi import HTTPException, Request
-from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from app.config import settings
-
-_serializer = URLSafeTimedSerializer(settings.SECRET_KEY)
-
-CSRF_TOKEN_MAX_AGE = 3600
+CSRF_TOKEN_LENGTH = 32
 
 
-def generate_csrf_token(session_id: str) -> str:
-    return _serializer.dumps(session_id, salt="csrf-token")
+def generate_csrf_token(request: Request) -> str:
+    if "session" not in request.scope:
+        return ""
+    session = request.session
+    token = session.get("_csrf_token")
+    if not token:
+        token = secrets.token_urlsafe(CSRF_TOKEN_LENGTH)
+        session["_csrf_token"] = token
+    return token
 
 
-def validate_csrf_token(token: str, session_id: str) -> bool:
-    try:
-        _serializer.loads(token, salt="csrf-token", max_age=CSRF_TOKEN_MAX_AGE)
-        return True
-    except (BadSignature, SignatureExpired):
+def regenerate_csrf_token(request: Request) -> str:
+    """Generate a fresh CSRF token, replacing any existing one.
+
+    Should be called after privilege elevation (login, register) so that
+    tokens issued under a pre-auth session cannot be reused after login.
+    """
+    if "session" not in request.scope:
+        return ""
+    token = secrets.token_urlsafe(CSRF_TOKEN_LENGTH)
+    request.session["_csrf_token"] = token
+    return token
+
+
+def validate_csrf_token(token: str, request: Request) -> bool:
+    if "session" not in request.scope:
         return False
+    stored = request.session.get("_csrf_token", "")
+    return secrets.compare_digest(token or "", stored)
 
 
 class CSRFMiddleware(BaseHTTPMiddleware):
@@ -37,10 +52,6 @@ class CSRFMiddleware(BaseHTTPMiddleware):
         if any(request.url.path.startswith(p) for p in self.EXEMPT_PATHS):
             return await call_next(request)
 
-        session_id = ""
-        if "session" in request.scope:
-            session_id = str(request.session.get("user_id", ""))
-
         token = request.headers.get("X-CSRF-Token", "")
         if not token:
             content_type = request.headers.get("Content-Type", "")
@@ -56,7 +67,7 @@ class CSRFMiddleware(BaseHTTPMiddleware):
                 except Exception:
                     token = ""
 
-        if not token or not validate_csrf_token(str(token), session_id):
+        if not token or not validate_csrf_token(str(token), request):
             raise HTTPException(status_code=403, detail="Invalid or missing CSRF token")
 
         return await call_next(request)

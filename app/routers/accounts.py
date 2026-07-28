@@ -1,4 +1,5 @@
 import os
+import secrets
 
 from fastapi import APIRouter, Depends, Form, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
@@ -14,6 +15,7 @@ from app.auth import (
     require_current_user,
     verify_password,
 )
+from app.csrf import generate_csrf_token, regenerate_csrf_token
 from app.database import get_session
 from app.i18n import lang
 from app.models import Summary, User
@@ -84,6 +86,7 @@ def register_post(
         )
 
     request.session["user_id"] = new_user.id
+    regenerate_csrf_token(request)
     add_flash_message(
         request,
         lang(request, "Account created for %(username)s! You are now logged in.")
@@ -115,6 +118,7 @@ def login_post(
         return render_template(request, "accounts/login.html", {"form": {"username": username}})
 
     request.session["user_id"] = user.id
+    regenerate_csrf_token(request)
     add_flash_message(
         request,
         lang(request, "Welcome back, %(username)s!") % {"username": user.username},

@@ -18,9 +18,9 @@
       </div>
       <div class="card-body">
         <form id="summarizeForm" method="post" action="/summarize/" hx-post="/summarize/" hx-target="#outputArea" hx-indicator="#loadingIndicator">
-          {{ csrf_field(request) }}
+        {{ csrf_input(request) }}
 
-          <div class="tabs" role="tablist">
+           <div class="tabs" role="tablist">
             <button type="button" class="tab active" data-tab="raw">{{ _("Raw text") }}</button>
             <button type="button" class="tab" data-tab="upload">{{ _("File upload") }}</button>
             <button type="button" class="tab" data-tab="presets">{{ _("Presets") }}</button>

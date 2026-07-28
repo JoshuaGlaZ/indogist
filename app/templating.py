@@ -104,13 +104,15 @@ def escapejs(value: str) -> str:
 
 
 def csrf_field(request: Request) -> str:
-    session_id = ""
-    if "session" in request.scope:
-        session_id = str(request.session.get("user_id", ""))
-    token = generate_csrf_token(session_id)
+    token = generate_csrf_token(request)
     return (
         f'<meta name="csrf-token" content="{token}"><script>window.__CSRF_TOKEN="{token}"</script>'
     )
+
+
+def csrf_input(request: Request) -> str:
+    token = generate_csrf_token(request)
+    return f'<input type="hidden" name="_csrf_header" value="{token}">'
 
 
 def floatformat(value, decimal_places=1):
@@ -141,6 +143,7 @@ templates.env.globals.update(
         "url": url_for,
         "static": static_url,
         "csrf_field": csrf_field,
+        "csrf_input": csrf_input,
         "now": datetime.datetime.now,
         "hasattr": hasattr,
         "getattr": getattr,

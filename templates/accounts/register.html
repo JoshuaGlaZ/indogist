@@ -10,7 +10,7 @@
     </div>
     <div class="card-body">
       <form method="post" action="/accounts/register">
-        {{ csrf_field(request) }}
+        {{ csrf_input(request) }}
         
         <div style="margin-bottom: 14px;">
           <label class="field-label" for="username">{{ _("Username") }}</label>

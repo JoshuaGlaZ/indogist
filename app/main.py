@@ -78,6 +78,7 @@ app.add_middleware(
     secret_key=settings.SECRET_KEY,
     session_cookie="indogist_session",
     max_age=86400 * 7,
+    same_site="lax",
 )
 
 static_dir = BASE_DIR / "static"
