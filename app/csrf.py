@@ -3,7 +3,8 @@ import secrets
 
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.responses import HTMLResponse, JSONResponse, Response as StarletteResponse
+from starlette.responses import HTMLResponse, JSONResponse
+from starlette.responses import Response as StarletteResponse
 
 CSRF_TOKEN_COOKIE = "csrf_token"
 CSRF_TOKEN_LENGTH = 32

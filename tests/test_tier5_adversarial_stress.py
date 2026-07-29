@@ -1,9 +1,8 @@
 import threading
 
-import pytest
 from fastapi.testclient import TestClient
 
-from app.main import _truncatechars, app
+from app.main import app
 from app.models import Summary
 from app.routers.summarizer import SUMMARY_CACHE
 from ml.summarization.hybrid import predict_and_summarize
