@@ -1,9 +1,9 @@
 import os
 import secrets
 
-from fastapi import HTTPException, Request
+from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.responses import Response as StarletteResponse
+from starlette.responses import HTMLResponse, JSONResponse, Response as StarletteResponse
 
 CSRF_TOKEN_COOKIE = "csrf_token"
 CSRF_TOKEN_LENGTH = 32
@@ -23,38 +23,47 @@ class CSRFMiddleware(BaseHTTPMiddleware):
     EXEMPT_PATHS = frozenset({"/health", "/language/"})
 
     async def dispatch(self, request: Request, call_next):
-        if os.getenv("TESTING", "False").lower() in ("true", "1"):
-            return await call_next(request)
+        testing = os.getenv("TESTING", "False").lower() in ("true", "1")
+        force_csrf = request.headers.get("X-Force-CSRF-Check", "").lower() == "true"
+        if testing and not force_csrf:
+            response = await call_next(request)
+            self._ensure_csrf_cookie(request, response)
+            return response
+
+        if request.method not in self.EXEMPT_METHODS and not any(
+            request.url.path.startswith(p) for p in self.EXEMPT_PATHS
+        ):
+            cookie_token = request.cookies.get(self.COOKIE_NAME, "")
+            header_token = request.headers.get("X-CSRF-Token", "")
+
+            if not header_token:
+                content_type = request.headers.get("Content-Type", "")
+                if (
+                    "application/x-www-form-urlencoded" in content_type
+                    or "multipart/form-data" in content_type
+                ):
+                    try:
+                        form = await request.form()
+                        header_token = str(
+                            form.get("csrf_token")
+                            or form.get("_csrf_header")
+                            or form.get("csrf")
+                            or ""
+                        )
+                    except Exception:
+                        header_token = ""
+
+            if not cookie_token or not header_token or not validate_csrf_token(cookie_token, header_token):
+                is_ajax = (
+                    request.headers.get("HX-Request") == "true"
+                    or "application/json" in request.headers.get("Accept", "")
+                )
+                if is_ajax:
+                    return JSONResponse({"detail": "Invalid or missing CSRF token"}, status_code=403)
+                return HTMLResponse("<h1>403 Forbidden</h1><p>Invalid or missing CSRF token.</p>", status_code=403)
 
         response = await call_next(request)
         self._ensure_csrf_cookie(request, response)
-
-        if request.method in self.EXEMPT_METHODS:
-            return response
-
-        if any(request.url.path.startswith(p) for p in self.EXEMPT_PATHS):
-            return response
-
-        cookie_token = request.cookies.get(self.COOKIE_NAME, "")
-        header_token = request.headers.get("X-CSRF-Token", "")
-
-        if not header_token:
-            content_type = request.headers.get("Content-Type", "")
-            if (
-                "application/x-www-form-urlencoded" in content_type
-                or "multipart/form-data" in content_type
-            ):
-                try:
-                    form = await request.form()
-                    header_token = str(
-                        form.get("csrf_token") or form.get("_csrf_header") or form.get("csrf") or ""
-                    )
-                except Exception:
-                    header_token = ""
-
-        if not header_token or not validate_csrf_token(cookie_token, header_token):
-            raise HTTPException(status_code=403, detail="Invalid or missing CSRF token")
-
         return response
 
     def _ensure_csrf_cookie(self, request: Request, response: StarletteResponse) -> None:
@@ -68,3 +77,4 @@ class CSRFMiddleware(BaseHTTPMiddleware):
                 samesite="lax",
                 path="/",
             )
+
