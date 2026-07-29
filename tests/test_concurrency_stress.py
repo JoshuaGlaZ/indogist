@@ -41,7 +41,7 @@ def create_test_users(db_session: Session):
 
 
 @pytest.mark.slow
-@pytest.mark.slow
+@pytest.mark.asyncio
 async def test_concurrent_session_isolation(create_test_users):
     """Stress test: 50 concurrent requests using separate session cookies for Alice and Bob.
     Verifies zero cross-session data leakage in profile and history views under high concurrency.
@@ -136,6 +136,7 @@ async def test_concurrent_session_isolation(create_test_users):
     )
 
 
+@pytest.mark.slow
 @pytest.mark.asyncio
 async def test_concurrent_database_writes(create_test_users, db_session: Session):
     """Stress test: Concurrent summary creation requests across multiple authenticated sessions.
@@ -210,6 +211,7 @@ async def test_concurrent_database_writes(create_test_users, db_session: Session
     )
 
 
+@pytest.mark.slow
 @pytest.mark.asyncio
 async def test_concurrent_registration_race_condition():
     """Stress test: 10 concurrent requests attempting to register the same username simultaneously.
