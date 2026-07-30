@@ -5,29 +5,29 @@
 {% block content %}
 <section class="view active" id="view-metrics">
   <div class="page-head">
-    <h1>{{ _("Model Performance Metrics") }}</h1>
+    <h1 data-scramble="{{ _("Model Performance Metrics") }}">{{ _("Model Performance Metrics") }}</h1>
     <p>{{ _("ROUGE and BLEU evaluation suite results for Indonesian text summarization.") }}</p>
   </div>
 
-  <div class="card mb-4">
+  <div class="card mb-4" data-tilt>
     <div class="card-head">
       <p class="card-title">{{ _("Evaluation Suite Summary") }}</p>
     </div>
     <div class="card-body">
       <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr);">
-        <div class="stat-card accent">
+        <div class="stat-card accent" data-tilt>
           <span class="s-label">{{ _("ROUGE-1 Score") }}</span>
           <span class="s-value">0.428</span>
         </div>
-        <div class="stat-card">
+        <div class="stat-card" data-tilt>
           <span class="s-label">{{ _("ROUGE-2 Score") }}</span>
           <span class="s-value">0.215</span>
         </div>
-        <div class="stat-card accent">
+        <div class="stat-card accent" data-tilt>
           <span class="s-label">{{ _("ROUGE-L Score") }}</span>
           <span class="s-value">0.389</span>
         </div>
-        <div class="stat-card">
+        <div class="stat-card" data-tilt>
           <span class="s-label">{{ _("BLEU Score") }}</span>
           <span class="s-value">0.342</span>
         </div>

@@ -5,11 +5,11 @@
 {% block content %}
 <section class="view active" id="view-comparison">
   <div class="page-head">
-    <h1>{{ _("Model comparison studio") }}</h1>
+    <h1 data-scramble="{{ _("Model comparison studio") }}">{{ _("Model comparison studio") }}</h1>
     <p>{{ _("Run the same text through two methods and compare results side by side.") }}</p>
   </div>
 
-  <div class="card mb-4">
+  <div class="card mb-4" data-tilt>
     <div class="card-body">
       <form id="comparisonForm" method="post" action="/comparison/" hx-post="/comparison/" hx-target="#compareGrid" hx-indicator="#loadingIndicator">
         <label class="field-label" for="compareText">{{ _("Input text for side-by-side evaluation") }}</label>
@@ -45,9 +45,9 @@
   </div>
 
   <!-- Compare Grid Target Container -->
-  <div class="compare-grid" id="compareGrid">
+  <div class="compare-grid snap-carousel" id="compareGrid">
     {% if traditional_summary or hybrid_summary %}
-      <div class="card">
+      <div class="card" data-tilt>
         <div class="card-head">
           <p class="card-title">{{ _("Model A: Traditional Extractive") }}</p>
           <span class="badge extractive">{{ _("Sentence rank") }}</span>
@@ -80,7 +80,7 @@
         </div>
       </div>
 
-      <div class="card">
+      <div class="card" data-tilt>
         <div class="card-head">
           <p class="card-title">{{ _("Model B") }} ({{ model_b|upper }})</p>
           <span class="badge {{ model_b }}">{{ model_b }}</span>

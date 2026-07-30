@@ -5,13 +5,13 @@
 {% block content %}
 <section class="view active" id="view-summarize">
   <div class="page-head">
-    <h1>INDOGIST STUDIO — {{ _("TEXT SUMMARIZER") }}</h1>
+    <h1 data-scramble="INDOGIST STUDIO — {{ _("TEXT SUMMARIZER") }}">INDOGIST STUDIO — {{ _("TEXT SUMMARIZER") }}</h1>
     <p>{{ _("Hybrid, traditional extractive, or abstractive — pick a method and run it on Indonesian text.") }}</p>
   </div>
 
   <div class="grid-2">
     <!-- Left Column: Input Workspace -->
-    <div class="card">
+    <div class="card" data-tilt>
       <div class="card-head">
         <p class="card-title">{{ _("Input workspace") }}</p>
         <span class="count-badge"><span id="wordCount">0</span> {{ _("words") }}</span>
@@ -76,11 +76,11 @@
           <div style="margin-top: 16px;">
             <p class="field-label">{{ _("Summarization method") }}</p>
             <div class="method-grid">
-              <label class="method-opt">
+              <label class="method-opt" data-tilt>
                 <input type="radio" name="method" value="hybrid" checked onclick="document.getElementById('hybridVariantRow').style.display='block'; document.getElementById('traditionalVariantRow').style.display='none';">
                 <span class="method-card hybrid"><span class="m-name">{{ _("Hybrid") }}</span><span class="m-sub">{{ _("POS/NER + TF-IDF") }}</span></span>
               </label>
-              <label class="method-opt">
+              <label class="method-opt" data-tilt>
                 <input type="radio" name="method" value="traditional" onclick="document.getElementById('hybridVariantRow').style.display='none'; document.getElementById('traditionalVariantRow').style.display='block';">
                 <span class="method-card extractive"><span class="m-name">{{ _("Traditional") }}</span><span class="m-sub">{{ _("Extractive Sentence Rank") }}</span></span>
               </label>
@@ -135,7 +135,7 @@
     </div>
 
     <!-- Right Column: Summary Output -->
-    <div class="card">
+    <div class="card" data-tilt>
       <div class="card-head">
         <p class="card-title">{{ _("Summary output") }}</p>
         <div class="card-actions">
@@ -151,7 +151,7 @@
         <!-- View Mode Toggle Bar (buttons dynamically updated via OOB swap) -->
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
           <span class="field-label" style="margin-bottom: 0;">{{ _("Output View") }}</span>
-          <div class="view-mode-toggle" id="viewModeToggle" style="display: flex; gap: 4px;">
+          <div class="view-mode-toggle snap-scroll" id="viewModeToggle" style="display: flex; gap: 4px;">
             <button type="button" class="btn btn-ghost active" style="padding: 2px 8px; font-size: 11.5px;" onclick="switchOutputMode(this, 'outputArea', 'plain')">{{ _("Plain") }}</button>
           </div>
         </div>

@@ -15,6 +15,8 @@ document.addEventListener('DOMContentLoaded', () => {
   initKeyboardShortcuts();
   initCSRF();
   initHamburger();
+  initTextScramble();
+  initCardTilt();
 });
 
 // Theme Management
@@ -685,3 +687,103 @@ function initCSRF() {
     });
   });
 }
+
+/* ==========================================================================
+   CREATIVE UI EFFECTS: TextScramble & 3D Spatial Glass Card Tilt
+   Ported & adapted from misc-ui-effects-knowledge
+   ========================================================================== */
+
+class TextScramble {
+  constructor(el) {
+    this.el = el;
+    this.chars = '!<>-_\\/[]{}—=+*^?#________';
+    this.update = this.update.bind(this);
+  }
+  setText(newText) {
+    const oldText = this.el.innerText || '';
+    const length = Math.max(oldText.length, newText.length);
+    const promise = new Promise((resolve) => (this.resolve = resolve));
+    this.queue = [];
+    for (let i = 0; i < length; i++) {
+      const from = oldText[i] || '';
+      const to = newText[i] || '';
+      const start = Math.floor(Math.random() * 30);
+      const end = start + Math.floor(Math.random() * 30);
+      this.queue.push({ from, to, start, end });
+    }
+    cancelAnimationFrame(this.frameRequest);
+    this.frame = 0;
+    this.update();
+    return promise;
+  }
+  update() {
+    let output = '';
+    let complete = 0;
+    for (let i = 0, n = this.queue.length; i < n; i++) {
+      let { from, to, start, end, char } = this.queue[i];
+      if (this.frame >= end) {
+        complete++;
+        output += to;
+      } else if (this.frame >= start) {
+        if (!char || Math.random() < 0.28) {
+          char = this.randomChar();
+          this.queue[i].char = char;
+        }
+        output += `<span class="dud">${char}</span>`;
+      } else {
+        output += from;
+      }
+    }
+    this.el.innerHTML = output;
+    if (complete === this.queue.length) {
+      this.resolve();
+    } else {
+      this.frameRequest = requestAnimationFrame(this.update);
+      this.frame++;
+    }
+  }
+  randomChar() {
+    return this.chars[Math.floor(Math.random() * this.chars.length)];
+  }
+}
+
+function initTextScramble() {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  document.querySelectorAll('[data-scramble]').forEach((el) => {
+    const targetText = el.getAttribute('data-scramble') || el.innerText;
+    if (!targetText) return;
+    const fx = new TextScramble(el);
+    el.innerText = '';
+    const delay = parseInt(el.getAttribute('data-scramble-delay') || '100', 10);
+    setTimeout(() => {
+      fx.setText(targetText);
+    }, delay);
+  });
+}
+
+function initCardTilt() {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const cards = document.querySelectorAll('[data-tilt]');
+  cards.forEach((card) => {
+    card.style.transformStyle = 'preserve-3d';
+    card.style.transition = 'transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.4s ease';
+
+    card.addEventListener('mousemove', (e) => {
+      const rect = card.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / rect.width - 0.5;
+      const y = (e.clientY - rect.top) / rect.height - 0.5;
+
+      const tiltX = (y * -12).toFixed(2);
+      const tiltY = (x * 12).toFixed(2);
+
+      card.style.transform = `perspective(800px) rotateX(${tiltX}deg) rotateY(${tiltY}deg) translateZ(6px)`;
+      card.style.boxShadow = `0 14px 36px rgba(0, 0, 0, 0.4), 0 0 24px var(--badge-hybrid-bg)`;
+    });
+
+    card.addEventListener('mouseleave', () => {
+      card.style.transform = 'perspective(800px) rotateX(0deg) rotateY(0deg) translateZ(0px)';
+      card.style.boxShadow = '';
+    });
+  });
+}
+
