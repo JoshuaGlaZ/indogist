@@ -54,14 +54,21 @@ class CSRFMiddleware(BaseHTTPMiddleware):
                     except Exception:
                         header_token = ""
 
-            if not cookie_token or not header_token or not validate_csrf_token(cookie_token, header_token):
-                is_ajax = (
-                    request.headers.get("HX-Request") == "true"
-                    or "application/json" in request.headers.get("Accept", "")
-                )
+            if (
+                not cookie_token
+                or not header_token
+                or not validate_csrf_token(cookie_token, header_token)
+            ):
+                is_ajax = request.headers.get(
+                    "HX-Request"
+                ) == "true" or "application/json" in request.headers.get("Accept", "")
                 if is_ajax:
-                    return JSONResponse({"detail": "Invalid or missing CSRF token"}, status_code=403)
-                return HTMLResponse("<h1>403 Forbidden</h1><p>Invalid or missing CSRF token.</p>", status_code=403)
+                    return JSONResponse(
+                        {"detail": "Invalid or missing CSRF token"}, status_code=403
+                    )
+                return HTMLResponse(
+                    "<h1>403 Forbidden</h1><p>Invalid or missing CSRF token.</p>", status_code=403
+                )
 
         response = await call_next(request)
         self._ensure_csrf_cookie(request, response)
@@ -78,4 +85,3 @@ class CSRFMiddleware(BaseHTTPMiddleware):
                 samesite="lax",
                 path="/",
             )
-
